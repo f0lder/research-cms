@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FieldType, FieldDefinition, ContentTypeDefinition } from '@research-cms/shared-types';
+import { FieldType, FieldDefinition, FieldConfig, ContentTypeDefinition } from '@research-cms/shared-types';
 import { api, generateSlugFromName, validateSlug, getErrorMessage } from '../../lib/utils';
 import FieldInput from './FieldInput';
 
@@ -46,10 +46,12 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
 		setFields(fields.filter((_, i) => i !== index));
 	};
 
-	const updateField = (index: number, key: keyof FieldDefinition, value: string | boolean) => {
-		const updated = [...fields];
-		updated[index] = { ...updated[index], [key]: value };
-		setFields(updated);
+	const updateField = (index: number, key: keyof FieldDefinition, value: string | boolean | FieldConfig | undefined) => {
+		setFields(prev => {
+			const updated = [...prev];
+			updated[index] = { ...updated[index], [key]: value };
+			return updated;
+		});
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
