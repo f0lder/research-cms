@@ -6,7 +6,7 @@ export type ContentTypeDocument = HydratedDocument<ContentType>;
 
 @Schema({ timestamps: true })
 export class ContentType implements ContentTypeDefinition {
-	@Prop({ required: true, unique: true })
+	@Prop({ required: true })
 	name: string;
 
 	@Prop({ required: true, unique: true })

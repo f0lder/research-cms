@@ -44,7 +44,7 @@ export class SchemaService {
 			return await this.model.findByIdAndUpdate(
 				schema._id,
 				{ $set: data },
-				{ new: true }
+				{ returnDocument: 'after' }
 			).exec();
 		} catch (error) {
 			throw new BadRequestException(error.message);
