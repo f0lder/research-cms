@@ -49,7 +49,7 @@ export default async function SchemasPage() {
 								padding: '20px',
 								display: 'flex',
 								justifyContent: 'space-between',
-								alignItems: 'start'
+								alignItems: 'center'
 							}}
 						>
 							<div>
@@ -61,8 +61,20 @@ export default async function SchemasPage() {
 									{schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}
 								</p>
 							</div>
-							<div style={{ fontSize: '12px', color: '#999' }}>
-								{new Date(schema.createdAt).toLocaleDateString()}
+							<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+								<span style={{ fontSize: '12px', color: '#999' }}>
+									{new Date(schema.createdAt).toLocaleDateString()}
+								</span>
+								<Link href={`/schemas/edit/${schema.slug}`}>
+									<button style={{
+										padding: '8px 16px',
+										background: '#000',
+										color: '#fff',
+										cursor: 'pointer'
+									}}>
+										Edit
+									</button>
+								</Link>
 							</div>
 						</div>
 					))}

@@ -32,4 +32,27 @@ export class SchemaService {
 		}
 		return schema;
 	}
+
+	async update(slug: string, data: Partial<ContentTypeDefinition>): Promise<ContentTypeDocument> {
+		const schema = await this.findOne(slug);
+
+		if (data.fields && data.fields.length === 0) {
+			throw new BadRequestException('Schema requires at least one field');
+		}
+
+		try {
+			return await this.model.findByIdAndUpdate(
+				schema._id,
+				{ $set: data },
+				{ new: true }
+			).exec();
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	async delete(slug: string): Promise<void> {
+		const schema = await this.findOne(slug);
+		await this.model.findByIdAndDelete(schema._id).exec();
+	}
 }

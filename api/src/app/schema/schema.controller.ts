@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
 import { SchemaService } from './schema.service';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 
@@ -19,5 +19,18 @@ export class SchemaController {
 	@Get(':slug')
 	findOne(@Param('slug') slug: string) {
 		return this.schemaService.findOne(slug);
+	}
+
+	@Put(':slug')
+	update(
+		@Param('slug') slug: string,
+		@Body() data: Partial<ContentTypeDefinition>
+	) {
+		return this.schemaService.update(slug, data);
+	}
+
+	@Delete(':slug')
+	delete(@Param('slug') slug: string) {
+		return this.schemaService.delete(slug);
 	}
 }
