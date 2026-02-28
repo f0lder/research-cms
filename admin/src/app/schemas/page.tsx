@@ -1,14 +1,9 @@
 import Link from 'next/link';
-import { API_URL } from '../../config';
+import { api, formatDate } from '../../lib/utils';
 
 async function getSchemas() {
-	try {
-		const res = await fetch(`${API_URL}/schemas`, { cache: 'no-store' });
-		if (!res.ok) return [];
-		return res.json();
-	} catch (e) {
-		return [];
-	}
+	const { data, error } = await api.get<any[]>('/schemas');
+	return data || [];
 }
 
 export default async function SchemasPage() {
@@ -63,7 +58,7 @@ export default async function SchemasPage() {
 							</div>
 							<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
 								<span style={{ fontSize: '12px', color: '#999' }}>
-									{new Date(schema.createdAt).toLocaleDateString()}
+									{formatDate(schema.createdAt)}
 								</span>
 								<Link href={`/schemas/edit/${schema.slug}`}>
 									<button style={{
