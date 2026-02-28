@@ -1,96 +1,406 @@
-# ResearchCms
+# Research CMS — Headless CMS Dissertation Project
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+## Project Overview
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+**Type:** Master's/PhD Dissertation Project  
+**Timeline:** March 2025 - Mid June 2025 (14 weeks, part-time)  
+**Developer:** Solo developer working full-time job + weekends  
+**Constraint:** Must have working implementation + evaluation + written dissertation by mid-June
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+### Research Contribution
 
-## Run tasks
+**Core Hypothesis:** Dynamic schema definitions that automatically propagate to client applications without developer intervention eliminates deployment bottlenecks in headless CMS architectures.
 
-To run tasks with Nx use:
+**Key Innovation:** Admin-defined content types (schemas) automatically generate:
+- Data validation rules in the backend
+- Dynamic forms in the admin interface  
+- Native mobile UI components via Server-Driven UI (SDUI)
 
-```sh
-npx nx <target> <project-name>
+**Differentiation from existing solutions (WordPress, Strapi, Contentful):**
+- Zero developer involvement for new content types
+- Real-time schema changes propagate to all clients
+- Simplified architecture optimized for small teams/solo developers
+
+---
+
+## Architecture
+
+### Tech Stack
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Monorepo | Nx Workspace | Orchestration, shared libraries, build optimization |
+| Backend API | NestJS + MongoDB | Schema storage, content validation, REST endpoints |
+| Admin Dashboard | Next.js 14 (App Router) | Schema builder, content management |
+| Mobile App | Expo (React Native) | Cross-platform content consumption |
+| Shared Types | TypeScript Library | Type safety across entire stack |
+| Database | MongoDB Atlas | Document-oriented storage for flexible schemas |
+
+### System Components
+
+```
+research-cms/
+├── api/                  # NestJS backend
+├── admin/                # Next.js admin dashboard
+├── mobile/               # Expo mobile app
+├── shared-types/         # Shared TypeScript definitions
+├── api-e2e/              # End-to-end tests for the API
+├── nx.json
+└── package.json
 ```
 
-For example:
+### Data Flow
 
-```sh
-npx nx build myproject
+```
+Admin creates "Product" schema
+  ↓
+API stores schema definition in MongoDB
+  ↓
+Admin generates form dynamically from schema
+  ↓
+User creates content entry (validated against schema)
+  ↓
+Mobile app fetches schema + content, renders via SDUI
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+---
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Current Implementation Status
 
-## Add new projects
+### ✅ Week 1–2 Complete: Schema System
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+**Backend (API):**
+- MongoDB connection configured
+- ContentType schema (stores schema definitions)
+- Schema CRUD endpoints: POST, GET, PUT, DELETE
+- Field type validation (`text`, `number`, `boolean`, `image`)
+- Slug-based schema retrieval
 
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
+**Admin Dashboard:**
+- Schema creation form with dynamic field builder
+- Schema listing page
+- Schema editing with delete functionality
+- Reusable `SchemaForm` component
+- Reusable `FieldInput` component
+- Utility functions for API requests, slug generation, validation
+
+**Key Files:**
+```
+api/src/app/
+├── schema/
+│   ├── schemas/content-type.schema.ts
+│   ├── schema.service.ts
+│   ├── schema.controller.ts
+│   └── schema.module.ts
+
+admin/src/
+├── app/
+│   └── schemas/
+│       ├── page.tsx              # List all schemas
+│       ├── create/page.tsx       # Create schema
+│       └── edit/[slug]/page.tsx  # Edit schema
+├── components/
+│   └── schemas/
+│       ├── SchemaForm.tsx        # Reusable form component
+│       └── FieldInput.tsx        # Field definition input
+└── lib/
+    └── utils.ts                  # API helpers, validation, formatters
 ```
 
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
+### ✅ Refactoring Complete
 
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
+- Centralized API request logic in `utils.ts`
+- Component extraction for reusability
+- Auto-slug generation from schema name
+- Slug validation with helpful error messages
+- Loading states and error handling
+- TypeScript strict mode throughout
 
-# Generate a library
-npx nx g @nx/react:lib some-lib
+---
+
+## Next Implementation Steps
+
+### 🔄 Week 3–4: Content Entry Storage (Current Priority)
+
+**Backend:**
+- [ ] ContentEntry schema (stores actual content with schemaId reference)
+- [ ] Dynamic validation service (validates data against schema definition)
+- [ ] Content CRUD endpoints per schema: `/content/:schemaSlug`
+- [ ] Type checking for TEXT, NUMBER, BOOLEAN, IMAGE fields
+- [ ] Required field validation
+- [ ] Reject unexpected fields
+
+**Admin Dashboard:**
+- [ ] Schema detail page showing content entries
+- [ ] Dynamic content entry form generator
+  - Reads schema fields
+  - Renders appropriate input types (text, number, checkbox, url)
+  - Client-side validation
+- [ ] Content entry list with edit/delete
+- [ ] Reusable `ContentForm` component
+- [ ] Reusable `DynamicFieldInput` component
+
+**Files to Create:**
+```
+api/src/app/content/
+├── schemas/content-entry.schema.ts
+├── content.service.ts
+├── content.controller.ts
+└── content.module.ts
+
+admin/src/app/schemas/[slug]/
+├── page.tsx                    # Schema detail + content list
+└── content/
+    ├── create/page.tsx        # Create content entry
+    └── edit/[id]/page.tsx     # Edit content entry
+
+admin/src/components/content/
+├── ContentForm.tsx
+└── DynamicFieldInput.tsx
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+### 📱 Week 5–6: Mobile App (SDUI Implementation)
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+**Expo App:**
+- [ ] Basic app structure and navigation
+- [ ] Fetch schemas from API on launch
+- [ ] Fetch content entries per schema
+- [ ] Hardcoded SDUI templates:
+  - List view (card layout)
+  - Detail view (hero + vertical fields)
+- [ ] Field type to component mapping
+  - TEXT → Text component
+  - NUMBER → Text component
+  - BOOLEAN → Show/hide or Yes/No
+  - IMAGE → Image component with URL
+- [ ] Local caching with AsyncStorage
+- [ ] Pull-to-refresh functionality
 
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
+**Files to Create:**
+```
+mobile/src/
+├── screens/
+│   ├── SchemaListScreen.tsx
+│   ├── ContentListScreen.tsx
+│   └── ContentDetailScreen.tsx
+├── components/
+│   └── DynamicContent.tsx
+└── services/
+    └── api.ts
 ```
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+### 🔧 Week 7: Integration & Polish
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- [ ] End-to-end testing: Create schema → Add content → View on mobile
+- [ ] Error handling improvements
+- [ ] Loading states and skeletons
+- [ ] Empty states with helpful messages
+- [ ] Basic styling with shadcn/ui (admin only)
+- [ ] Demo video recording
 
-### Step 2
+### 📊 Week 8–9: Evaluation
 
-Use the following command to configure a CI workflow for your workspace:
+**Primary Evaluation (Required):**
+- [ ] Time comparison: WordPress custom post type vs. your system
+- [ ] User study with 5-8 participants (non-technical users)
+- [ ] Task: "Create a Product catalog with 3 fields"
+- [ ] Metrics: completion time, errors, satisfaction survey
 
-```sh
-npx nx g ci-workflow
+**Optional Enhancements (Week 8+ only if ahead of schedule):**
+- [ ] Schema versioning (backward compatibility)
+- [ ] Authentication (JWT with Passport)
+- [ ] Image upload to cloud storage (vs. URL only)
+- [ ] Rich text editor for TEXT fields
+- [ ] Search/filter on content lists
+- [ ] Bulk operations (delete multiple entries)
+
+### 📝 Week 10-14: Dissertation Writing
+
+Focus shifts to writing while maintaining functional system.
+
+---
+
+## Features Deliberately Excluded (Out of Scope)
+
+**Will NOT implement due to time constraints:**
+- ❌ Multi-tenant architecture
+- ❌ Role-based access control (RBAC)
+- ❌ Real-time collaboration
+- ❌ Content versioning/revision history
+- ❌ Advanced SDUI layouts (only list + detail)
+- ❌ Complex relationships between content types
+- ❌ Workflow/approval systems
+- ❌ SEO optimization features
+- ❌ Analytics/usage tracking
+- ❌ Internationalization (i18n)
+- ❌ Advanced caching strategies
+- ❌ Rate limiting
+- ❌ Comprehensive test suite (only manual testing)
+
+These are documented as "future work" in dissertation.
+
+---
+
+## Setup Instructions
+
+### Prerequisites
+
+```bash
+node --version   # v18 or higher
+npm --version    # v9 or higher
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+MongoDB Atlas account with connection string.
 
-## Install Nx Console
+### Installation
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+```bash
+# Clone and install
+git clone <repository-url>
+cd research-cms
+npm install
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+# Configure API environment
+echo 'MONGO_URI=mongodb+srv://<USER>:<PASSWORD>@<CLUSTER>.mongodb.net/cms' > api/.env
 
-## Useful links
+# Start development servers
+# Terminal 1 - API
+npx nx serve api
 
-Learn more:
+# Terminal 2 - Admin
+npx nx serve admin
+```
 
-- [Learn more about this workspace setup](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+**Access:**
+- API: http://localhost:3000
+- Admin: http://localhost:4200
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Quick Test
+
+1. Open http://localhost:4200
+2. Create schema: Name="Product", Slug="product"
+3. Add fields: `title` (text, required), `price` (number, required)
+4. Submit → Should see schema in list
+
+---
+
+## Key Design Decisions
+
+### Why MongoDB over PostgreSQL?
+Dynamic schemas with unpredictable structures fit document databases better than rigid SQL tables. No migrations required for schema changes.
+
+### Why Nx Monorepo?
+Single repository for API, admin, and mobile ensures type safety across boundaries. Shared types library prevents API/frontend drift.
+
+### Why Next.js App Router?
+Server-side rendering for admin dashboard improves initial load. React Server Components reduce client bundle size.
+
+### Why Expo over React Native CLI?
+Faster development, built-in tooling, easier cross-platform deployment. Universal app (web + iOS + Android) from single codebase.
+
+### Why No Tests?
+Time constraint prioritizes working implementation over test coverage. Manual testing sufficient for dissertation scope.
+
+### Why Simple SDUI (List + Detail only)?
+Complex layout algorithms would consume 40+ hours. Hardcoded templates prove concept while remaining achievable.
+
+---
+
+## Common Issues & Solutions
+
+### CORS Errors
+Ensure `api/src/main.ts` has CORS enabled for localhost:4200 and localhost:19006.
+
+### Module Format Errors (shared-types)
+Check `libs/shared-types/package.json` has `"type": "module"` and rebuild with `npx nx build shared-types`.
+
+### MongoDB Connection Fails
+Verify IP whitelist in MongoDB Atlas. Check connection string in `api/.env`.
+
+### Admin Pages 404
+Check folder structure uses `[slug]` with brackets for dynamic routes.
+
+---
+
+## Performance Targets
+
+**API Response Times:**
+- Schema CRUD: <100ms
+- Content validation: <50ms per entry
+- Bulk content fetch: <200ms for 100 entries
+
+**Admin Dashboard:**
+- Schema list load: <500ms
+- Dynamic form generation: <100ms
+- Schema save: <300ms total
+
+**Mobile App:**
+- Schema fetch on launch: <1s
+- Content list render: <500ms
+- SDUI layout generation: <50ms per screen
+
+---
+
+## Dissertation Evaluation Plan
+
+### Quantitative Metrics
+1. **Deployment Time:** WordPress custom post type (30 min) vs. Your system (3 min)
+2. **Schema Change Propagation:** Immediate vs. code deployment required
+3. **Developer Coordination:** 3 people (backend/frontend/mobile) vs. 1 person (admin user)
+
+### Qualitative Metrics
+1. **User Study (n=8):** Task completion rate, error frequency, SUS scores
+2. **Comparison Table:** Feature parity analysis vs. existing solutions
+3. **Architecture Analysis:** Complexity reduction, maintenance burden
+
+### Expected Contribution Statement
+"We demonstrate that runtime schema definition with automatic client propagation reduces content type deployment time by 90% compared to traditional CMS architectures (WordPress), validated through user testing with non-technical administrators (n=8, mean task completion 3.2 minutes vs. 28 minutes)."
+
+---
+
+## Current Blockers / Risks
+
+**None currently.** Week 1–2 complete on schedule.
+
+**Potential Future Risks:**
+- Week 3-4: Dynamic form validation complexity
+- Week 5-6: SDUI component mapping edge cases
+- Week 8-9: User study recruitment delays
+- Week 12-14: Writing time underestimated
+
+**Mitigation:** Aggressive scope cutting if any week exceeds time budget. Mobile app becomes "proof of concept" with 2 screens if needed.
+
+---
+
+## Contact & Handoff Notes
+
+**For AI Assistant Continuation:**
+- All existing code follows TypeScript strict mode
+- API uses NestJS decorators pattern
+- Admin uses React functional components with hooks
+- No class components anywhere
+- Error handling: service throws, controller returns 400/404
+- All dates use ISO 8601 strings
+- MongoDB ObjectIds stored as strings in TypeScript
+
+**Coding Conventions:**
+- 2-space indentation
+- Single quotes for strings
+- No semicolons (except where required)
+- Inline styles for rapid prototyping (no CSS modules yet)
+- Comments only for complex logic, not obvious code
+
+**Next Steps:**
+Continue Week 3–4 implementation: create the `ContentEntry` backend with dynamic validation, then build dynamic content forms in the admin dashboard. Start with `content.service.ts` validation logic.
+
+---
+
+## License
+
+MIT (Academic Use)
+
+---
+
+**Last Updated:** February 2026  
+**Project Status:** Week 2 complete, Week 3 in progress  
+**Estimated Completion:** On track for June deadline
