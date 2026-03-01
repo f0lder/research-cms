@@ -20,6 +20,13 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
 	const [error, setError] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [manualSlugEdit, setManualSlugEdit] = useState(false);
+	const [availableSchemas, setAvailableSchemas] = useState<ContentTypeDefinition[]>([]);
+
+	useEffect(() => {
+		api.get<ContentTypeDefinition[]>('/schemas').then(({ data }) => {
+			if (data) setAvailableSchemas(data);
+		});
+	}, []);
 
 	const handleNameChange = (value: string) => {
 		setName(value);
@@ -192,6 +199,8 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
 							onUpdate={updateField}
 							onRemove={removeField}
 							disabled={isSubmitting}
+							availableSchemas={availableSchemas}
+							currentSlug={slug}
 						/>
 					))}
 

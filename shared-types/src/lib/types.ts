@@ -16,12 +16,17 @@ export enum FieldType {
   // Choice
   SELECT = 'select',
   TAGS = 'tags',
+  // Relations
+  REFERENCE = 'reference',
+  REFERENCES = 'references',
 }
 
 /** Per-type metadata carried alongside a field definition. */
 export type FieldConfig =
   | { type: 'select'; options: string[] }
-  | { type: 'tags' };
+  | { type: 'tags' }
+  | { type: 'reference'; targetSlug: string }
+  | { type: 'references'; targetSlug: string };
 
 export interface FieldDefinition {
   name: string;

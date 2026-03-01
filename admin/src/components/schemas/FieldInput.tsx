@@ -1,7 +1,7 @@
 'use client';
 import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
-import { FieldType, FieldDefinition, FieldConfig } from '@research-cms/shared-types';
+import { FieldType, FieldDefinition, FieldConfig, ContentTypeDefinition } from '@research-cms/shared-types';
 
 type SelectOption = { value: string; label: string };
 
@@ -26,8 +26,12 @@ const FIELD_TYPE_OPTIONS = [
 		{ value: FieldType.IMAGE,    label: 'Image URL' },
 	]},
 	{ label: 'Choice',     options: [
-		{ value: FieldType.SELECT,   label: 'Select' },
-		{ value: FieldType.TAGS,     label: 'Tags' },
+		{ value: FieldType.SELECT,      label: 'Select' },
+		{ value: FieldType.TAGS,        label: 'Tags' },
+	]},
+	{ label: 'Relations',  options: [
+		{ value: FieldType.REFERENCE,   label: 'Reference (one)' },
+		{ value: FieldType.REFERENCES,  label: 'References (many)' },
 	]},
 ];
 
@@ -35,6 +39,8 @@ interface FieldInputProps {
 	field: FieldDefinition;
 	index: number;
 	disabled?: boolean;
+	availableSchemas?: ContentTypeDefinition[];
+	currentSlug?: string;
 	onUpdate: (index: number, key: keyof FieldDefinition, value: string | boolean | FieldConfig | undefined) => void;
 	onRemove: (index: number) => void;
 }
@@ -43,6 +49,8 @@ export default function FieldInput({
 	field,
 	index,
 	disabled = false,
+	availableSchemas = [],
+	currentSlug,
 	onUpdate,
 	onRemove
 }: FieldInputProps) {
@@ -53,9 +61,36 @@ export default function FieldInput({
 			onUpdate(index, 'config', { type: 'select', options: [] });
 		} else if (newType === FieldType.TAGS) {
 			onUpdate(index, 'config', { type: 'tags' });
+		} else if (newType === FieldType.REFERENCE) {
+			onUpdate(index, 'config', { type: 'reference', targetSlug: '' });
+		} else if (newType === FieldType.REFERENCES) {
+			onUpdate(index, 'config', { type: 'references', targetSlug: '' });
 		} else {
 			onUpdate(index, 'config', undefined);
 		}
+	};
+
+	// Schema options for reference pickers: "self" + all known schemas
+	const schemaOptions: SelectOption[] = [
+		...(currentSlug ? [{ value: currentSlug, label: `Self (${currentSlug})` }] : []),
+		...availableSchemas
+			.filter(s => s.slug !== currentSlug)
+			.map(s => ({ value: s.slug, label: `${s.name} (${s.slug})` })),
+	];
+
+	const referenceConfig =
+		field.config?.type === 'reference' || field.config?.type === 'references'
+			? (field.config as { type: 'reference' | 'references'; targetSlug: string })
+			: null;
+
+	const referenceTargetValue = referenceConfig?.targetSlug
+		? schemaOptions.find(o => o.value === referenceConfig.targetSlug) ?? null
+		: null;
+
+	const handleReferenceTargetChange = (opt: SelectOption | null) => {
+		if (!opt) return;
+		const configType = field.type === FieldType.REFERENCE ? 'reference' : 'references';
+		onUpdate(index, 'config', { type: configType, targetSlug: opt.value });
 	};
 
 	const currentTypeOption =
@@ -180,6 +215,35 @@ export default function FieldInput({
 					</button>
 				</div>
 			</div>
+
+			{/* Reference target — shown for REFERENCE and REFERENCES types */}
+			{(field.type === FieldType.REFERENCE || field.type === FieldType.REFERENCES) && (
+				<div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+					<label style={{ fontSize: '12px', color: '#666' }}>
+						Target schema *
+						{field.type === FieldType.REFERENCES && <span style={{ color: '#999' }}> (many)</span>}
+					</label>
+					<Select<SelectOption>
+						instanceId={`field-ref-${index}`}
+						options={schemaOptions}
+						value={referenceTargetValue}
+						onChange={handleReferenceTargetChange}
+						isDisabled={disabled}
+						isSearchable
+						placeholder={schemaOptions.length === 0 ? 'No schemas available yet…' : 'Choose a schema…'}
+						styles={{
+							control: base => ({
+								...base,
+								fontSize: '14px',
+								backgroundColor: disabled ? '#f9f9f9' : '#fff',
+							}),
+						}}
+					/>
+					{referenceTargetValue === null && field.config && (field.config.type === 'reference' || field.config.type === 'references') && (
+						<small style={{ color: '#e00' }}>A target schema is required</small>
+					)}
+				</div>
+			)}
 
 			{/* Select options — only shown for SELECT type */}
 			{field.type === FieldType.SELECT && (
