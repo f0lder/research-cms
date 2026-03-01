@@ -2,7 +2,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FieldType, FieldDefinition, FieldConfig, ContentTypeDefinition } from '@research-cms/shared-types';
-import { api, generateSlugFromName, validateSlug, getErrorMessage } from '../../lib/utils';
+import {
+	getAllSchemas,
+	createSchema,
+	updateSchema,
+	deleteSchema,
+	generateSlugFromName,
+	validateSlug,
+	getErrorMessage,
+} from '../../lib/utils';
 import FieldInput from './FieldInput';
 
 interface SchemaFormProps {
@@ -23,7 +31,7 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
 	const [availableSchemas, setAvailableSchemas] = useState<ContentTypeDefinition[]>([]);
 
 	useEffect(() => {
-		api.get<ContentTypeDefinition[]>('/schemas').then(({ data }) => {
+		getAllSchemas().then(({ data }) => {
 			if (data) setAvailableSchemas(data);
 		});
 	}, []);
@@ -90,14 +98,14 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
 
 		try {
 			if (mode === 'create') {
-				const { data, error } = await api.post('/schemas', { name, slug, fields });
+				const { error } = await createSchema({ name, slug, fields });
 				if (error) {
 					setError(error);
 					setIsSubmitting(false);
 					return;
 				}
 			} else {
-				const { data, error } = await api.put(`/schemas/${initialData?.slug}`, { name, slug, fields });
+				const { error } = await updateSchema(initialData?.slug ?? slug, { name, slug, fields });
 				if (error) {
 					setError(error);
 					setIsSubmitting(false);
@@ -120,7 +128,7 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
 		if (!confirm('Delete this schema? This cannot be undone.')) return;
 
 		setIsSubmitting(true);
-		const { error } = await api.delete(`/schemas/${initialData?.slug}`);
+		const { error } = await deleteSchema(initialData?.slug ?? '');
 
 		if (error) {
 			setError(error);

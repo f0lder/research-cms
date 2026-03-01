@@ -1,4 +1,5 @@
 import { API_URL } from '../config';
+import { ContentTypeDefinition } from '@research-cms/shared-types';
 
 // ============================================
 // API Request Helpers
@@ -189,4 +190,33 @@ export function getErrorMessage(error: unknown): string {
 		return String(error.message);
 	}
 	return 'An unknown error occurred';
+}
+
+// ============================================
+// Schema API
+// ============================================
+
+export async function getAllSchemas(): Promise<{ data?: ContentTypeDefinition[]; error?: string }> {
+	return api.get<ContentTypeDefinition[]>('/schemas');
+}
+
+export async function getSchema(slug: string): Promise<{ data?: ContentTypeDefinition; error?: string }> {
+	return api.get<ContentTypeDefinition>(`/schemas/${slug}`);
+}
+
+export async function createSchema(
+	payload: Omit<ContentTypeDefinition, '_id'>
+): Promise<{ data?: ContentTypeDefinition; error?: string }> {
+	return api.post<ContentTypeDefinition>('/schemas', payload);
+}
+
+export async function updateSchema(
+	slug: string,
+	payload: Partial<ContentTypeDefinition>
+): Promise<{ data?: ContentTypeDefinition; error?: string }> {
+	return api.put<ContentTypeDefinition>(`/schemas/${slug}`, payload);
+}
+
+export async function deleteSchema(slug: string): Promise<{ error?: string }> {
+	return api.delete(`/schemas/${slug}`);
 }
