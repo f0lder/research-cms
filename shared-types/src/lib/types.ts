@@ -43,3 +43,16 @@ export interface ContentTypeDefinition {
   slug: string;
   fields: FieldDefinition[];
 }
+
+/** All possible values a content field can hold. */
+export type FieldValue = string | number | boolean | string[];
+
+/** A single content entry whose shape is defined by a ContentTypeDefinition. */
+export interface ContentEntry {
+  _id?: string;
+  schemaSlug: string;
+  /** Keyed by field name, values depend on FieldType. */
+  data: Record<string, FieldValue>;
+  createdAt?: string;
+  updatedAt?: string;
+}

@@ -48,7 +48,9 @@ export default async function SchemasPage() {
 							}}
 						>
 							<div>
-								<h3 style={{ margin: '0 0 5px 0' }}>{schema.name}</h3>
+								<Link href={`/schemas/${schema.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+									<h3 style={{ margin: '0 0 5px 0', cursor: 'pointer' }}>{schema.name}</h3>
+								</Link>
 								<p style={{ margin: '0', color: '#666', fontSize: '14px' }}>
 									Slug: /{schema.slug}
 								</p>
@@ -60,6 +62,16 @@ export default async function SchemasPage() {
 								<span style={{ fontSize: '12px', color: '#999' }}>
 									{formatDate(schema.createdAt)}
 								</span>
+								<Link href={`/schemas/${schema.slug}`}>
+									<button style={{
+										padding: '8px 16px',
+										background: '#fff',
+										border: '1px solid #ccc',
+										cursor: 'pointer'
+									}}>
+										Entries
+									</button>
+								</Link>
 								<Link href={`/schemas/edit/${schema.slug}`}>
 									<button style={{
 										padding: '8px 16px',

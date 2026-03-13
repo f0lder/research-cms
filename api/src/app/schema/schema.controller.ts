@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, HttpCode } from '@nestjs/common';
 import { SchemaService } from './schema.service';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 
@@ -30,6 +30,7 @@ export class SchemaController {
 	}
 
 	@Delete(':slug')
+	@HttpCode(204)
 	delete(@Param('slug') slug: string) {
 		return this.schemaService.delete(slug);
 	}

@@ -1,5 +1,5 @@
 import { API_URL } from '../config';
-import { ContentTypeDefinition } from '@research-cms/shared-types';
+import { ContentTypeDefinition, ContentEntry, FieldValue } from '@research-cms/shared-types';
 
 // ============================================
 // API Request Helpers
@@ -219,4 +219,35 @@ export async function updateSchema(
 
 export async function deleteSchema(slug: string): Promise<{ error?: string }> {
 	return api.delete(`/schemas/${slug}`);
+}
+
+// ============================================
+// Content Entry API
+// ============================================
+
+export async function getAllEntries(schemaSlug: string): Promise<{ data?: ContentEntry[]; error?: string }> {
+	return api.get<ContentEntry[]>(`/content/${schemaSlug}`);
+}
+
+export async function getEntry(schemaSlug: string, id: string): Promise<{ data?: ContentEntry; error?: string }> {
+	return api.get<ContentEntry>(`/content/${schemaSlug}/${id}`);
+}
+
+export async function createEntry(
+	schemaSlug: string,
+	data: Record<string, FieldValue>
+): Promise<{ data?: ContentEntry; error?: string }> {
+	return api.post<ContentEntry>(`/content/${schemaSlug}`, { data });
+}
+
+export async function updateEntry(
+	schemaSlug: string,
+	id: string,
+	data: Record<string, FieldValue>
+): Promise<{ data?: ContentEntry; error?: string }> {
+	return api.put<ContentEntry>(`/content/${schemaSlug}/${id}`, { data });
+}
+
+export async function deleteEntry(schemaSlug: string, id: string): Promise<{ error?: string }> {
+	return api.delete(`/content/${schemaSlug}/${id}`);
 }
