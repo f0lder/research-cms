@@ -1,157 +1,296 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ContentTypeDefinition, ContentEntry } from '@research-cms/shared-types';
+import { ContentTypeDefinition, ContentEntry, FieldDefinition, FieldType, FieldValue } from '@research-cms/shared-types';
 import { getSchema, getAllEntries, deleteEntry, formatDate } from '../../../lib/utils';
 
+// ── Cell renderer ──────────────────────────────────────────────────────────────
+function CellValue({ value, field }: { value: FieldValue | undefined; field: FieldDefinition }) {
+  if (value === undefined || value === null || value === '') {
+    return <span className="text-zinc-300">—</span>;
+  }
+
+  switch (field.type) {
+    case FieldType.BOOLEAN:
+      return value
+        ? <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 font-mono">Yes</span>
+        : <span className="text-xs bg-zinc-100 text-zinc-400 px-1.5 py-0.5 font-mono">No</span>;
+
+    case FieldType.IMAGE:
+      return (
+        <img
+          src={String(value)}
+          alt=""
+          className="h-8 w-auto object-contain"
+          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        />
+      );
+
+    case FieldType.TAGS:
+    case FieldType.REFERENCES: {
+      const arr = Array.isArray(value) ? value : [];
+      if (arr.length === 0) return <span className="text-zinc-300">—</span>;
+      return (
+        <div className="flex flex-wrap gap-1">
+          {arr.slice(0, 3).map((v, i) => (
+            <span key={i} className="text-xs bg-zinc-100 text-zinc-600 px-1.5 py-0.5 font-mono">{String(v)}</span>
+          ))}
+          {arr.length > 3 && <span className="text-xs text-zinc-400">+{arr.length - 3}</span>}
+        </div>
+      );
+    }
+
+    case FieldType.SELECT:
+      return <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-0.5 font-mono">{String(value)}</span>;
+
+    case FieldType.DATE:
+      return <span className="text-xs text-zinc-500">{formatDate(String(value))}</span>;
+
+    case FieldType.DATETIME:
+      return <span className="text-xs text-zinc-500">{new Date(String(value)).toLocaleString()}</span>;
+
+    case FieldType.NUMBER:
+      return <span className="font-mono text-sm">{String(value)}</span>;
+
+    case FieldType.EMAIL:
+      return <a href={`mailto:${value}`} className="text-blue-600 hover:underline text-sm truncate max-w-xs block">{String(value)}</a>;
+
+    case FieldType.URL:
+      return <a href={String(value)} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm truncate max-w-xs block">{String(value)}</a>;
+
+    default: {
+      const str = String(value);
+      return <span className="text-zinc-700 text-sm">{str.length > 60 ? str.slice(0, 60) + '…' : str}</span>;
+    }
+  }
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
 export default function SchemaDetailPage() {
-	const params = useParams();
-	const slug = params?.slug ? (Array.isArray(params.slug) ? params.slug[0] : params.slug) : '';
+  const params = useParams();
+  const slug = params?.slug ? (Array.isArray(params.slug) ? params.slug[0] : params.slug) : '';
 
-	const [schema, setSchema] = useState<ContentTypeDefinition | null>(null);
-	const [entries, setEntries] = useState<ContentEntry[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState('');
-	const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [schema, setSchema] = useState<ContentTypeDefinition | null>(null);
+  const [entries, setEntries] = useState<ContentEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-	const load = useCallback(async () => {
-		setLoading(true);
-		const [schemaRes, entriesRes] = await Promise.all([
-			getSchema(slug),
-			getAllEntries(slug),
-		]);
+  // Column visibility — array of field.name + 'date' for the system date column
+  const [visibleCols, setVisibleCols] = useState<string[]>([]);
+  const [colPickerOpen, setColPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
-		if (schemaRes.error) {
-			setError(schemaRes.error);
-			setLoading(false);
-			return;
-		}
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [schemaRes, entriesRes] = await Promise.all([getSchema(slug), getAllEntries(slug)]);
+    if (schemaRes.error) { setError(schemaRes.error); setLoading(false); return; }
+    setSchema(schemaRes.data!);
+    setEntries(entriesRes.data ?? []);
+    setLoading(false);
+  }, [slug]);
 
-		setSchema(schemaRes.data!);
-		setEntries(entriesRes.data ?? []);
-		setLoading(false);
-	}, [slug]);
+  useEffect(() => { if (slug) load(); }, [slug, load]);
 
-	useEffect(() => {
-		if (slug) load();
-	}, [slug, load]);
+  // Init visible columns from localStorage once schema is known
+  useEffect(() => {
+    if (!schema) return;
+    const saved = typeof window !== 'undefined'
+      ? localStorage.getItem(`cms_cols_${slug}`)
+      : null;
+    if (saved) {
+      setVisibleCols(JSON.parse(saved) as string[]);
+    } else {
+      const defaults = [...schema.fields.slice(0, 4).map(f => f.name), 'date'];
+      setVisibleCols(defaults);
+    }
+  }, [schema, slug]);
 
-	const handleDelete = async (id: string) => {
-		if (!confirm('Delete this entry? This cannot be undone.')) return;
-		setDeletingId(id);
-		const { error: err } = await deleteEntry(slug, id);
-		if (err) {
-			alert(err);
-		} else {
-			setEntries(prev => prev.filter(e => e._id !== id));
-		}
-		setDeletingId(null);
-	};
+  // Close picker on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setColPickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
-	/** Render entry row — show first 2 string fields as preview */
-	const getPreview = (entry: ContentEntry): string => {
-		const vals = Object.values(entry.data)
-			.filter(v => typeof v === 'string' && v)
-			.slice(0, 2);
-		return vals.length > 0 ? vals.join(' · ') : '(empty)';
-	};
+  const toggleCol = (key: string) => {
+    setVisibleCols(prev => {
+      const next = prev.includes(key) ? prev.filter(c => c !== key) : [...prev, key];
+      localStorage.setItem(`cms_cols_${slug}`, JSON.stringify(next));
+      return next;
+    });
+  };
 
-	if (loading) return <div style={{ padding: '20px' }}>Loading…</div>;
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this entry? This cannot be undone.')) return;
+    setDeletingId(id);
+    const { error: err } = await deleteEntry(slug, id);
+    if (err) alert(err);
+    else setEntries(prev => prev.filter(e => e._id !== id));
+    setDeletingId(null);
+  };
 
-	if (error || !schema) {
-		return (
-			<div style={{ padding: '20px' }}>
-				<div style={{ padding: '10px', background: '#fee', border: '1px solid #f00' }}>
-					{error || 'Schema not found'}
-				</div>
-			</div>
-		);
-	}
+  if (loading) return <div className="p-8 font-mono text-sm text-zinc-400">Loading…</div>;
+  if (error || !schema) {
+    return <div className="p-8"><div className="alert-error">{error || 'Schema not found'}</div></div>;
+  }
 
-	return (
-		<div style={{ padding: '20px', fontFamily: 'monospace', maxWidth: '1200px', margin: '0 auto' }}>
-			{/* Breadcrumb */}
-			<p style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>
-				<Link href="/schemas" style={{ color: '#0070f3' }}>Content Types</Link>
-				{' / '}{schema.name}
-			</p>
+  const visibleFields = schema.fields.filter(f => visibleCols.includes(f.name));
+  const showDate = visibleCols.includes('date');
 
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-				<div>
-					<h1 style={{ margin: '0 0 4px 0' }}>{schema.name}</h1>
-					<span style={{ fontSize: '13px', color: '#888' }}>/{schema.slug} · {schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}</span>
-				</div>
-				<div style={{ display: 'flex', gap: '10px' }}>
-					<Link href={`/schemas/edit/${slug}`}>
-						<button style={{ padding: '9px 18px', border: '1px solid #ccc', background: '#fff', cursor: 'pointer', fontSize: '14px' }}>
-							Edit schema
-						</button>
-					</Link>
-					<Link href={`/schemas/${slug}/content/create`}>
-						<button style={{ padding: '9px 18px', background: '#000', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>
-							+ New entry
-						</button>
-					</Link>
-				</div>
-			</div>
+  return (
+    <div className="p-8 font-mono">
+      {/* Breadcrumb */}
+      <p className="breadcrumb">
+        <Link href="/schemas">Content Types</Link>
+        <span className="mx-1">/</span>
+        {schema.name}
+      </p>
 
-			{entries.length === 0 ? (
-				<div style={{ padding: '40px', textAlign: 'center', border: '2px dashed #ccc' }}>
-					<p style={{ color: '#888' }}>No entries yet.</p>
-					<Link href={`/schemas/${slug}/content/create`}>
-						<button style={{ padding: '10px 20px', marginTop: '10px', cursor: 'pointer' }}>
-							Create first entry
-						</button>
-					</Link>
-				</div>
-			) : (
-				<div style={{ display: 'grid', gap: '12px' }}>
-					{entries.map(entry => (
-						<div
-							key={entry._id}
-							style={{
-								border: '1px solid #ddd',
-								padding: '16px 20px',
-								display: 'flex',
-								justifyContent: 'space-between',
-								alignItems: 'center',
-							}}
-						>
-							<div>
-								<p style={{ margin: '0 0 4px 0', fontWeight: 600, fontSize: '15px' }}>
-									{getPreview(entry)}
-								</p>
-								<p style={{ margin: 0, fontSize: '12px', color: '#999' }}>
-									{entry.createdAt ? formatDate(entry.createdAt as string) : ''}
-									{entry._id && <span style={{ marginLeft: '8px' }}>id: {entry._id}</span>}
-								</p>
-							</div>
-							<div style={{ display: 'flex', gap: '8px' }}>
-								<Link href={`/schemas/${slug}/content/edit/${entry._id}`}>
-									<button style={{ padding: '7px 16px', background: '#000', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px' }}>
-										Edit
-									</button>
-								</Link>
-								<button
-									onClick={() => handleDelete(entry._id!)}
-									disabled={deletingId === entry._id}
-									style={{
-										padding: '7px 16px',
-										background: deletingId === entry._id ? '#aaa' : '#e53e3e',
-										color: '#fff',
-										border: 'none',
-										cursor: deletingId === entry._id ? 'not-allowed' : 'pointer',
-										fontSize: '13px',
-									}}
-								>
-									{deletingId === entry._id ? '…' : 'Delete'}
-								</button>
-							</div>
-						</div>
-					))}
-				</div>
-			)}
-		</div>
-	);
+      {/* Page header */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="page-heading">{schema.name}</h1>
+          <p className="page-sub">/{schema.slug} · {schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}</p>
+        </div>
+        <div className="flex gap-2">
+          <Link href={`/schemas/edit/${slug}`}>
+            <button className="btn-secondary">Edit schema</button>
+          </Link>
+          <Link href={`/schemas/${slug}/content/create`}>
+            <button className="btn-primary">+ New entry</button>
+          </Link>
+        </div>
+      </div>
+
+      {entries.length === 0 ? (
+        <div className="border-2 border-dashed border-zinc-200 p-16 text-center">
+          <p className="text-zinc-400 text-sm mb-4">No entries yet.</p>
+          <Link href={`/schemas/${slug}/content/create`}>
+            <button className="btn-secondary">Create first entry</button>
+          </Link>
+        </div>
+      ) : (
+        <div className="bg-white border border-zinc-200">
+          {/* Table toolbar */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
+            <span className="text-xs text-zinc-400">
+              {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
+            </span>
+
+            {/* Column picker */}
+            <div className="relative" ref={pickerRef}>
+              <button
+                onClick={() => setColPickerOpen(o => !o)}
+                className="btn-ghost text-xs px-3 py-1.5 flex items-center gap-1.5"
+              >
+                Columns
+                <span className="text-zinc-400">{colPickerOpen ? '▲' : '▼'}</span>
+              </button>
+
+              {colPickerOpen && (
+                <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-zinc-200 shadow-sm z-10 py-2">
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-400 px-3 pb-2 border-b border-zinc-100 mb-1">
+                    Visible columns
+                  </p>
+                  {schema.fields.map(field => (
+                    <label
+                      key={field.name}
+                      className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-zinc-50 cursor-pointer text-sm text-zinc-700"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={visibleCols.includes(field.name)}
+                        onChange={() => toggleCol(field.name)}
+                        className="cursor-pointer"
+                      />
+                      {field.label}
+                      <span className="ml-auto text-[10px] text-zinc-300 font-mono">{field.type}</span>
+                    </label>
+                  ))}
+                  {/* System column: date */}
+                  <div className="border-t border-zinc-100 mt-1 pt-1">
+                    <label className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-zinc-50 cursor-pointer text-sm text-zinc-700">
+                      <input
+                        type="checkbox"
+                        checked={showDate}
+                        onChange={() => toggleCol('date')}
+                        className="cursor-pointer"
+                      />
+                      Date
+                      <span className="ml-auto text-[10px] text-zinc-300 font-mono">system</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-zinc-100 bg-zinc-50">
+                  {visibleFields.map(field => (
+                    <th
+                      key={field.name}
+                      className="text-left px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider whitespace-nowrap"
+                    >
+                      {field.label}
+                    </th>
+                  ))}
+                  {showDate && (
+                    <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider whitespace-nowrap">
+                      Date
+                    </th>
+                  )}
+                  <th className="px-4 py-2.5 text-right text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map(entry => (
+                  <tr
+                    key={entry._id}
+                    className="border-b border-zinc-100 hover:bg-zinc-50 transition-colors"
+                  >
+                    {visibleFields.map(field => (
+                      <td key={field.name} className="px-4 py-3 max-w-xs">
+                        <CellValue value={entry.data[field.name]} field={field} />
+                      </td>
+                    ))}
+                    {showDate && (
+                      <td className="px-4 py-3 text-xs text-zinc-400 whitespace-nowrap">
+                        {entry.createdAt ? formatDate(entry.createdAt as string) : '—'}
+                      </td>
+                    )}
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/schemas/${slug}/content/edit/${entry._id}`}>
+                          <button className="btn-primary text-xs px-3 py-1">Edit</button>
+                        </Link>
+                        <button
+                          onClick={() => entry._id && handleDelete(entry._id)}
+                          disabled={deletingId === entry._id}
+                          className="btn-danger text-xs px-3 py-1"
+                        >
+                          {deletingId === entry._id ? '…' : 'Delete'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

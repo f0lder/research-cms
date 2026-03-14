@@ -42,6 +42,8 @@ export interface ContentTypeDefinition {
   name: string;
   slug: string;
   fields: FieldDefinition[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /** All possible values a content field can hold. */

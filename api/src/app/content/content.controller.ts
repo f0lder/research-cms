@@ -1,8 +1,13 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, HttpCode, UseGuards } from '@nestjs/common';
 import { FieldValue } from '@research-cms/shared-types';
 import { ContentService } from './content.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../auth/schemas/user.schema';
 
 @Controller('content')
+@UseGuards(JwtAuthGuard)
 export class ContentController {
 	constructor(private readonly contentService: ContentService) {}
 
@@ -20,6 +25,8 @@ export class ContentController {
 	}
 
 	@Post(':schemaSlug')
+	@UseGuards(RolesGuard)
+	@Roles(UserRole.ADMIN, UserRole.EDITOR)
 	create(
 		@Param('schemaSlug') schemaSlug: string,
 		@Body() body: { data: Record<string, FieldValue> }
@@ -28,6 +35,8 @@ export class ContentController {
 	}
 
 	@Put(':schemaSlug/:id')
+	@UseGuards(RolesGuard)
+	@Roles(UserRole.ADMIN, UserRole.EDITOR)
 	update(
 		@Param('schemaSlug') schemaSlug: string,
 		@Param('id') id: string,
@@ -38,6 +47,8 @@ export class ContentController {
 
 	@Delete(':schemaSlug/:id')
 	@HttpCode(204)
+	@UseGuards(RolesGuard)
+	@Roles(UserRole.ADMIN, UserRole.EDITOR)
 	delete(
 		@Param('schemaSlug') schemaSlug: string,
 		@Param('id') id: string

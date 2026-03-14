@@ -6,7 +6,7 @@ import { ContentTypeDefinition, ContentEntry, FieldValue } from '@research-cms/s
 // ============================================
 
 interface RequestOptions {
-	method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+	method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 	body?: any;
 	headers?: Record<string, string>;
 }
@@ -18,10 +18,13 @@ export async function apiRequest<T>(
 	try {
 		const { method = 'GET', body, headers = {} } = options;
 
+		const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
 		const config: RequestInit = {
 			method,
 			headers: {
 				'Content-Type': 'application/json',
+				...(token && { Authorization: `Bearer ${token}` }),
 				...headers,
 			},
 		};
@@ -31,6 +34,14 @@ export async function apiRequest<T>(
 		}
 
 		const response = await fetch(`${API_URL}${endpoint}`, config);
+
+		if (response.status === 401) {
+			if (typeof window !== 'undefined') {
+				localStorage.removeItem('token');
+				window.location.href = '/login';
+			}
+			return { error: 'Unauthorized' };
+		}
 
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
@@ -59,6 +70,9 @@ export const api = {
 
 	put: <T>(endpoint: string, body: any) =>
 		apiRequest<T>(endpoint, { method: 'PUT', body }),
+
+	patch: <T>(endpoint: string, body: unknown) =>
+		apiRequest<T>(endpoint, { method: 'PATCH', body }),
 
 	delete: <T>(endpoint: string) =>
 		apiRequest<T>(endpoint, { method: 'DELETE' }),

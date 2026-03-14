@@ -83,16 +83,30 @@ export class ContentService {
 						errors.push(`"${field.label || field.name}" must be an array of strings`);
 					}
 					break;
-				case FieldType.REFERENCE:
+				case FieldType.REFERENCE: {
 					if (typeof value !== 'string' || !isValidObjectId(value)) {
 						errors.push(`"${field.label || field.name}" must be a valid entry ID`);
+					} else {
+						const targetSlug = field.config?.type === 'reference' ? field.config.targetSlug : schemaSlug;
+						const exists = await this.model.exists({ _id: value, schemaSlug: targetSlug });
+						if (!exists) {
+							errors.push(`"${field.label || field.name}" references an entry that does not exist`);
+						}
 					}
 					break;
-				case FieldType.REFERENCES:
+				}
+				case FieldType.REFERENCES: {
 					if (!Array.isArray(value) || value.some(v => !isValidObjectId(v))) {
 						errors.push(`"${field.label || field.name}" must be an array of valid entry IDs`);
+					} else if (value.length > 0) {
+						const targetSlug = field.config?.type === 'references' ? field.config.targetSlug : schemaSlug;
+						const found = await this.model.countDocuments({ _id: { $in: value }, schemaSlug: targetSlug });
+						if (found !== value.length) {
+							errors.push(`"${field.label || field.name}" contains one or more entries that do not exist`);
+						}
 					}
 					break;
+				}
 			}
 		}
 
