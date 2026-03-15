@@ -95,6 +95,16 @@ export function generateSlugFromName(name: string): string {
 	return sanitizeSlug(name);
 }
 
+/** Convert a display label into a snake_case field key, e.g. "Product Title" → "product_title" */
+export function labelToFieldKey(label: string): string {
+	return label
+		.toLowerCase()
+		.trim()
+		.replace(/[^a-z0-9_]/g, '_')
+		.replace(/_+/g, '_')
+		.replace(/^_|_$/g, '');
+}
+
 export function validateSlug(slug: string): { valid: boolean; error?: string } {
 	if (!slug) {
 		return { valid: false, error: 'Slug is required' };

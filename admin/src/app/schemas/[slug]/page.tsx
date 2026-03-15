@@ -4,9 +4,23 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ContentTypeDefinition, ContentEntry, FieldDefinition, FieldType, FieldValue } from '@research-cms/shared-types';
 import { getSchema, getAllEntries, deleteEntry, formatDate } from '../../../lib/utils';
+import { useAuth } from '../../../contexts/AuthContext';
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function entryTitle(entry: ContentEntry): string {
+  if (entry.data.title && typeof entry.data.title === 'string') return entry.data.title;
+  const first = Object.values(entry.data).find(v => typeof v === 'string' && v);
+  return first ? String(first).slice(0, 40) : `#${entry._id?.slice(-6)}`;
+}
 
 // ── Cell renderer ──────────────────────────────────────────────────────────────
-function CellValue({ value, field }: { value: FieldValue | undefined; field: FieldDefinition }) {
+function CellValue({
+  value, field, refCache,
+}: {
+  value: FieldValue | undefined;
+  field: FieldDefinition;
+  refCache: Record<string, ContentEntry>;
+}) {
   if (value === undefined || value === null || value === '') {
     return <span className="text-zinc-300">—</span>;
   }
@@ -27,8 +41,41 @@ function CellValue({ value, field }: { value: FieldValue | undefined; field: Fie
         />
       );
 
-    case FieldType.TAGS:
+    case FieldType.REFERENCE: {
+      const id = String(value);
+      const targetSlug = field.config?.type === 'reference' ? field.config.targetSlug : '';
+      const entry = refCache[id];
+      const label = entry ? entryTitle(entry) : id.slice(-8);
+      return (
+        <Link href={`/schemas/${targetSlug}/content/edit/${id}`}
+          className="text-blue-600 hover:underline text-sm">
+          {label}
+        </Link>
+      );
+    }
+
     case FieldType.REFERENCES: {
+      const arr = Array.isArray(value) ? value : [];
+      if (arr.length === 0) return <span className="text-zinc-300">—</span>;
+      const targetSlug = field.config?.type === 'references' ? field.config.targetSlug : '';
+      return (
+        <div className="flex flex-wrap gap-1">
+          {arr.slice(0, 3).map((id, i) => {
+            const entry = refCache[String(id)];
+            const label = entry ? entryTitle(entry) : String(id).slice(-8);
+            return (
+              <Link key={i} href={`/schemas/${targetSlug}/content/edit/${id}`}
+                className="text-xs bg-zinc-100 text-blue-600 hover:bg-zinc-200 px-1.5 py-0.5 font-mono">
+                {label}
+              </Link>
+            );
+          })}
+          {arr.length > 3 && <span className="text-xs text-zinc-400">+{arr.length - 3}</span>}
+        </div>
+      );
+    }
+
+    case FieldType.TAGS: {
       const arr = Array.isArray(value) ? value : [];
       if (arr.length === 0) return <span className="text-zinc-300">—</span>;
       return (
@@ -68,6 +115,8 @@ function CellValue({ value, field }: { value: FieldValue | undefined; field: Fie
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 export default function SchemaDetailPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const params = useParams();
   const slug = params?.slug ? (Array.isArray(params.slug) ? params.slug[0] : params.slug) : '';
 
@@ -76,6 +125,7 @@ export default function SchemaDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [refCache, setRefCache] = useState<Record<string, ContentEntry>>({});
 
   // Column visibility — array of field.name + 'date' for the system date column
   const [visibleCols, setVisibleCols] = useState<string[]>([]);
@@ -86,9 +136,26 @@ export default function SchemaDetailPage() {
     setLoading(true);
     const [schemaRes, entriesRes] = await Promise.all([getSchema(slug), getAllEntries(slug)]);
     if (schemaRes.error) { setError(schemaRes.error); setLoading(false); return; }
-    setSchema(schemaRes.data!);
+    const schemaData = schemaRes.data ?? null;
+    setSchema(schemaData);
     setEntries(entriesRes.data ?? []);
     setLoading(false);
+
+    // Fetch referenced entries so cells can show titles instead of IDs
+    if (schemaData) {
+      const targetSlugs = [...new Set(
+        schemaData.fields
+          .filter(f => f.type === FieldType.REFERENCE || f.type === FieldType.REFERENCES)
+          .map(f => (f.config?.type === 'reference' || f.config?.type === 'references') ? f.config.targetSlug : null)
+          .filter((s): s is string => !!s)
+      )];
+      if (targetSlugs.length > 0) {
+        const results = await Promise.all(targetSlugs.map(s => getAllEntries(s)));
+        const cache: Record<string, ContentEntry> = {};
+        results.forEach(({ data }) => (data ?? []).forEach(e => { if (e._id) cache[e._id] = e; }));
+        setRefCache(cache);
+      }
+    }
   }, [slug]);
 
   useEffect(() => { if (slug) load(); }, [slug, load]);
@@ -97,7 +164,7 @@ export default function SchemaDetailPage() {
   useEffect(() => {
     if (!schema) return;
     const saved = typeof window !== 'undefined'
-      ? localStorage.getItem(`cms_cols_${slug}`)
+      ? localStorage.getItem(`cms_cols_${schema._id}`)
       : null;
     if (saved) {
       setVisibleCols(JSON.parse(saved) as string[]);
@@ -121,7 +188,7 @@ export default function SchemaDetailPage() {
   const toggleCol = (key: string) => {
     setVisibleCols(prev => {
       const next = prev.includes(key) ? prev.filter(c => c !== key) : [...prev, key];
-      localStorage.setItem(`cms_cols_${slug}`, JSON.stringify(next));
+      localStorage.setItem(`cms_cols_${schema?._id}`, JSON.stringify(next));
       return next;
     });
   };
@@ -159,9 +226,11 @@ export default function SchemaDetailPage() {
           <p className="page-sub">/{schema.slug} · {schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex gap-2">
-          <Link href={`/schemas/edit/${slug}`}>
-            <button className="btn-secondary">Edit schema</button>
-          </Link>
+          {isAdmin && (
+            <Link href={`/schemas/edit/${slug}`}>
+              <button className="btn-secondary">Edit schema</button>
+            </Link>
+          )}
           <Link href={`/schemas/${slug}/content/create`}>
             <button className="btn-primary">+ New entry</button>
           </Link>
@@ -262,7 +331,7 @@ export default function SchemaDetailPage() {
                   >
                     {visibleFields.map(field => (
                       <td key={field.name} className="px-4 py-3 max-w-xs">
-                        <CellValue value={entry.data[field.name]} field={field} />
+                        <CellValue value={entry.data[field.name]} field={field} refCache={refCache} />
                       </td>
                     ))}
                     {showDate && (

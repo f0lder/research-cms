@@ -2,12 +2,14 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ContentType, ContentTypeDocument } from './schemas/content-type.schema';
+import { ContentEntryModel, ContentEntryDocument } from '../content/schemas/content-entry.schema';
 import { ContentTypeDefinition, FieldDefinition } from '@research-cms/shared-types';
 
 @Injectable()
 export class SchemaService {
 	constructor(
-		@InjectModel(ContentType.name) private model: Model<ContentTypeDocument>
+		@InjectModel(ContentType.name) private model: Model<ContentTypeDocument>,
+		@InjectModel(ContentEntryModel.name) private entryModel: Model<ContentEntryDocument>,
 	) { }
 
 	/** Returns all schemas that have at least one reference/references field targeting the given slug. */
@@ -45,9 +47,13 @@ export class SchemaService {
 			throw new BadRequestException('Schema requires at least one field');
 		}
 
-		// If the slug is being renamed, cascade-update all reference fields in other schemas
+		// If the slug is being renamed, cascade-update all content entries and reference fields
 		const newSlug = data.slug;
 		if (newSlug && newSlug !== slug) {
+			// 1. Re-point all entries that belonged to the old slug
+			await this.entryModel.updateMany({ schemaSlug: slug }, { $set: { schemaSlug: newSlug } }).exec();
+
+			// 2. Update targetSlug in any reference fields across other schemas
 			const referencing = await this.findSchemasReferencingSlug(slug);
 			for (const ref of referencing) {
 				const updatedFields = ref.fields.map((f: FieldDefinition) => {

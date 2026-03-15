@@ -13,6 +13,14 @@ import {
 } from '../../lib/utils';
 import FieldInput from './FieldInput';
 
+const DEFAULT_FIELDS: FieldDefinition[] = [
+  { name: 'title',   label: 'Title',   type: FieldType.TEXT,     required: true  },
+  { name: 'slug',    label: 'Slug',    type: FieldType.TEXT,     required: false },
+  { name: 'status',  label: 'Status',  type: FieldType.SELECT,   required: true,
+    config: { type: 'select', options: ['draft', 'published', 'private'] } },
+  { name: 'excerpt', label: 'Excerpt', type: FieldType.TEXTAREA, required: false },
+];
+
 interface SchemaFormProps {
   mode: 'create' | 'edit';
   initialData?: ContentTypeDefinition;
@@ -24,7 +32,9 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
 
   const [name, setName] = useState(initialData?.name || '');
   const [slug, setSlug] = useState(initialData?.slug || '');
-  const [fields, setFields] = useState<FieldDefinition[]>(initialData?.fields || []);
+  const [fields, setFields] = useState<FieldDefinition[]>(
+    initialData?.fields ?? (mode === 'create' ? DEFAULT_FIELDS : [])
+  );
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manualSlugEdit, setManualSlugEdit] = useState(false);
@@ -58,7 +68,7 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault();
     setError('');
 
@@ -155,6 +165,7 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
               disabled={isSubmitting}
               availableSchemas={availableSchemas}
               currentSlug={slug}
+              existingKeys={fields.filter((_, j) => j !== i).map(f => f.name).filter(Boolean)}
             />
           ))}
           <button
