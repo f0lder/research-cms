@@ -3,15 +3,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ContentTypeDefinition, ContentEntry, FieldDefinition, FieldType, FieldValue } from '@research-cms/shared-types';
-import { getSchema, getAllEntries, deleteEntry, formatDate } from '../../../lib/utils';
+import { getSchema, getAllEntries, deleteEntry, formatDate, formatDateTime, getEntryTitle, extractParam, adminRoutes, truncateString } from '../../../lib/utils';
 import { useAuth } from '../../../contexts/AuthContext';
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
-function entryTitle(entry: ContentEntry): string {
-  if (entry.data.title && typeof entry.data.title === 'string') return entry.data.title;
-  const first = Object.values(entry.data).find(v => typeof v === 'string' && v);
-  return first ? String(first).slice(0, 40) : `#${entry._id?.slice(-6)}`;
-}
 
 // ── Cell renderer ──────────────────────────────────────────────────────────────
 function CellValue({
@@ -45,9 +38,9 @@ function CellValue({
       const id = String(value);
       const targetSlug = field.config?.type === 'reference' ? field.config.targetSlug : '';
       const entry = refCache[id];
-      const label = entry ? entryTitle(entry) : id.slice(-8);
+      const label = entry ? getEntryTitle(entry) : id.slice(-8);
       return (
-        <Link href={`/schemas/${targetSlug}/content/edit/${id}`}
+        <Link href={adminRoutes.contentEdit(targetSlug, String(id))}
           className="text-blue-600 hover:underline text-sm">
           {label}
         </Link>
@@ -62,9 +55,9 @@ function CellValue({
         <div className="flex flex-wrap gap-1">
           {arr.slice(0, 3).map((id, i) => {
             const entry = refCache[String(id)];
-            const label = entry ? entryTitle(entry) : String(id).slice(-8);
+            const label = entry ? getEntryTitle(entry) : String(id).slice(-8);
             return (
-              <Link key={i} href={`/schemas/${targetSlug}/content/edit/${id}`}
+              <Link key={i} href={adminRoutes.contentEdit(targetSlug, String(id))}
                 className="text-xs bg-zinc-100 text-blue-600 hover:bg-zinc-200 px-1.5 py-0.5 font-mono">
                 {label}
               </Link>
@@ -95,7 +88,7 @@ function CellValue({
       return <span className="text-xs text-zinc-500">{formatDate(String(value))}</span>;
 
     case FieldType.DATETIME:
-      return <span className="text-xs text-zinc-500">{new Date(String(value)).toLocaleString()}</span>;
+      return <span className="text-xs text-zinc-500">{formatDateTime(String(value))}</span>;
 
     case FieldType.NUMBER:
       return <span className="font-mono text-sm">{String(value)}</span>;
@@ -107,8 +100,7 @@ function CellValue({
       return <a href={String(value)} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm truncate max-w-xs block">{String(value)}</a>;
 
     default: {
-      const str = String(value);
-      return <span className="text-zinc-700 text-sm">{str.length > 60 ? str.slice(0, 60) + '…' : str}</span>;
+      return <span className="text-zinc-700 text-sm">{truncateString(value)}</span>;
     }
   }
 }
@@ -118,7 +110,7 @@ export default function SchemaDetailPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const params = useParams();
-  const slug = params?.slug ? (Array.isArray(params.slug) ? params.slug[0] : params.slug) : '';
+  const slug = extractParam(params, 'slug');
 
   const [schema, setSchema] = useState<ContentTypeDefinition | null>(null);
   const [entries, setEntries] = useState<ContentEntry[]>([]);
@@ -231,7 +223,7 @@ export default function SchemaDetailPage() {
               <button className="btn-secondary">Edit schema</button>
             </Link>
           )}
-          <Link href={`/schemas/${slug}/content/create`}>
+          <Link href={adminRoutes.contentCreate(slug)}>
             <button className="btn-primary">+ New entry</button>
           </Link>
         </div>
@@ -240,7 +232,7 @@ export default function SchemaDetailPage() {
       {entries.length === 0 ? (
         <div className="border-2 border-dashed border-zinc-200 p-16 text-center">
           <p className="text-zinc-400 text-sm mb-4">No entries yet.</p>
-          <Link href={`/schemas/${slug}/content/create`}>
+          <Link href={adminRoutes.contentCreate(slug)}>
             <button className="btn-secondary">Create first entry</button>
           </Link>
         </div>
@@ -341,7 +333,7 @@ export default function SchemaDetailPage() {
                     )}
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/schemas/${slug}/content/edit/${entry._id}`}>
+                        <Link href={adminRoutes.contentEdit(slug, entry._id ?? '')}>
                           <button className="btn-primary text-xs px-3 py-1">Edit</button>
                         </Link>
                         <button

@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import Select from 'react-select';
-import { FieldDefinition, FieldType, FieldValue, ContentEntry } from '@research-cms/shared-types';
-import { getAllEntries } from '../../lib/utils';
+import { FieldDefinition, FieldType, FieldValue } from '@research-cms/shared-types';
+import { getAllEntries, getEntryTitle } from '../../lib/utils';
 
 interface DynamicFieldInputProps {
   field: FieldDefinition;
@@ -49,7 +49,7 @@ export default function DynamicFieldInput({
     getAllEntries(targetSlug).then(({ data }) => {
       if (data) {
         setReferenceOptions(
-          data.map(entry => ({ value: entry._id ?? '', label: getEntryLabel(entry) }))
+          data.map(entry => ({ value: entry._id ?? '', label: getEntryTitle(entry) }))
         );
       }
       setReferenceLoading(false);
@@ -240,9 +240,3 @@ export default function DynamicFieldInput({
   }
 }
 
-function getEntryLabel(entry: ContentEntry): string {
-  for (const val of Object.values(entry.data)) {
-    if (typeof val === 'string' && val.trim()) return val;
-  }
-  return entry._id ?? '(no label)';
-}

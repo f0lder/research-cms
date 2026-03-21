@@ -10,6 +10,7 @@ import {
   generateSlugFromName,
   validateSlug,
   getErrorMessage,
+  generateRandomId,
 } from '../../lib/utils';
 import FieldInput from './FieldInput';
 
@@ -35,9 +36,7 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
     initialData?.fields ?? (mode === 'create' ? DEFAULT_FIELDS : [])
   );
   const [fieldIds, setFieldIds] = useState<string[]>(() =>
-    (initialData?.fields ?? (mode === 'create' ? DEFAULT_FIELDS : [])).map(() =>
-      Math.random().toString(36).slice(2)
-    )
+    (initialData?.fields ?? (mode === 'create' ? DEFAULT_FIELDS : [])).map(() => generateRandomId())
   );
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,7 +59,7 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
 
   const addField = () => {
     setFields(prev => [...prev, { name: '', label: '', type: FieldType.TEXT, required: false }]);
-    setFieldIds(prev => [...prev, Math.random().toString(36).slice(2)]);
+    setFieldIds(prev => [...prev, generateRandomId()]);
   };
 
   const removeField = (index: number) => {

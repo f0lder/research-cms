@@ -2,12 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
-import { api } from '../../../../lib/utils';
+import { api, extractParam } from '../../../../lib/utils';
 import SchemaForm from '../../../../components/schemas/SchemaForm';
 
 export default function EditSchemaPage() {
   const params = useParams();
-  const slug = params?.slug ? (Array.isArray(params.slug) ? params.slug[0] : params.slug) : '';
+  const slug = extractParam(params, 'slug');
 
   const [schema, setSchema] = useState<ContentTypeDefinition | null>(null);
   const [loading, setLoading] = useState(true);

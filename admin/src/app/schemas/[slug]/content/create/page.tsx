@@ -3,13 +3,13 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
-import { getSchema } from '../../../../../lib/utils';
+import { getSchema, extractParam, adminRoutes } from '../../../../../lib/utils';
 import ContentForm from '../../../../../components/content/ContentForm';
 
 export default function ContentCreatePage() {
   const params = useParams();
   const router = useRouter();
-  const slug = params?.slug ? (Array.isArray(params.slug) ? params.slug[0] : params.slug) : '';
+  const slug = extractParam(params, 'slug');
 
   const [schema, setSchema] = useState<ContentTypeDefinition | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export default function ContentCreatePage() {
       <p className="breadcrumb">
         <Link href="/schemas">Content Types</Link>
         <span className="mx-1">/</span>
-        <Link href={`/schemas/${slug}`}>{schema.name}</Link>
+        <Link href={adminRoutes.schemaDetail(slug)}>{schema.name}</Link>
         <span className="mx-1">/</span>
         New entry
       </p>
@@ -49,7 +49,7 @@ export default function ContentCreatePage() {
       <ContentForm
         mode="create"
         schema={schema}
-        onSuccess={() => router.push(`/schemas/${slug}`)}
+        onSuccess={() => router.push(adminRoutes.schemaDetail(slug))}
       />
     </div>
   );
