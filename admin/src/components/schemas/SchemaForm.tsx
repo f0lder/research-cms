@@ -11,7 +11,7 @@ import {
   validateSlug,
   getErrorMessage,
   generateRandomId,
-} from '../../lib/utils';
+} from '@/lib/utils';
 import FieldInput from './FieldInput';
 
 const DEFAULT_FIELDS: FieldDefinition[] = [

@@ -16,7 +16,11 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
-    "plugins": [{ "name": "next" }]
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@research-cms/shared-types": ["../shared-types/src/index.ts"],
+      "@/*": ["./src/*"]
+    }
   },
   "include": [
     "**/*.ts",

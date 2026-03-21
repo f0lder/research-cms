@@ -1,5 +1,5 @@
-import ProtectedRoute from '../auth/ProtectedRoute';
-import Sidebar from './Sidebar';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import Sidebar from '@/components/layout/Sidebar';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (

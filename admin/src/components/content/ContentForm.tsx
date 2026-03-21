@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ContentTypeDefinition, ContentEntry, FieldType, FieldValue } from '@research-cms/shared-types';
-import { createEntry, updateEntry } from '../../lib/utils';
+import { createEntry, updateEntry } from '@/lib/utils';
 import DynamicFieldInput from './DynamicFieldInput';
 
 interface ContentFormProps {

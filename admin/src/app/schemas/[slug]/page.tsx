@@ -3,8 +3,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ContentTypeDefinition, ContentEntry, FieldDefinition, FieldType, FieldValue } from '@research-cms/shared-types';
-import { getSchema, getAllEntries, deleteEntry, formatDate, formatDateTime, getEntryTitle, extractParam, adminRoutes, truncateString } from '../../../lib/utils';
-import { useAuth } from '../../../contexts/AuthContext';
+import { getSchema, getAllEntries, deleteEntry, formatDate, formatDateTime, getEntryTitle, extractParam, adminRoutes, truncateString } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ── Cell renderer ──────────────────────────────────────────────────────────────
 function CellValue({

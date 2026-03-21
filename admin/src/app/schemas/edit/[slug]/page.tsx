@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
-import { api, extractParam } from '../../../../lib/utils';
-import SchemaForm from '../../../../components/schemas/SchemaForm';
+import { api, extractParam } from '@/lib/utils';
+import SchemaForm from '@/components/schemas/SchemaForm';
 
 export default function EditSchemaPage() {
   const params = useParams();

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { api, formatDate } from '../../lib/utils';
-import { useAuth } from '../../contexts/AuthContext';
+import { api, formatDate } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserEntry {
   _id: string;

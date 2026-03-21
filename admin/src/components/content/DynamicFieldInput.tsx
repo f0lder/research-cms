@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import Select from 'react-select';
 import { FieldDefinition, FieldType, FieldValue } from '@research-cms/shared-types';
-import { getAllEntries, getEntryTitle } from '../../lib/utils';
+import { getAllEntries, getEntryTitle } from '@/lib/utils';
 
 interface DynamicFieldInputProps {
   field: FieldDefinition;

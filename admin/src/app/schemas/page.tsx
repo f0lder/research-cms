@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
-import { getAllSchemas, formatDate } from '../../lib/utils';
-import { useAuth } from '../../contexts/AuthContext';
+import { getAllSchemas, formatDate } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SchemasPage() {
   const { user } = useAuth();

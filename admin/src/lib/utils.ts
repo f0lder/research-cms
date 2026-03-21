@@ -1,4 +1,4 @@
-import { API_URL } from '../config';
+import { API_URL } from '@/config';
 import { ContentTypeDefinition, ContentEntry, FieldValue } from '@research-cms/shared-types';
 
 // ── HTTP ──────────────────────────────────────────────────────────────────────

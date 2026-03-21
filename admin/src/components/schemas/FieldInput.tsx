@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import { FieldType, FieldDefinition, FieldConfig, ContentTypeDefinition } from '@research-cms/shared-types';
-import { labelToFieldKey } from '../../lib/utils';
+import { labelToFieldKey } from '@/lib/utils';
 
 type SelectOption = { value: string; label: string };
 

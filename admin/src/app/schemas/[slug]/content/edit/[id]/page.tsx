@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ContentTypeDefinition, ContentEntry } from '@research-cms/shared-types';
-import { getSchema, getEntry, extractParam, adminRoutes } from '../../../../../../lib/utils';
-import ContentForm from '../../../../../../components/content/ContentForm';
+import { getSchema, getEntry, extractParam, adminRoutes } from '@/lib/utils';
+import ContentForm from '@/components/content/ContentForm';
 
 export default function ContentEditPage() {
   const params = useParams();
