@@ -205,3 +205,20 @@ export const updateApiKeySchemas = (id: string, allowedSchemas: string[]) =>
 
 export const deleteApiKey = (id: string) =>
   api.delete(`/api-keys/${id}`);
+
+// ── Logs API ──────────────────────────────────────────────────────────────────
+
+export const getLogs = (params: { tags?: string[]; search?: string; limit?: number; offset?: number } = {}) => {
+  const q = new URLSearchParams();
+  if (params.tags?.length) q.set('tags', params.tags.join(','));
+  if (params.search) q.set('search', params.search);
+  if (params.limit != null) q.set('limit', String(params.limit));
+  if (params.offset != null) q.set('offset', String(params.offset));
+  return api.get<{ entries: import('@research-cms/shared-types').LogEntry[]; total: number }>(`/logs?${q}`);
+};
+
+export const getLogTags = () =>
+  api.get<string[]>('/logs/tags');
+
+export const clearLogs = () =>
+  api.delete('/logs');

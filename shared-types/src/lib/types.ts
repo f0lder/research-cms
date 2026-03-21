@@ -91,6 +91,16 @@ export interface PublicEntryResponse {
   createdAt?: string;
 }
 
+// ── Logs ──────────────────────────────────────────────────────────────────────
+
+export interface LogEntry {
+  _id?: string;
+  message: string;
+  tags: string[];
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+}
+
 // ── API Keys ──────────────────────────────────────────────────────────────────
 
 export interface ApiKey {

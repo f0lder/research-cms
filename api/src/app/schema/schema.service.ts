@@ -4,12 +4,14 @@ import { Model } from 'mongoose';
 import { ContentType, ContentTypeDocument } from './schemas/content-type.schema';
 import { ContentEntryModel, ContentEntryDocument } from '../content/schemas/content-entry.schema';
 import { ContentTypeDefinition, FieldDefinition } from '@research-cms/shared-types';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class SchemaService {
 	constructor(
 		@InjectModel(ContentType.name) private model: Model<ContentTypeDocument>,
 		@InjectModel(ContentEntryModel.name) private entryModel: Model<ContentEntryDocument>,
+		private readonly logsService: LogsService,
 	) { }
 
 	/** Returns all schemas that have at least one reference/references field targeting the given slug. */
@@ -22,7 +24,9 @@ export class SchemaService {
 			throw new BadRequestException('Schema requires at least one field');
 		}
 		try {
-			return await this.model.create(data);
+			const schema = await this.model.create(data);
+			this.logsService.log(`Schema created: "${data.name}" (${data.slug})`, ['schema', 'create'], { slug: data.slug });
+			return schema;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -78,6 +82,7 @@ export class SchemaService {
 				{ returnDocument: 'after' }
 			).exec();
 			if (!updated) throw new BadRequestException('Schema update failed');
+			this.logsService.log(`Schema updated: "${updated.name}" (${updated.slug})`, ['schema', 'update'], { slug: updated.slug });
 			return updated;
 		} catch (error) {
 			throw new BadRequestException(error.message);
@@ -98,5 +103,6 @@ export class SchemaService {
 
 		await this.model.findByIdAndDelete(schema._id).exec();
 		await this.entryModel.deleteMany({ schemaSlug: slug }).exec();
+		this.logsService.log(`Schema deleted: "${schema.name}" (${slug})`, ['schema', 'delete'], { slug });
 	}
 }

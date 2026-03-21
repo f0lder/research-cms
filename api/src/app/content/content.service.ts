@@ -4,12 +4,14 @@ import { Model, isValidObjectId } from 'mongoose';
 import { ContentEntryModel, ContentEntryDocument } from './schemas/content-entry.schema';
 import { SchemaService } from '../schema/schema.service';
 import { FieldType, FieldValue } from '@research-cms/shared-types';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class ContentService {
 	constructor(
 		@InjectModel(ContentEntryModel.name) private model: Model<ContentEntryDocument>,
-		private readonly schemaService: SchemaService
+		private readonly schemaService: SchemaService,
+		private readonly logsService: LogsService,
 	) {}
 
 	// ─── Validation ────────────────────────────────────────────────────────────
@@ -136,7 +138,9 @@ export class ContentService {
 
 	async create(schemaSlug: string, data: Record<string, FieldValue>): Promise<ContentEntryDocument> {
 		await this.validateData(schemaSlug, data, false);
-		return this.model.create({ schemaSlug, data });
+		const entry = await this.model.create({ schemaSlug, data });
+		this.logsService.log(`Entry created in "${schemaSlug}"`, ['content', 'create'], { schemaSlug, id: String(entry._id) });
+		return entry;
 	}
 
 	async update(
@@ -146,15 +150,18 @@ export class ContentService {
 	): Promise<ContentEntryDocument> {
 		const entry = await this.findOne(schemaSlug, id);
 		await this.validateData(schemaSlug, data, true);
-		return this.model.findByIdAndUpdate(
+		const updated = await this.model.findByIdAndUpdate(
 			entry._id,
 			{ $set: { data: { ...entry.data, ...data } } },
 			{ returnDocument: 'after' }
 		).exec();
+		this.logsService.log(`Entry updated in "${schemaSlug}"`, ['content', 'update'], { schemaSlug, id });
+		return updated;
 	}
 
 	async delete(schemaSlug: string, id: string): Promise<void> {
 		const entry = await this.findOne(schemaSlug, id);
 		await this.model.findByIdAndDelete(entry._id).exec();
+		this.logsService.log(`Entry deleted from "${schemaSlug}"`, ['content', 'delete'], { schemaSlug, id });
 	}
 }

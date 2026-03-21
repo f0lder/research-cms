@@ -3,11 +3,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomBytes } from 'crypto';
 import { ApiKeyModel, ApiKeyDocument } from './schemas/api-key.schema';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class ApiKeysService {
   constructor(
     @InjectModel(ApiKeyModel.name) private model: Model<ApiKeyDocument>,
+    private readonly logsService: LogsService,
   ) {}
 
   async findAll(): Promise<ApiKeyDocument[]> {
@@ -16,12 +18,15 @@ export class ApiKeysService {
 
   async create(name: string): Promise<ApiKeyDocument> {
     const key = `cms_${randomBytes(24).toString('hex')}`;
-    return this.model.create({ name, key });
+    const doc = await this.model.create({ name, key });
+    this.logsService.log(`API key created: "${name}"`, ['api-key', 'create'], { name, id: String(doc._id) });
+    return doc;
   }
 
   async delete(id: string): Promise<void> {
     const result = await this.model.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException(`API key not found`);
+    this.logsService.log(`API key deleted: "${result.name}"`, ['api-key', 'delete'], { name: result.name, id });
   }
 
   async updateAllowedSchemas(id: string, allowedSchemas: string[]): Promise<ApiKeyDocument> {

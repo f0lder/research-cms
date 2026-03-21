@@ -40,6 +40,7 @@ export default function Sidebar() {
     pathname.startsWith('/schemas/edit');
   const usersActive = pathname.startsWith('/users');
   const apiKeysActive = pathname.startsWith('/api-keys');
+  const logsActive = pathname.startsWith('/logs');
 
   const navItem = (active: boolean) =>
     `flex items-center px-5 py-2.5 text-sm cursor-pointer border-l-2 transition-colors duration-100 ${
@@ -110,6 +111,11 @@ export default function Sidebar() {
         {/* API Keys */}
         <Link href="/api-keys" className="block no-underline">
           <div className={navItem(apiKeysActive)}>API Keys</div>
+        </Link>
+
+        {/* Logs */}
+        <Link href="/logs" className="block no-underline">
+          <div className={navItem(logsActive)}>Logs</div>
         </Link>
       </nav>
 
