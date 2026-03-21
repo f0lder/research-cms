@@ -70,11 +70,15 @@ export class SchemaService {
 		}
 
 		try {
-			return await this.model.findByIdAndUpdate(
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const { _id: _ignored, ...safeData } = data as ContentTypeDefinition & { _id?: unknown };
+			const updated = await this.model.findByIdAndUpdate(
 				schema._id,
-				{ $set: data },
+				{ $set: safeData },
 				{ returnDocument: 'after' }
 			).exec();
+			if (!updated) throw new BadRequestException('Schema update failed');
+			return updated;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -93,5 +97,6 @@ export class SchemaService {
 		}
 
 		await this.model.findByIdAndDelete(schema._id).exec();
+		await this.entryModel.deleteMany({ schemaSlug: slug }).exec();
 	}
 }

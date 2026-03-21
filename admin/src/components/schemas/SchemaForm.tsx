@@ -15,7 +15,6 @@ import FieldInput from './FieldInput';
 
 const DEFAULT_FIELDS: FieldDefinition[] = [
   { name: 'title',   label: 'Title',   type: FieldType.TEXT,     required: true  },
-  { name: 'slug',    label: 'Slug',    type: FieldType.TEXT,     required: false },
   { name: 'status',  label: 'Status',  type: FieldType.SELECT,   required: true,
     config: { type: 'select', options: ['draft', 'published', 'private'] } },
   { name: 'excerpt', label: 'Excerpt', type: FieldType.TEXTAREA, required: false },
@@ -34,6 +33,11 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
   const [slug, setSlug] = useState(initialData?.slug || '');
   const [fields, setFields] = useState<FieldDefinition[]>(
     initialData?.fields ?? (mode === 'create' ? DEFAULT_FIELDS : [])
+  );
+  const [fieldIds, setFieldIds] = useState<string[]>(() =>
+    (initialData?.fields ?? (mode === 'create' ? DEFAULT_FIELDS : [])).map(() =>
+      Math.random().toString(36).slice(2)
+    )
   );
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,10 +59,14 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
   };
 
   const addField = () => {
-    setFields([...fields, { name: '', label: '', type: FieldType.TEXT, required: false }]);
+    setFields(prev => [...prev, { name: '', label: '', type: FieldType.TEXT, required: false }]);
+    setFieldIds(prev => [...prev, Math.random().toString(36).slice(2)]);
   };
 
-  const removeField = (index: number) => setFields(fields.filter((_, i) => i !== index));
+  const removeField = (index: number) => {
+    setFields(prev => prev.filter((_, i) => i !== index));
+    setFieldIds(prev => prev.filter((_, i) => i !== index));
+  };
 
   const updateField = (index: number, key: keyof FieldDefinition, value: string | boolean | FieldConfig | undefined) => {
     setFields(prev => {
@@ -157,7 +165,7 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
           )}
           {fields.map((field, i) => (
             <FieldInput
-              key={i}
+              key={fieldIds[i]}
               index={i}
               field={field}
               onUpdate={updateField}
