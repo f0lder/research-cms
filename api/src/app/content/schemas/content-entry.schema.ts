@@ -11,6 +11,9 @@ export class ContentEntryModel implements Omit<ContentEntry, '_id' | 'createdAt'
 
 	@Prop({ type: Object, required: true })
 	data: Record<string, FieldValue>;
+
+	createdAt?: Date;
+	updatedAt?: Date;
 }
 
 export const ContentEntrySchema = SchemaFactory.createForClass(ContentEntryModel);

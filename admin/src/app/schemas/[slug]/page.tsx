@@ -219,9 +219,14 @@ export default function SchemaDetailPage() {
         </div>
         <div className="flex gap-2">
           {isAdmin && (
-            <Link href={`/schemas/edit/${slug}`}>
-              <button className="btn-secondary">Edit schema</button>
-            </Link>
+            <>
+              <Link href={adminRoutes.schemaEdit(slug)}>
+                <button className="btn-secondary">Edit schema</button>
+              </Link>
+              <Link href={adminRoutes.schemaLayout(slug)}>
+                <button className="btn-secondary">Block layout</button>
+              </Link>
+            </>
           )}
           <Link href={adminRoutes.contentCreate(slug)}>
             <button className="btn-primary">+ New entry</button>

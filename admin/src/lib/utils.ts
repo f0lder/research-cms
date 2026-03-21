@@ -1,5 +1,5 @@
 import { API_URL } from '@/config';
-import { ContentTypeDefinition, ContentEntry, FieldValue } from '@research-cms/shared-types';
+import { ContentTypeDefinition, ContentEntry, FieldValue, BlockLayout, BlockDefinition, ApiKey } from '@research-cms/shared-types';
 
 // ── HTTP ──────────────────────────────────────────────────────────────────────
 
@@ -65,8 +65,10 @@ export const adminRoutes = {
   schemaCreate:  '/schemas/create',
   schemaEdit:    (slug: string) => `/schemas/edit/${slug}`,
   schemaDetail:  (slug: string) => `/schemas/${slug}`,
+  schemaLayout:  (slug: string) => `/schemas/${slug}/layout`,
   contentCreate: (slug: string) => `/schemas/${slug}/content/create`,
   contentEdit:   (slug: string, id: string) => `/schemas/${slug}/content/edit/${id}`,
+  apiKeys:       '/api-keys',
 };
 
 /** Extract a single string from Next.js dynamic route params (handles string | string[]). */
@@ -181,3 +183,22 @@ export const updateEntry = (schemaSlug: string, id: string, data: Record<string,
 
 export const deleteEntry = (schemaSlug: string, id: string) =>
   api.delete(`/content/${schemaSlug}/${id}`);
+
+// ── Layout API ────────────────────────────────────────────────────────────────
+
+export const getLayout = (schemaSlug: string) =>
+  api.get<BlockLayout>(`/layouts/${schemaSlug}`);
+
+export const saveLayout = (schemaSlug: string, blocks: BlockDefinition[]) =>
+  api.put<BlockLayout>(`/layouts/${schemaSlug}`, { blocks });
+
+// ── API Keys API ──────────────────────────────────────────────────────────────
+
+export const getAllApiKeys = () =>
+  api.get<ApiKey[]>('/api-keys');
+
+export const createApiKey = (name: string) =>
+  api.post<ApiKey>('/api-keys', { name });
+
+export const deleteApiKey = (id: string) =>
+  api.delete(`/api-keys/${id}`);

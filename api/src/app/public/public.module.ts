@@ -1,0 +1,20 @@
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { PublicService } from './public.service';
+import { PublicController } from './public.controller';
+import { SchemaModule } from '../schema/schema.module';
+import { LayoutsModule } from '../layouts/layouts.module';
+import { ApiKeysModule } from '../api-keys/api-keys.module';
+import { ContentEntryModel, ContentEntrySchema } from '../content/schemas/content-entry.schema';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([{ name: ContentEntryModel.name, schema: ContentEntrySchema }]),
+    SchemaModule,
+    LayoutsModule,
+    ApiKeysModule,
+  ],
+  controllers: [PublicController],
+  providers: [PublicService],
+})
+export class PublicModule {}

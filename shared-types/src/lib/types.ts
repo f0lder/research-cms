@@ -58,3 +58,47 @@ export interface ContentEntry {
   createdAt?: string;
   updatedAt?: string;
 }
+
+// ── Block Layout ──────────────────────────────────────────────────────────────
+
+/** One block in a layout — corresponds to a field on the schema. */
+export interface BlockDefinition {
+  fieldName: string;
+  label: string;
+  type: FieldType;
+  visible: boolean;
+  order: number;
+}
+
+/** Saved layout for a content type — one document per schema slug. */
+export interface BlockLayout {
+  _id?: string;
+  schemaSlug: string;
+  blocks: BlockDefinition[];
+  updatedAt?: string;
+}
+
+/** A single block with its resolved value, returned by the public API. */
+export interface PublicBlock extends BlockDefinition {
+  value: FieldValue | null;
+}
+
+/** Shape of a public API entry response. */
+export interface PublicEntryResponse {
+  _id: string;
+  schemaSlug: string;
+  blocks: PublicBlock[];
+  createdAt?: string;
+}
+
+// ── API Keys ──────────────────────────────────────────────────────────────────
+
+export interface ApiKey {
+  _id?: string;
+  name: string;
+  key: string;
+  hits: number;
+  lastUsedAt?: string;
+  active: boolean;
+  createdAt?: string;
+}
