@@ -100,5 +100,7 @@ export interface ApiKey {
   hits: number;
   lastUsedAt?: string;
   active: boolean;
+  /** Empty array = all schemas allowed. Non-empty = only listed slugs accessible. */
+  allowedSchemas: string[];
   createdAt?: string;
 }

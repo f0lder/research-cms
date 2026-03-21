@@ -1,4 +1,5 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
 import { PublicService } from './public.service';
 import { ApiKeyGuard } from '../api-keys/guards/api-key.guard';
 
@@ -8,8 +9,8 @@ export class PublicController {
   constructor(private readonly publicService: PublicService) {}
 
   @Get()
-  listSchemas() {
-    return this.publicService.listSchemas();
+  listSchemas(@Req() req: Request & { apiKeyAllowedSchemas: string[] }) {
+    return this.publicService.listSchemas(req.apiKeyAllowedSchemas);
   }
 
   @Get(':schemaSlug')

@@ -20,6 +20,9 @@ export class ApiKeyModel implements Omit<ApiKey, '_id' | 'createdAt'> {
 
   @Prop({ default: true })
   active: boolean;
+
+  @Prop({ type: [String], default: [] })
+  allowedSchemas: string[];
 }
 
 export const ApiKeySchema = SchemaFactory.createForClass(ApiKeyModel);

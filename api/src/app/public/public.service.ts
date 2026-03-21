@@ -25,9 +25,11 @@ export class PublicService {
       .map(b => ({ ...b, value: (data[b.fieldName] ?? null) as FieldValue | null }));
   }
 
-  async listSchemas(): Promise<{ slug: string; name: string }[]> {
+  async listSchemas(allowedSchemas: string[] = []): Promise<{ slug: string; name: string }[]> {
     const schemas = await this.schemaService.findAll();
-    return schemas.map(s => ({ slug: s.slug, name: s.name }));
+    const all = schemas.map(s => ({ slug: s.slug, name: s.name }));
+    if (allowedSchemas.length === 0) return all;
+    return all.filter(s => allowedSchemas.includes(s.slug));
   }
 
   async findAll(schemaSlug: string): Promise<PublicEntryResponse[]> {

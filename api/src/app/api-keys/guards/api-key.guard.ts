@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { ApiKeysService } from '../api-keys.service';
 
 @Injectable()
@@ -9,8 +9,19 @@ export class ApiKeyGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const key = request.headers['x-api-key'];
     if (!key) throw new UnauthorizedException('Missing X-API-Key header');
-    const valid = await this.apiKeysService.validateAndTrack(key);
-    if (!valid) throw new UnauthorizedException('Invalid or inactive API key');
+
+    const doc = await this.apiKeysService.validateAndTrack(key);
+    if (!doc) throw new UnauthorizedException('Invalid or inactive API key');
+
+    // Attach scope to request so controllers can filter accordingly
+    request.apiKeyAllowedSchemas = doc.allowedSchemas;
+
+    // If allowedSchemas is non-empty, enforce schema-level access
+    const schemaSlug: string | undefined = request.params?.schemaSlug;
+    if (schemaSlug && doc.allowedSchemas.length > 0 && !doc.allowedSchemas.includes(schemaSlug)) {
+      throw new ForbiddenException(`This API key does not have access to "${schemaSlug}"`);
+    }
+
     return true;
   }
 }

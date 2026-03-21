@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, HttpCode, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Body, Param, HttpCode, UseGuards } from '@nestjs/common';
 import { ApiKeysService } from './api-keys.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -19,6 +19,14 @@ export class ApiKeysController {
   @Post()
   create(@Body() body: { name: string }) {
     return this.apiKeysService.create(body.name);
+  }
+
+  @Patch(':id/schemas')
+  updateAllowedSchemas(
+    @Param('id') id: string,
+    @Body() body: { allowedSchemas: string[] },
+  ) {
+    return this.apiKeysService.updateAllowedSchemas(id, body.allowedSchemas);
   }
 
   @Delete(':id')

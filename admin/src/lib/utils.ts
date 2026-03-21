@@ -200,5 +200,8 @@ export const getAllApiKeys = () =>
 export const createApiKey = (name: string) =>
   api.post<ApiKey>('/api-keys', { name });
 
+export const updateApiKeySchemas = (id: string, allowedSchemas: string[]) =>
+  api.patch<ApiKey>(`/api-keys/${id}/schemas`, { allowedSchemas });
+
 export const deleteApiKey = (id: string) =>
   api.delete(`/api-keys/${id}`);

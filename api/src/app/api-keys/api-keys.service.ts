@@ -24,14 +24,24 @@ export class ApiKeysService {
     if (!result) throw new NotFoundException(`API key not found`);
   }
 
-  /** Called by ApiKeyGuard on every public request — validates key and tracks usage. */
-  async validateAndTrack(key: string): Promise<boolean> {
+  async updateAllowedSchemas(id: string, allowedSchemas: string[]): Promise<ApiKeyDocument> {
+    const doc = await this.model.findByIdAndUpdate(
+      id,
+      { $set: { allowedSchemas } },
+      { returnDocument: 'after' },
+    ).exec();
+    if (!doc) throw new NotFoundException('API key not found');
+    return doc;
+  }
+
+  /** Called by ApiKeyGuard on every public request — validates key and tracks usage. Returns the key doc or null. */
+  async validateAndTrack(key: string): Promise<ApiKeyDocument | null> {
     const doc = await this.model.findOne({ key, active: true }).exec();
-    if (!doc) return false;
+    if (!doc) return null;
     await this.model.findByIdAndUpdate(doc._id, {
       $inc: { hits: 1 },
       $set: { lastUsedAt: new Date().toISOString() },
     }).exec();
-    return true;
+    return doc;
   }
 }
