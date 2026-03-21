@@ -33,7 +33,7 @@ export class PublicService {
   async findAll(schemaSlug: string): Promise<PublicEntryResponse[]> {
     await this.schemaService.findOne(schemaSlug); // throws 400 if not found
     const entries = await this.entryModel
-      .find({ schemaSlug, 'data.status': { $ne: 'draft' } })
+      .find({ schemaSlug, $or: [{ 'data.status': 'published' }, { 'data.status': { $exists: false } }] })
       .sort({ createdAt: -1 })
       .exec();
 
