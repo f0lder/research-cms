@@ -1,5 +1,5 @@
 import { API_URL } from '@/config';
-import { ContentTypeDefinition, ContentEntry, FieldValue, BlockLayout, BlockDefinition, ApiKey } from '@research-cms/shared-types';
+import { ContentTypeDefinition, ContentEntry, FieldValue, BlockLayout, BlockDefinition, ApiKey, LogEntry } from '@research-cms/shared-types';
 
 // ── HTTP ──────────────────────────────────────────────────────────────────────
 
@@ -214,7 +214,7 @@ export const getLogs = (params: { tags?: string[]; search?: string; limit?: numb
   if (params.search) q.set('search', params.search);
   if (params.limit != null) q.set('limit', String(params.limit));
   if (params.offset != null) q.set('offset', String(params.offset));
-  return api.get<{ entries: import('@research-cms/shared-types').LogEntry[]; total: number }>(`/logs?${q}`);
+  return api.get<{ entries: LogEntry[]; total: number }>(`/logs?${q}`);
 };
 
 export const getLogTags = () =>
