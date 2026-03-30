@@ -7,11 +7,13 @@ import { LayoutsModule } from './layouts/layouts.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
 import { PublicModule } from './public/public.module';
 import { LogsModule } from './logs/logs.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
     MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost:27017/nestjs-api'),
     LogsModule,
+    MediaModule,
     AuthModule,
     SchemaModule,
     ContentModule,

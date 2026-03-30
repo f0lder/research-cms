@@ -14,6 +14,9 @@ export class ContentType implements ContentTypeDefinition {
 	
 	@Prop({ type: [Object], required: true })
 	fields: FieldDefinition[];
+
+	@Prop({ default: false })
+	system: boolean;
 }
 
 export const ContentTypeSchema = SchemaFactory.createForClass(ContentType);

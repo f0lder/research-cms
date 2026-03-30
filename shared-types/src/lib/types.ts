@@ -11,8 +11,8 @@ export enum FieldType {
   DATETIME = 'datetime',
   // Toggle
   BOOLEAN = 'boolean',
-  // Media
-  IMAGE = 'image',
+  // Media (reference to the built-in media schema — use mimeType to distinguish image/video/etc.)
+  MEDIA = 'media',
   // Choice
   SELECT = 'select',
   TAGS = 'tags',
@@ -42,6 +42,8 @@ export interface ContentTypeDefinition {
   name: string;
   slug: string;
   fields: FieldDefinition[];
+  /** System schemas (e.g. media) cannot be deleted or renamed. */
+  system?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -57,6 +59,22 @@ export interface ContentEntry {
   data: Record<string, FieldValue>;
   createdAt?: string;
   updatedAt?: string;
+}
+
+// ── Media ─────────────────────────────────────────────────────────────────────
+
+export const MEDIA_SCHEMA_SLUG = 'media';
+
+/** Shape of a resolved media entry (used in admin picker + public API). */
+export interface MediaEntry {
+  _id: string;
+  title: string;
+  url: string;
+  caption?: string;
+  altText?: string;
+  mimeType?: string;
+  fileSize?: number;
+  createdAt?: string;
 }
 
 // ── Block Layout ──────────────────────────────────────────────────────────────
@@ -80,7 +98,7 @@ export interface BlockLayout {
 
 /** A single block with its resolved value, returned by the public API. */
 export interface PublicBlock extends BlockDefinition {
-  value: FieldValue | null;
+  value: FieldValue | MediaEntry | null;
 }
 
 /** Shape of a public API entry response. */

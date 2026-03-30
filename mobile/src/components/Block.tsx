@@ -7,10 +7,12 @@ function BlockValue({ block }: { block: PublicBlock }) {
   if (block.value === null || block.value === undefined || block.value === '') return null;
 
   switch (block.type) {
-    case FieldType.IMAGE:
-      return (
-        <Image source={{ uri: String(block.value) }} style={s.image} resizeMode="cover" />
-      );
+    case FieldType.MEDIA: {
+      const mediaValue = block.value as { url?: string } | string | null;
+      const uri = typeof mediaValue === 'object' && mediaValue !== null ? mediaValue.url : String(mediaValue ?? '');
+      if (!uri) return null;
+      return <Image source={{ uri }} style={s.image} resizeMode="cover" />;
+    }
 
     case FieldType.BOOLEAN:
       return (

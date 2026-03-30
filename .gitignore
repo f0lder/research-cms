@@ -64,3 +64,7 @@ cache/
 .nx/polygraph
 .claude/worktrees
 .claude/settings.local.json
+
+
+# Media dir for local storage
+uploads

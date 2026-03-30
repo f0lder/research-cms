@@ -25,7 +25,7 @@ const FIELD_TYPE_OPTIONS = [
     { value: FieldType.BOOLEAN,   label: 'Boolean' },
   ]},
   { label: 'Media', options: [
-    { value: FieldType.IMAGE,     label: 'Image URL' },
+    { value: FieldType.MEDIA, label: 'Media' },
   ]},
   { label: 'Choice', options: [
     { value: FieldType.SELECT,    label: 'Select' },

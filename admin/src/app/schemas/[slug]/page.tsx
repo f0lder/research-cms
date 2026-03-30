@@ -24,15 +24,18 @@ function CellValue({
         ? <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 font-mono">Yes</span>
         : <span className="text-xs bg-zinc-100 text-zinc-400 px-1.5 py-0.5 font-mono">No</span>;
 
-    case FieldType.IMAGE:
+    case FieldType.MEDIA: {
+      const mediaUrl = refCache[String(value)]?.data?.url;
+      if (!mediaUrl) return <span className="text-zinc-300 text-xs font-mono">—</span>;
       return (
         <img
-          src={String(value)}
+          src={String(mediaUrl)}
           alt=""
           className="h-8 w-auto object-contain"
           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
       );
+    }
 
     case FieldType.REFERENCE: {
       const id = String(value);
@@ -133,16 +136,19 @@ export default function SchemaDetailPage() {
     setEntries(entriesRes.data ?? []);
     setLoading(false);
 
-    // Fetch referenced entries so cells can show titles instead of IDs
+    // Fetch referenced + media entries so cells can resolve IDs to values
     if (schemaData) {
-      const targetSlugs = [...new Set(
+      const refSlugs = [...new Set(
         schemaData.fields
           .filter(f => f.type === FieldType.REFERENCE || f.type === FieldType.REFERENCES)
           .map(f => (f.config?.type === 'reference' || f.config?.type === 'references') ? f.config.targetSlug : null)
           .filter((s): s is string => !!s)
       )];
-      if (targetSlugs.length > 0) {
-        const results = await Promise.all(targetSlugs.map(s => getAllEntries(s)));
+      const hasMedia = schemaData.fields.some(f => f.type === FieldType.MEDIA);
+      const slugsToFetch = hasMedia ? [...refSlugs, 'media'] : refSlugs;
+
+      if (slugsToFetch.length > 0) {
+        const results = await Promise.all(slugsToFetch.map(s => getAllEntries(s)));
         const cache: Record<string, ContentEntry> = {};
         results.forEach(({ data }) => (data ?? []).forEach(e => { if (e._id) cache[e._id] = e; }));
         setRefCache(cache);

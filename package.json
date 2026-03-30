@@ -27,6 +27,7 @@
     "@swc/helpers": "~0.5.18",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/bcrypt": "^6.0.0",
+    "@types/multer": "^2.1.0",
     "@types/node": "^25.3.2",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",

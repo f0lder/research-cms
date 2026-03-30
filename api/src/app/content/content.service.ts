@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, isValidObjectId } from 'mongoose';
 import { ContentEntryModel, ContentEntryDocument } from './schemas/content-entry.schema';
 import { SchemaService } from '../schema/schema.service';
-import { FieldType, FieldValue } from '@research-cms/shared-types';
+import { FieldType, FieldValue, MEDIA_SCHEMA_SLUG } from '@research-cms/shared-types';
 import { LogsService } from '../logs/logs.service';
 
 @Injectable()
@@ -68,7 +68,6 @@ export class ContentService {
 					}
 					break;
 				case FieldType.URL:
-				case FieldType.IMAGE:
 					try { new URL(String(value)); } catch {
 						errors.push(`"${field.label || field.name}" must be a valid URL`);
 					}
@@ -85,11 +84,14 @@ export class ContentService {
 						errors.push(`"${field.label || field.name}" must be an array of strings`);
 					}
 					break;
+				case FieldType.MEDIA:
 				case FieldType.REFERENCE: {
 					if (typeof value !== 'string' || !isValidObjectId(value)) {
 						errors.push(`"${field.label || field.name}" must be a valid entry ID`);
 					} else {
-						const targetSlug = field.config?.type === 'reference' ? field.config.targetSlug : schemaSlug;
+						const targetSlug = field.type === FieldType.MEDIA
+							? MEDIA_SCHEMA_SLUG
+							: (field.config?.type === 'reference' ? field.config.targetSlug : schemaSlug);
 						const exists = await this.model.exists({ _id: value, schemaSlug: targetSlug });
 						if (!exists) {
 							errors.push(`"${field.label || field.name}" references an entry that does not exist`);

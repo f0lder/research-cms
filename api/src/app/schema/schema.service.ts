@@ -33,7 +33,11 @@ export class SchemaService {
 	}
 
 	async findAll(): Promise<ContentTypeDocument[]> {
-		return this.model.find().exec();
+		return this.model.find({ system: { $ne: true } }).exec();
+	}
+
+	async findSystem(): Promise<ContentTypeDocument[]> {
+		return this.model.find({ system: true }).exec();
 	}
 
 	async findOne(slug: string): Promise<ContentTypeDocument> {
@@ -46,6 +50,8 @@ export class SchemaService {
 
 	async update(slug: string, data: Partial<ContentTypeDefinition>): Promise<ContentTypeDocument> {
 		const schema = await this.findOne(slug);
+		if (schema.system) throw new BadRequestException(`"${schema.name}" is a system schema and cannot be modified`);
+
 
 		if (data.fields && data.fields.length === 0) {
 			throw new BadRequestException('Schema requires at least one field');
@@ -91,6 +97,7 @@ export class SchemaService {
 
 	async delete(slug: string): Promise<void> {
 		const schema = await this.findOne(slug);
+		if (schema.system) throw new BadRequestException(`"${schema.name}" is a system schema and cannot be deleted`);
 
 		// Block deletion if other schemas have reference fields pointing to this slug
 		const referencing = await this.findSchemasReferencingSlug(slug);

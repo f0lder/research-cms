@@ -155,6 +155,9 @@ export function formatDateTime(date: string | Date): string {
 export const getAllSchemas = () =>
   api.get<ContentTypeDefinition[]>('/schemas');
 
+export const getSystemSchemas = () =>
+  api.get<ContentTypeDefinition[]>('/schemas/system');
+
 export const getSchema = (slug: string) =>
   api.get<ContentTypeDefinition>(`/schemas/${slug}`);
 
@@ -205,6 +208,40 @@ export const updateApiKeySchemas = (id: string, allowedSchemas: string[]) =>
 
 export const deleteApiKey = (id: string) =>
   api.delete(`/api-keys/${id}`);
+
+// ── Media API ─────────────────────────────────────────────────────────────────
+
+export interface StorageResult {
+  key: string;
+  url: string;
+  size: number;
+  mimeType: string;
+  originalName: string;
+}
+
+/** Upload a file and create a media entry. Returns the full MediaEntry. */
+export async function uploadMedia(file: File, title?: string): Promise<import('@research-cms/shared-types').MediaEntry> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const form = new FormData();
+  form.append('file', file);
+  const qs = title ? `?title=${encodeURIComponent(title)}` : '';
+  const res = await fetch(`${API_URL}/media/upload${qs}`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message ?? 'Upload failed');
+  return json;
+}
+
+export const getMediaLibrary = () =>
+  api.get<import('@research-cms/shared-types').MediaEntry[]>('/media/library');
+
+export const updateMedia = (id: string, data: { title?: string; caption?: string; altText?: string }) =>
+  api.patch<import('@research-cms/shared-types').MediaEntry>(`/media/${id}`, data);
+
+export const deleteMedia = (id: string) => api.delete(`/media/${id}`);
 
 // ── Logs API ──────────────────────────────────────────────────────────────────
 

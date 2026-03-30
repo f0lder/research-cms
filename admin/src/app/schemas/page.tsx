@@ -2,18 +2,54 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
-import { getAllSchemas, formatDate } from '@/lib/utils';
+import { getAllSchemas, getSystemSchemas, formatDate } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+
+function SchemaRow({ schema, isAdmin }: { schema: ContentTypeDefinition; isAdmin: boolean }) {
+  return (
+    <div className="panel flex items-center justify-between">
+      <div>
+        <Link href={`/schemas/${schema.slug}`} className="no-underline">
+          <h3 className="text-sm font-semibold text-zinc-900 hover:text-zinc-600 cursor-pointer mb-1">
+            {schema.name}
+          </h3>
+        </Link>
+        <p className="text-xs text-zinc-400 mb-1">/{schema.slug}</p>
+        <p className="text-xs text-zinc-500">
+          {schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <span className="text-xs text-zinc-300">
+          {schema.createdAt ? formatDate(schema.createdAt) : ''}
+        </span>
+        {!schema.system && (
+          <Link href={`/schemas/${schema.slug}`}>
+            <button className="btn-secondary text-xs px-3 py-1.5">Entries</button>
+          </Link>
+        )}
+        {isAdmin && !schema.system && (
+          <Link href={`/schemas/edit/${schema.slug}`}>
+            <button className="btn-primary text-xs px-3 py-1.5">Edit</button>
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function SchemasPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [schemas, setSchemas] = useState<ContentTypeDefinition[]>([]);
+  const [systemSchemas, setSystemSchemas] = useState<ContentTypeDefinition[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getAllSchemas().then(({ data }) => {
-      if (data) setSchemas(data);
+    Promise.all([getAllSchemas(), getSystemSchemas()]).then(([user, system]) => {
+      if (user.data) setSchemas(user.data);
+      if (system.data) setSystemSchemas(system.data);
       setLoading(false);
     });
   }, []);
@@ -22,6 +58,7 @@ export default function SchemasPage() {
 
   return (
     <div className="page">
+      {/* User-defined schemas */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="page-heading">Content Types</h1>
@@ -44,37 +81,26 @@ export default function SchemasPage() {
           )}
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 mb-12">
           {schemas.map(schema => (
-            <div key={schema._id} className="panel flex items-center justify-between">
-              <div>
-                <Link href={`/schemas/${schema.slug}`} className="no-underline">
-                  <h3 className="text-sm font-semibold text-zinc-900 hover:text-zinc-600 cursor-pointer mb-1">
-                    {schema.name}
-                  </h3>
-                </Link>
-                <p className="text-xs text-zinc-400 mb-1">/{schema.slug}</p>
-                <p className="text-xs text-zinc-500">
-                  {schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-zinc-300">
-                  {schema.createdAt ? formatDate(schema.createdAt) : ''}
-                </span>
-                <Link href={`/schemas/${schema.slug}`}>
-                  <button className="btn-secondary text-xs px-3 py-1.5">Entries</button>
-                </Link>
-                {isAdmin && (
-                  <Link href={`/schemas/edit/${schema.slug}`}>
-                    <button className="btn-primary text-xs px-3 py-1.5">Edit</button>
-                  </Link>
-                )}
-              </div>
-            </div>
+            <SchemaRow key={schema._id} schema={schema} isAdmin={isAdmin} />
           ))}
         </div>
+      )}
+
+      {/* System schemas */}
+      {systemSchemas.length > 0 && (
+        <>
+          <div className="mb-4">
+            <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">System Types</h2>
+            <p className="text-xs text-zinc-400 mt-0.5">Built-in schemas managed by the CMS — read only.</p>
+          </div>
+          <div className="flex flex-col gap-3">
+            {systemSchemas.map(schema => (
+              <SchemaRow key={schema._id} schema={schema} isAdmin={isAdmin} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
