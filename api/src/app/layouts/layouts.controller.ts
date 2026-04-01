@@ -15,15 +15,15 @@ export class LayoutsController {
     private readonly schemaService: SchemaService,
   ) {}
 
-  /** Get layout for a schema. If none saved, returns a bootstrapped default. */
+  /** Get layout for a schema, synced against the live schema fields. */
   @Get(':schemaSlug')
   async findOne(@Param('schemaSlug') schemaSlug: string) {
-    const saved = await this.layoutsService.findOne(schemaSlug);
-    if (saved) return saved;
-
-    // No layout saved yet — derive from schema fields
-    const schema = await this.schemaService.findOne(schemaSlug);
-    return this.layoutsService.bootstrapFromSchema(schema);
+    const [schema, saved] = await Promise.all([
+      this.schemaService.findOne(schemaSlug),
+      this.layoutsService.findOne(schemaSlug),
+    ]);
+    const blocks = this.layoutsService.syncWithSchema(schema, saved?.blocks ?? null);
+    return { schemaSlug, blocks };
   }
 
   /** Save (upsert) a layout. Admin only. */

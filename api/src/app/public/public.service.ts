@@ -31,17 +31,17 @@ export class PublicService {
   private async resolveBlocks(schemaSlug: string, data: Record<string, unknown>): Promise<PublicBlock[]> {
     const schema = await this.schemaService.findOne(schemaSlug);
     const savedLayout = await this.layoutsService.findOne(schemaSlug);
-    const layout = savedLayout ?? this.layoutsService.bootstrapFromSchema(schema);
 
     const fieldMap = new Map(schema.fields.map(f => [f.name, f]));
+    const layoutBlocks = this.layoutsService.syncWithSchema(schema, savedLayout?.blocks ?? null);
 
-    const blocks = layout.blocks
+    const blocks = layoutBlocks
       .filter(b => b.visible)
       .sort((a, b) => a.order - b.order);
 
     return Promise.all(blocks.map(async b => {
-      const raw = data[b.fieldName] ?? null;
       const field = fieldMap.get(b.fieldName);
+      const raw = data[b.fieldName] ?? null;
       if (field?.type === FieldType.MEDIA && typeof raw === 'string') {
         const resolved = await this.resolveMediaId(raw);
         return { ...b, value: resolved };

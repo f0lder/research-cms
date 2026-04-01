@@ -101,32 +101,8 @@ export default function LayoutEditorPage() {
     const schema = schemaRes.data!;
     setSchemaName(schema.name);
 
-    if (layoutRes.data) {
-      // Use saved layout, but merge in any new fields from schema not yet in layout
-      const saved = layoutRes.data.blocks;
-      const savedNames = new Set(saved.map(b => b.fieldName));
-      const newBlocks: BlockDefinition[] = schema.fields
-        .filter(f => !savedNames.has(f.name))
-        .map((f, i) => ({
-          fieldName: f.name,
-          label: f.label,
-          type: f.type,
-          visible: true,
-          order: saved.length + i,
-        }));
-      setBlocks([...saved, ...newBlocks]);
-    } else {
-      // Bootstrap from schema fields
-      setBlocks(
-        schema.fields.map((f, i) => ({
-          fieldName: f.name,
-          label: f.label,
-          type: f.type,
-          visible: true,
-          order: i,
-        }))
-      );
-    }
+    // API always returns synced blocks (merged against live schema)
+    setBlocks(layoutRes.data?.blocks ?? []);
     setLoading(false);
   }, [slug]);
 

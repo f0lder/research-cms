@@ -8,10 +8,30 @@ function BlockValue({ block }: { block: PublicBlock }) {
 
   switch (block.type) {
     case FieldType.MEDIA: {
-      const mediaValue = block.value as { url?: string } | string | null;
-      const uri = typeof mediaValue === 'object' && mediaValue !== null ? mediaValue.url : String(mediaValue ?? '');
-      if (!uri) return null;
-      return <Image source={{ uri }} style={s.image} resizeMode="cover" />;
+      const media = typeof block.value === 'object' && block.value !== null
+        ? block.value as { url?: string; mimeType?: string; title?: string; caption?: string; altText?: string }
+        : null;
+      if (!media?.url) return null;
+      const isImage = !media.mimeType || media.mimeType.startsWith('image/');
+      if (isImage) {
+        return (
+          <View>
+            <Image
+              source={{ uri: media.url }}
+              style={s.image}
+              resizeMode="cover"
+              accessibilityLabel={media.altText || media.title || ''}
+            />
+            {media.caption ? <Text style={s.caption}>{media.caption}</Text> : null}
+          </View>
+        );
+      }
+      return (
+        <View style={s.filePill}>
+          <Text style={s.fileTitle}>{media.title || media.url.split('/').pop()}</Text>
+          {media.mimeType ? <Text style={s.fileMime}>{media.mimeType}</Text> : null}
+        </View>
+      );
     }
 
     case FieldType.BOOLEAN:
@@ -81,4 +101,8 @@ const s = StyleSheet.create({
   tagRow:   { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag:      { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 3, backgroundColor: C.border },
   tagText:  { fontSize: 11, color: C.text, fontFamily: 'monospace' },
+  caption:  { fontSize: 12, color: C.subText, marginTop: 6, fontStyle: 'italic' },
+  filePill: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, backgroundColor: C.border, borderRadius: 4 },
+  fileTitle: { fontSize: 14, color: C.text, flex: 1 },
+  fileMime:  { fontSize: 11, color: C.subText, fontFamily: 'monospace' },
 });
