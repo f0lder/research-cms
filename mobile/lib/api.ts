@@ -1,4 +1,4 @@
-import { API_URL, API_KEY } from './config';
+import { API_URL, API_KEY } from '@/lib/config';
 import { PublicEntryResponse } from '@research-cms/shared-types';
 
 const baseHeaders = { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' };

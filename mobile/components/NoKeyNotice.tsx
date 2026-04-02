@@ -1,13 +1,12 @@
-import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { C } from '../theme';
+import { C } from '@/lib/theme';
 
 export function NoKeyNotice() {
   return (
     <View style={s.notice}>
       <Text style={s.title}>API key not set</Text>
       <Text style={s.body}>
-        Open <Text style={s.code}>mobile/src/config.ts</Text> and paste your API key.{'\n'}
+        Open <Text style={s.code}>mobile/lib/config.ts</Text> and paste your API key.{'\n'}
         Generate one in the admin under <Text style={s.code}>API Keys</Text>.
       </Text>
     </View>

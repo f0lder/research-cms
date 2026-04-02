@@ -1,28 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { PublicEntryResponse } from '@research-cms/shared-types';
-import { getEntry } from '../api';
-import { Block } from '../components/Block';
-import { C, shared } from '../theme';
+import { useSchemasContext } from '@/app/_layout';
+import { getEntry } from '@/lib/api';
+import { Block } from '@/components/Block';
+import { C, shared } from '@/lib/theme';
 
-interface Props {
-  slug: string;
-  entryId: string;
-}
+export default function DetailPage() {
+  const { slug, id } = useLocalSearchParams<{ slug: string; id: string }>();
+  const { schemas } = useSchemasContext();
+  const navigation = useNavigation();
 
-export function DetailScreen({ slug, entryId }: Props) {
   const [entry, setEntry] = useState<PublicEntryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const schemaName = schemas.find(s => s.slug === slug)?.name ?? slug;
+
+  useEffect(() => {
+    navigation.setOptions({ title: schemaName });
+  }, [schemaName, navigation]);
+
   useEffect(() => {
     setLoading(true);
     setError('');
-    getEntry(slug, entryId)
+    getEntry(slug, id)
       .then(setEntry)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [slug, entryId]);
+  }, [slug, id]);
 
   if (loading) return <ActivityIndicator style={shared.center} color={C.accent} />;
   if (error || !entry) return <Text style={shared.errorText}>{error || 'Not found'}</Text>;

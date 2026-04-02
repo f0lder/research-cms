@@ -1,19 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { useLocalSearchParams, useNavigation, router } from 'expo-router';
 import { PublicEntryResponse } from '@research-cms/shared-types';
-import { listEntries } from '../api';
-import { entryTitle, entrySubtitle } from '../helpers';
-import { C, shared } from '../theme';
+import { useSchemasContext } from '@/app/_layout';
+import { listEntries } from '@/lib/api';
+import { entryTitle, entrySubtitle } from '@/lib/helpers';
+import { C, shared } from '@/lib/theme';
 
-interface Props {
-  slug: string;
-  onSelect: (id: string) => void;
-}
+export default function ArchivePage() {
+  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { schemas } = useSchemasContext();
+  const navigation = useNavigation();
 
-export function ArchiveScreen({ slug, onSelect }: Props) {
   const [entries, setEntries] = useState<PublicEntryResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const schemaName = schemas.find(s => s.slug === slug)?.name ?? slug;
+
+  useEffect(() => {
+    navigation.setOptions({ title: schemaName });
+  }, [schemaName, navigation]);
 
   useEffect(() => {
     setLoading(true);
@@ -34,7 +41,11 @@ export function ArchiveScreen({ slug, onSelect }: Props) {
       keyExtractor={e => e._id}
       contentContainerStyle={s.list}
       renderItem={({ item }) => (
-        <TouchableOpacity style={s.card} onPress={() => onSelect(item._id)} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={s.card}
+          onPress={() => router.push(`/${slug}/${item._id}` as never)}
+          activeOpacity={0.7}
+        >
           <Text style={s.title} numberOfLines={2}>{entryTitle(item)}</Text>
           {entrySubtitle(item) !== null && (
             <Text style={s.sub} numberOfLines={2}>{entrySubtitle(item)}</Text>
