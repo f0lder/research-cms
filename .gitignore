@@ -68,3 +68,6 @@ cache/
 
 # Media dir for local storage
 uploads
+
+#Secret files
+api/.env
