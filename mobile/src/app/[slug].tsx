@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { FlatList, TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useNavigation, router } from 'expo-router';
 import { PublicEntryResponse } from '@research-cms/shared-types';
-import { useSchemasContext } from '@/app/_layout';
+import { useSchemasContext } from '@/src/app/_layout';
 import { listEntries } from '@/lib/api';
 import { entryTitle, entrySubtitle } from '@/lib/helpers';
 import { C, shared } from '@/lib/theme';

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { PublicEntryResponse } from '@research-cms/shared-types';
-import { useSchemasContext } from '@/app/_layout';
+import { useSchemasContext } from '@/src/app/_layout';
 import { getEntry } from '@/lib/api';
 import { Block } from '@/components/Block';
 import { C, shared } from '@/lib/theme';

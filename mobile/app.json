@@ -6,8 +6,8 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
-    "router": {
-      "root": "app"
+    "experiments": {
+      "routerRoot": "app"
     },
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

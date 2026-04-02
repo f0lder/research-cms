@@ -22,11 +22,12 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const userCount = await this.userModel.countDocuments();
     const user = await this.userModel.create({
       email,
       password: hashedPassword,
       name,
-      role: 'editor',
+      role: userCount === 0 ? UserRole.ADMIN : UserRole.EDITOR,
     });
 
     this.logsService.log(`New user registered: ${name} (${email})`, ['auth', 'register'], { email, name });

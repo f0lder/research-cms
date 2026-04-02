@@ -3,7 +3,7 @@ import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { API_KEY, API_URL } from '@/lib/config';
 import { NoKeyNotice } from '@/components/NoKeyNotice';
-import { useSchemasContext } from '@/app/_layout';
+import { useSchemasContext } from '@/src/app/_layout';
 import { C, shared } from '@/lib/theme';
 
 export default function IndexScreen() {
