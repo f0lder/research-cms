@@ -16,8 +16,9 @@ export function listSchemas(): Promise<{ slug: string; name: string }[]> {
   return get('/public');
 }
 
-export function listEntries(slug: string): Promise<PublicEntryResponse[]> {
-  return get(`/public/${slug}`);
+export async function listEntries(slug: string): Promise<PublicEntryResponse[]> {
+  const res = await get<{ items: PublicEntryResponse[] }>(`/public/${slug}`);
+  return res.items;
 }
 
 export function getEntry(slug: string, id: string): Promise<PublicEntryResponse> {

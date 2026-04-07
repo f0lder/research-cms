@@ -53,7 +53,7 @@ export default function DynamicFieldInput({
     getAllEntries(targetSlug).then(({ data }) => {
       if (data) {
         setReferenceOptions(
-          data.map(entry => ({ value: entry._id ?? '', label: getEntryTitle(entry) }))
+          data.items.map(entry => ({ value: entry._id ?? '', label: getEntryTitle(entry) }))
         );
       }
       setReferenceLoading(false);

@@ -1,5 +1,5 @@
 import { API_URL } from '@/config';
-import { ContentTypeDefinition, ContentEntry, FieldValue, BlockLayout, BlockDefinition, ApiKey, LogEntry } from '@research-cms/shared-types';
+import { ContentTypeDefinition, ContentEntry, FieldValue, BlockLayout, BlockDefinition, Client, LogEntry } from '@research-cms/shared-types';
 
 // ── HTTP ──────────────────────────────────────────────────────────────────────
 
@@ -65,10 +65,11 @@ export const adminRoutes = {
   schemaCreate:  '/schemas/create',
   schemaEdit:    (slug: string) => `/schemas/edit/${slug}`,
   schemaDetail:  (slug: string) => `/schemas/${slug}`,
-  schemaLayout:  (slug: string) => `/schemas/${slug}/layout`,
   contentCreate: (slug: string) => `/schemas/${slug}/content/create`,
   contentEdit:   (slug: string, id: string) => `/schemas/${slug}/content/edit/${id}`,
-  apiKeys:       '/api-keys',
+  clients:       '/clients',
+  clientDetail:  (id: string) => `/clients/${id}`,
+  clientLayout:  (id: string, slug: string) => `/clients/${id}/layout/${slug}`,
 };
 
 /** Extract a single string from Next.js dynamic route params (handles string | string[]). */
@@ -172,8 +173,10 @@ export const deleteSchema = (slug: string) =>
 
 // ── Content API ───────────────────────────────────────────────────────────────
 
-export const getAllEntries = (schemaSlug: string) =>
-  api.get<ContentEntry[]>(`/content/${schemaSlug}`);
+export const getAllEntries = (schemaSlug: string, page = 1, limit = 50) =>
+  api.get<{ items: ContentEntry[]; total: number; page: number; limit: number }>(
+    `/content/${schemaSlug}?page=${page}&limit=${limit}`
+  );
 
 export const getEntry = (schemaSlug: string, id: string) =>
   api.get<ContentEntry>(`/content/${schemaSlug}/${id}`);
@@ -189,25 +192,29 @@ export const deleteEntry = (schemaSlug: string, id: string) =>
 
 // ── Layout API ────────────────────────────────────────────────────────────────
 
+/** Fetch the global default layout for a schema (used as the base when editing client layouts). */
 export const getLayout = (schemaSlug: string) =>
   api.get<BlockLayout>(`/layouts/${schemaSlug}`);
 
-export const saveLayout = (schemaSlug: string, blocks: BlockDefinition[]) =>
-  api.put<BlockLayout>(`/layouts/${schemaSlug}`, { blocks });
+// ── Clients API ───────────────────────────────────────────────────────────────
 
-// ── API Keys API ──────────────────────────────────────────────────────────────
+export const getAllClients = () =>
+  api.get<Client[]>('/clients');
 
-export const getAllApiKeys = () =>
-  api.get<ApiKey[]>('/api-keys');
+export const getClient = (id: string) =>
+  api.get<Client>(`/clients/${id}`);
 
-export const createApiKey = (name: string) =>
-  api.post<ApiKey>('/api-keys', { name });
+export const createClient = (name: string) =>
+  api.post<Client>('/clients', { name });
 
-export const updateApiKeySchemas = (id: string, allowedSchemas: string[]) =>
-  api.patch<ApiKey>(`/api-keys/${id}/schemas`, { allowedSchemas });
+export const updateClientSchemas = (id: string, allowedSchemas: string[]) =>
+  api.patch<Client>(`/clients/${id}/schemas`, { allowedSchemas });
 
-export const deleteApiKey = (id: string) =>
-  api.delete(`/api-keys/${id}`);
+export const upsertClientLayout = (id: string, schemaSlug: string, blocks: BlockDefinition[]) =>
+  api.put<Client>(`/clients/${id}/layouts/${schemaSlug}`, { blocks });
+
+export const deleteClient = (id: string) =>
+  api.delete(`/clients/${id}`);
 
 // ── Media API ─────────────────────────────────────────────────────────────────
 

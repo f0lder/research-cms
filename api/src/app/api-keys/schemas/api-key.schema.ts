@@ -1,11 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { ApiKey } from '@research-cms/shared-types';
+import { Client, BlockDefinition } from '@research-cms/shared-types';
 
 export type ApiKeyDocument = HydratedDocument<ApiKeyModel>;
 
 @Schema({ timestamps: true })
-export class ApiKeyModel implements Omit<ApiKey, '_id' | 'createdAt'> {
+export class ApiKeyModel implements Omit<Client, '_id' | 'createdAt'> {
   @Prop({ required: true })
   name: string;
 
@@ -23,6 +23,17 @@ export class ApiKeyModel implements Omit<ApiKey, '_id' | 'createdAt'> {
 
   @Prop({ type: [String], default: [] })
   allowedSchemas: string[];
+
+  @Prop({
+    type: [
+      {
+        schemaSlug: { type: String, required: true },
+        blocks: { type: [Object], default: [] },
+      },
+    ],
+    default: [],
+  })
+  layouts: { schemaSlug: string; blocks: BlockDefinition[] }[];
 }
 
 export const ApiKeySchema = SchemaFactory.createForClass(ApiKeyModel);

@@ -119,16 +119,27 @@ export interface LogEntry {
   createdAt?: string;
 }
 
-// ── API Keys ──────────────────────────────────────────────────────────────────
+// ── Clients (formerly API Keys) ───────────────────────────────────────────────
 
-export interface ApiKey {
+/** Per-schema block layout override stored on a client. */
+export interface ClientLayout {
+  schemaSlug: string;
+  blocks: BlockDefinition[];
+}
+
+export interface Client {
   _id?: string;
   name: string;
   key: string;
   hits: number;
-  lastUsedAt?: string;
+  lastUsedAt?: string | null;
   active: boolean;
   /** Empty array = all schemas allowed. Non-empty = only listed slugs accessible. */
   allowedSchemas: string[];
+  /** Per-schema block layout overrides. Schemas not listed here use the global layout. */
+  layouts: ClientLayout[];
   createdAt?: string;
 }
+
+/** @deprecated Use Client instead */
+export type ApiKey = Client;

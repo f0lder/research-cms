@@ -13,13 +13,16 @@ export class ApiKeyGuard implements CanActivate {
     const doc = await this.apiKeysService.validateAndTrack(key);
     if (!doc) throw new UnauthorizedException('Invalid or inactive API key');
 
-    // Attach scope to request so controllers can filter accordingly
+    // Attach scope and client-specific layouts to request
     request.apiKeyAllowedSchemas = doc.allowedSchemas;
+    request.clientLayouts = new Map(
+      (doc.layouts ?? []).map(l => [l.schemaSlug, l.blocks]),
+    );
 
     // If allowedSchemas is non-empty, enforce schema-level access
     const schemaSlug: string | undefined = request.params?.schemaSlug;
     if (schemaSlug && doc.allowedSchemas.length > 0 && !doc.allowedSchemas.includes(schemaSlug)) {
-      throw new ForbiddenException(`This API key does not have access to "${schemaSlug}"`);
+      throw new ForbiddenException(`This key does not have access to "${schemaSlug}"`);
     }
 
     return true;

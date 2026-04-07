@@ -39,7 +39,7 @@ export default function Sidebar() {
     pathname.startsWith('/schemas/create') ||
     pathname.startsWith('/schemas/edit');
   const usersActive = pathname.startsWith('/users');
-  const apiKeysActive = pathname.startsWith('/api-keys');
+  const clientsActive = pathname.startsWith('/clients');
   const mediaActive = pathname.startsWith('/media');
   const logsActive = pathname.startsWith('/logs');
 
@@ -109,9 +109,9 @@ export default function Sidebar() {
           <div className={navItem(usersActive)}>Users</div>
         </Link>
 
-        {/* API Keys */}
-        <Link href="/api-keys" className="block no-underline">
-          <div className={navItem(apiKeysActive)}>API Keys</div>
+        {/* Clients */}
+        <Link href="/clients" className="block no-underline">
+          <div className={navItem(clientsActive)}>Clients</div>
         </Link>
 
         {/* Media */}

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, HttpCode, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, UseGuards } from '@nestjs/common';
 import { FieldValue } from '@research-cms/shared-types';
 import { ContentService } from './content.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -12,8 +12,12 @@ export class ContentController {
 	constructor(private readonly contentService: ContentService) {}
 
 	@Get(':schemaSlug')
-	findAll(@Param('schemaSlug') schemaSlug: string) {
-		return this.contentService.findAll(schemaSlug);
+	findAll(
+		@Param('schemaSlug') schemaSlug: string,
+		@Query('page') page?: string,
+		@Query('limit') limit?: string,
+	) {
+		return this.contentService.findAll(schemaSlug, Number(page) || 1, Number(limit) || 50);
 	}
 
 	@Get(':schemaSlug/:id')

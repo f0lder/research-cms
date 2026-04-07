@@ -1,11 +1,12 @@
-import { Controller, Get, Post, Delete, Patch, Body, Param, HttpCode, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Put, Body, Param, HttpCode, UseGuards } from '@nestjs/common';
 import { ApiKeysService } from './api-keys.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/schemas/user.schema';
+import { BlockDefinition } from '@research-cms/shared-types';
 
-@Controller('api-keys')
+@Controller('clients')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class ApiKeysController {
@@ -14,6 +15,11 @@ export class ApiKeysController {
   @Get()
   findAll() {
     return this.apiKeysService.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.apiKeysService.findOne(id);
   }
 
   @Post()
@@ -27,6 +33,15 @@ export class ApiKeysController {
     @Body() body: { allowedSchemas: string[] },
   ) {
     return this.apiKeysService.updateAllowedSchemas(id, body.allowedSchemas);
+  }
+
+  @Put(':id/layouts/:schemaSlug')
+  upsertLayout(
+    @Param('id') id: string,
+    @Param('schemaSlug') schemaSlug: string,
+    @Body() body: { blocks: BlockDefinition[] },
+  ) {
+    return this.apiKeysService.upsertLayout(id, schemaSlug, body.blocks);
   }
 
   @Delete(':id')

@@ -133,7 +133,7 @@ export default function SchemaDetailPage() {
     if (schemaRes.error) { setError(schemaRes.error); setLoading(false); return; }
     const schemaData = schemaRes.data ?? null;
     setSchema(schemaData);
-    setEntries(entriesRes.data ?? []);
+    setEntries(entriesRes.data?.items ?? []);
     setLoading(false);
 
     // Fetch referenced + media entries so cells can resolve IDs to values
@@ -150,7 +150,7 @@ export default function SchemaDetailPage() {
       if (slugsToFetch.length > 0) {
         const results = await Promise.all(slugsToFetch.map(s => getAllEntries(s)));
         const cache: Record<string, ContentEntry> = {};
-        results.forEach(({ data }) => (data ?? []).forEach(e => { if (e._id) cache[e._id] = e; }));
+        results.forEach(({ data }) => (data?.items ?? []).forEach(e => { if (e._id) cache[e._id] = e; }));
         setRefCache(cache);
       }
     }
@@ -228,9 +228,6 @@ export default function SchemaDetailPage() {
             <>
               <Link href={adminRoutes.schemaEdit(slug)}>
                 <button className="btn-secondary">Edit schema</button>
-              </Link>
-              <Link href={adminRoutes.schemaLayout(slug)}>
-                <button className="btn-secondary">Block layout</button>
               </Link>
             </>
           )}

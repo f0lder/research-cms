@@ -53,8 +53,8 @@ export class MediaController {
   /** List all media entries (for the picker). */
   @Get('library')
   async library() {
-    const entries = await this.contentService.findAll(MEDIA_SCHEMA_SLUG);
-    return entries.map(e => this.toMediaEntry(e));
+    const { items } = await this.contentService.findAll(MEDIA_SCHEMA_SLUG);
+    return items.map(e => this.toMediaEntry(e));
   }
 
   /** Update title / caption / altText of a media entry. */

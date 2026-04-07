@@ -16,27 +16,32 @@ export class ContentService {
 
 	// ─── Validation ────────────────────────────────────────────────────────────
 
+	/**
+	 * Validates entry data against its schema.
+	 * @param partial - When true, missing required fields are allowed (partial update).
+	 */
 	private async validateData(
 		schemaSlug: string,
 		data: Record<string, FieldValue>,
-		partial = false
+		partial = false,
 	): Promise<void> {
-		const schema = await this.schemaService.findOne(schemaSlug);
+		const resolvedSchema = await this.schemaService.findOne(schemaSlug);
 		const errors: string[] = [];
 
 		// Reject fields not defined in the schema
-		const allowed = new Set(schema.fields.map(f => f.name));
+		const allowed = new Set(resolvedSchema.fields.map(f => f.name));
 		for (const key of Object.keys(data)) {
-			if (!allowed.has(key)) {
-				errors.push(`Unknown field: "${key}"`);
-			}
+			if (!allowed.has(key)) errors.push(`Unknown field: "${key}"`);
 		}
 
-		for (const field of schema.fields) {
+		// Collect reference existence checks so they run in parallel instead of sequentially
+		const referenceChecks: Promise<void>[] = [];
+
+		for (const field of resolvedSchema.fields) {
 			const value = data[field.name];
 			const missing = value === undefined || value === null || value === '';
 
-			// Required check (skip on partial updates when field is not present at all)
+			// Required check (skip on partial updates when field is not present)
 			if (field.required && !partial && missing) {
 				errors.push(`"${field.label || field.name}" is required`);
 				continue;
@@ -44,7 +49,6 @@ export class ContentService {
 
 			if (missing) continue;
 
-			// Type checks
 			switch (field.type as FieldType) {
 				case FieldType.NUMBER:
 					if (typeof value !== 'number' && isNaN(Number(value))) {
@@ -92,10 +96,13 @@ export class ContentService {
 						const targetSlug = field.type === FieldType.MEDIA
 							? MEDIA_SCHEMA_SLUG
 							: (field.config?.type === 'reference' ? field.config.targetSlug : schemaSlug);
-						const exists = await this.model.exists({ _id: value, schemaSlug: targetSlug });
-						if (!exists) {
-							errors.push(`"${field.label || field.name}" references an entry that does not exist`);
-						}
+						const label = field.label || field.name;
+						// Queue the existence check — resolved below in parallel
+						referenceChecks.push(
+							this.model.exists({ _id: value, schemaSlug: targetSlug }).then(exists => {
+								if (!exists) errors.push(`"${label}" references an entry that does not exist`);
+							})
+						);
 					}
 					break;
 				}
@@ -104,15 +111,20 @@ export class ContentService {
 						errors.push(`"${field.label || field.name}" must be an array of valid entry IDs`);
 					} else if (value.length > 0) {
 						const targetSlug = field.config?.type === 'references' ? field.config.targetSlug : schemaSlug;
-						const found = await this.model.countDocuments({ _id: { $in: value }, schemaSlug: targetSlug });
-						if (found !== value.length) {
-							errors.push(`"${field.label || field.name}" contains one or more entries that do not exist`);
-						}
+						const label = field.label || field.name;
+						referenceChecks.push(
+							this.model.countDocuments({ _id: { $in: value }, schemaSlug: targetSlug }).then(found => {
+								if (found !== value.length) errors.push(`"${label}" contains one or more entries that do not exist`);
+							})
+						);
 					}
 					break;
 				}
 			}
 		}
+
+		// Run all reference existence checks in parallel
+		await Promise.all(referenceChecks);
 
 		if (errors.length > 0) {
 			throw new BadRequestException(errors);
@@ -121,10 +133,18 @@ export class ContentService {
 
 	// ─── CRUD ────────────────────────────────────────────────────────────────
 
-	async findAll(schemaSlug: string): Promise<ContentEntryDocument[]> {
-		// Verify schema exists first
+	async findAll(schemaSlug: string, page = 1, limit = 50): Promise<{
+		items: ContentEntryDocument[];
+		total: number;
+		page: number;
+		limit: number;
+	}> {
 		await this.schemaService.findOne(schemaSlug);
-		return this.model.find({ schemaSlug }).sort({ createdAt: -1 }).exec();
+		const [items, total] = await Promise.all([
+			this.model.find({ schemaSlug }).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).exec(),
+			this.model.countDocuments({ schemaSlug }),
+		]);
+		return { items, total, page, limit };
 	}
 
 	async findOne(schemaSlug: string, id: string): Promise<ContentEntryDocument> {
@@ -141,29 +161,33 @@ export class ContentService {
 	async create(schemaSlug: string, data: Record<string, FieldValue>): Promise<ContentEntryDocument> {
 		await this.validateData(schemaSlug, data, false);
 		const entry = await this.model.create({ schemaSlug, data });
-		this.logsService.log(`Entry created in "${schemaSlug}"`, ['content', 'create'], { schemaSlug, id: String(entry._id) });
+		// Fire-and-forget — logging failures must not affect the write response
+		void this.logsService.log(`Entry created in "${schemaSlug}"`, ['content', 'create'], { schemaSlug, id: String(entry._id) });
 		return entry;
 	}
 
 	async update(
 		schemaSlug: string,
 		id: string,
-		data: Record<string, FieldValue>
+		data: Record<string, FieldValue>,
 	): Promise<ContentEntryDocument> {
 		const entry = await this.findOne(schemaSlug, id);
 		await this.validateData(schemaSlug, data, true);
 		const updated = await this.model.findByIdAndUpdate(
 			entry._id,
+			// Merges only at the top level — other fields are preserved unchanged
 			{ $set: { data: { ...entry.data, ...data } } },
-			{ returnDocument: 'after' }
+			{ returnDocument: 'after' },
 		).exec();
-		this.logsService.log(`Entry updated in "${schemaSlug}"`, ['content', 'update'], { schemaSlug, id });
+		// Fire-and-forget — logging failures must not affect the write response
+		void this.logsService.log(`Entry updated in "${schemaSlug}"`, ['content', 'update'], { schemaSlug, id });
 		return updated;
 	}
 
 	async delete(schemaSlug: string, id: string): Promise<void> {
 		const entry = await this.findOne(schemaSlug, id);
 		await this.model.findByIdAndDelete(entry._id).exec();
-		this.logsService.log(`Entry deleted from "${schemaSlug}"`, ['content', 'delete'], { schemaSlug, id });
+		// Fire-and-forget — logging failures must not affect the write response
+		void this.logsService.log(`Entry deleted from "${schemaSlug}"`, ['content', 'delete'], { schemaSlug, id });
 	}
 }
