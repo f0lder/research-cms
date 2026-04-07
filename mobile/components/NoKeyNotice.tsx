@@ -4,10 +4,10 @@ import { C } from '@/lib/theme';
 export function NoKeyNotice() {
   return (
     <View style={s.notice}>
-      <Text style={s.title}>API key not set</Text>
+      <Text style={s.title}>Client key not set</Text>
       <Text style={s.body}>
-        Open <Text style={s.code}>mobile/lib/config.ts</Text> and paste your API key.{'\n'}
-        Generate one in the admin under <Text style={s.code}>API Keys</Text>.
+        Open <Text style={s.code}>mobile/lib/config.ts</Text> and paste your client key.{'\n'}
+        Generate one in the admin under <Text style={s.code}>Clients</Text>.
       </Text>
     </View>
   );
