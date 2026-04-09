@@ -5,11 +5,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ContentEntryModel, ContentEntryDocument } from '../content/schemas/content-entry.schema';
 import {
-  BlockDefinition,
   FieldType,
   FieldValue,
   MediaEntry,
-  PublicBlock,
+  Block,
+  FieldBlock,
   PublicEntryResponse,
   MEDIA_SCHEMA_SLUG,
 } from '@research-cms/shared-types';
@@ -29,7 +29,7 @@ const PUBLISHED_FILTER = {
 export class PublicService {
   constructor(
     private readonly schemaService: SchemaService,
-    private readonly layoutsService: LayoutsService,
+    private readonly layoutsService: LayoutsService, // still used for syncWithSchema helper
     @InjectModel(ContentEntryModel.name) private entryModel: Model<ContentEntryDocument>,
   ) {}
 
@@ -48,17 +48,17 @@ export class PublicService {
   }
 
   /**
-   * Resolves all MEDIA field values in a set of blocks with a single DB query
-   * instead of one query per media field per entry.
+   * Resolves all MEDIA field values in a set of blocks with a single DB query.
+   * Only processes field blocks; static blocks are passed through as-is.
    */
   private async resolveMediaBatch(
-    blocks: BlockDefinition[],
+    blocks: Block[],
     data: Record<string, unknown>,
     fieldMap: Map<string, { type: FieldType }>,
   ): Promise<Map<string, MediaEntry | null>> {
     const mediaIds = blocks
-      .filter(b => fieldMap.get(b.fieldName)?.type === FieldType.MEDIA)
-      .map(b => data[b.fieldName])
+      .filter((b): b is FieldBlock => b.type === 'field' && fieldMap.get((b as FieldBlock).fieldName)?.type === FieldType.MEDIA)
+      .map(b => data[(b as FieldBlock).fieldName])
       .filter((v): v is string => typeof v === 'string');
 
     if (mediaIds.length === 0) return new Map();
@@ -74,36 +74,56 @@ export class PublicService {
 
   /**
    * Resolves blocks for a single entry.
-   * `savedBlocks` is the layout to use — either the client's custom layout for this
-   * schema or the global layout. Null falls back to bootstrapping from the schema.
+   * `savedBlocks` is the layout to use (mix of field and static blocks).
+   * Null falls back to bootstrapping field blocks from the schema.
    */
   private async resolveBlocks(
     schema: { fields: { name: string; label: string; type: FieldType }[] },
-    savedBlocks: BlockDefinition[] | null,
+    savedBlocks: Block[] | null,
     data: Record<string, unknown>,
-  ): Promise<PublicBlock[]> {
+  ): Promise<Block[]> {
     const fieldMap = new Map(schema.fields.map(f => [f.name, f]));
-    const layoutBlocks = this.layoutsService.syncWithSchema(
-      schema as Parameters<typeof this.layoutsService.syncWithSchema>[0],
-      savedBlocks,
-    );
+    
+    // Get layout blocks (field + static), or bootstrap if none saved
+    const layoutBlocks = savedBlocks ?? this.layoutsService.bootstrapFromSchema(schema as any).blocks;
 
+    // Filter and sort visible field blocks
     const visibleBlocks = layoutBlocks
-      .filter(b => b.visible)
-      .sort((a, b) => a.order - b.order);
+      .filter(b => {
+        if (b.type === 'field') return (b as FieldBlock).visible !== false;
+        return true; // Keep all static blocks
+      })
+      .sort((a, b) => {
+        const aOrder = a.type === 'field' ? (a as FieldBlock).order : 999;
+        const bOrder = b.type === 'field' ? (b as FieldBlock).order : 999;
+        return aOrder - bOrder;
+      });
 
     // Batch-resolve all media IDs in one query
     const mediaMap = await this.resolveMediaBatch(visibleBlocks, data, fieldMap);
 
+    // Resolve blocks: fill field blocks with data, pass static blocks through
     return visibleBlocks.map(b => {
-      const field = fieldMap.get(b.fieldName);
-      const raw = data[b.fieldName] ?? null;
+      if (b.type === 'field') {
+        const fieldBlock = b as FieldBlock;
+        const field = fieldMap.get(fieldBlock.fieldName);
+        const raw = data[fieldBlock.fieldName] ?? null;
+        const value = field?.type === FieldType.MEDIA && typeof raw === 'string'
+          ? mediaMap.get(raw) ?? null
+          : (raw as FieldValue | null);
 
-      if (field?.type === FieldType.MEDIA && typeof raw === 'string') {
-        return { ...b, value: mediaMap.get(raw) ?? null };
+        return {
+          type: 'field' as const,
+          fieldName: fieldBlock.fieldName,
+          label: fieldBlock.label,
+          fieldType: fieldBlock.fieldType,
+          value,
+          visible: fieldBlock.visible,
+          order: fieldBlock.order,
+        } as FieldBlock;
       }
-
-      return { ...b, value: raw as FieldValue | null };
+      // Static blocks (heading, text, archive) pass through unchanged
+      return b;
     });
   }
 
@@ -120,13 +140,11 @@ export class PublicService {
     schemaSlug: string,
     page = 1,
     limit = 50,
-    clientLayouts: Map<string, BlockDefinition[]> = new Map(),
+    clientLayouts: Map<string, Block[]> = new Map(),
   ): Promise<{ items: PublicEntryResponse[]; total: number; page: number; limit: number }> {
-    // Fetch schema, layout, and entries in parallel — avoids repeating these
-    // lookups per-entry which would cause N+1 queries
-    const [schema, savedLayout, entries, total] = await Promise.all([
+    // Fetch schema and entries in parallel
+    const [schema, entries, total] = await Promise.all([
       this.schemaService.findOne(schemaSlug),
-      this.layoutsService.findOne(schemaSlug),
       this.entryModel
         .find({ schemaSlug, ...PUBLISHED_FILTER })
         .sort({ createdAt: -1 })
@@ -136,8 +154,8 @@ export class PublicService {
       this.entryModel.countDocuments({ schemaSlug, ...PUBLISHED_FILTER }),
     ]);
 
-    // Client layout takes precedence over the global layout
-    const savedBlocks = clientLayouts.get(schemaSlug) ?? savedLayout?.blocks ?? null;
+    // Use the client's layout for this schema; null falls back to schema-bootstrapped defaults
+    const savedBlocks = clientLayouts.get(schemaSlug) ?? null;
 
     const items = await Promise.all(
       entries.map(async e => ({
@@ -155,7 +173,7 @@ export class PublicService {
     schemaSlug: string,
     id: string,
     allowedSchemas: string[] = [],
-    clientLayouts: Map<string, BlockDefinition[]> = new Map(),
+    clientLayouts: Map<string, Block[]> = new Map(),
   ): Promise<PublicEntryResponse> {
     // Enforce API key schema restrictions — return 404 (not 403) to avoid
     // leaking the existence of schemas the key isn't permitted to access
@@ -163,16 +181,14 @@ export class PublicService {
       throw new NotFoundException('Entry not found');
     }
 
-    const [schema, savedLayout, entry] = await Promise.all([
+    const [schema, entry] = await Promise.all([
       this.schemaService.findOne(schemaSlug),
-      this.layoutsService.findOne(schemaSlug),
       this.entryModel.findOne({ _id: id, schemaSlug }).exec(),
     ]);
 
     if (!entry) throw new NotFoundException('Entry not found');
 
-    // Client layout takes precedence over the global layout
-    const savedBlocks = clientLayouts.get(schemaSlug) ?? savedLayout?.blocks ?? null;
+    const savedBlocks = clientLayouts.get(schemaSlug) ?? null;
 
     return {
       _id: String(entry._id),

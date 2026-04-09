@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { api, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { getUsers, updateUserRole } from '@/app/actions';
+import { ListSkeleton } from '@/components/skeletons';
 
 interface UserEntry {
   _id: string;
@@ -28,22 +30,33 @@ export default function UsersPage() {
   const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<UserEntry[]>('/auth/users').then(({ data, error: err }) => {
+    (async () => {
+      const { data, error: err } = await getUsers();
       if (data) setUsers(data);
       if (err) setError(err);
       setLoading(false);
-    });
+    })();
   }, []);
 
   const handleRoleChange = async (userId: string, role: string) => {
     setUpdating(userId);
-    const { data, error: err } = await api.patch<UserEntry>(`/auth/users/${userId}`, { role });
+    const { data, error: err } = await updateUserRole(userId, role);
     if (data) setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: data.role } : u));
     if (err) alert(err);
     setUpdating(null);
   };
 
-  if (loading) return <div className="p-8 font-mono text-sm text-zinc-400">Loading…</div>;
+  if (loading) {
+    return (
+      <div className="page">
+        <div className="mb-8 space-y-2 w-1/2">
+          <div className="h-8 bg-zinc-200 rounded animate-pulse" />
+          <div className="h-4 bg-zinc-100 rounded animate-pulse" />
+        </div>
+        <ListSkeleton items={8} />
+      </div>
+    );
+  }
 
   return (
     <div className="page">

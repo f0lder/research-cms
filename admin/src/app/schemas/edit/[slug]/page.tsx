@@ -2,31 +2,39 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
-import { api, extractParam } from '@/lib/utils';
+import { extractParam } from '@/lib/utils';
+import { getSchema } from '@/app/actions';
 import SchemaForm from '@/components/schemas/SchemaForm';
+import { FormSkeleton } from '@/components/skeletons';
 
 export default function EditSchemaPage() {
   const params = useParams();
   const slug = extractParam(params, 'slug');
 
-  const [schema, setSchema] = useState<ContentTypeDefinition | null>(null);
+  const [schema, setSchema] = useState<ContentTypeDefinition | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!slug) return;
-    api.get<ContentTypeDefinition>(`/schemas/${slug}`).then(({ data, error: err }) => {
-      if (err) setError(err);
-      else if (data) setSchema(data);
-      setLoading(false);
-    });
+    (async () => {
+      try {
+        const { data, error: err } = await getSchema(slug);
+        if (err) setError(err);
+        else if (data) setSchema(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load schema');
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [slug]);
 
-  if (loading) return <div className="p-8 font-mono text-sm text-zinc-400">Loading…</div>;
+  if (loading) return <FormSkeleton />;
 
   if (error || !schema) {
     return (
-      <div className="p-8">
+      <div className="page">
         <div className="alert-error">{error || 'Schema not found'}</div>
       </div>
     );

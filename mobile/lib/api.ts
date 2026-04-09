@@ -1,5 +1,5 @@
 import { API_URL, API_KEY } from '@/lib/config';
-import { PublicEntryResponse } from '@research-cms/shared-types';
+import { PublicEntryResponse, ClientPage } from '@research-cms/shared-types';
 
 const baseHeaders = { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' };
 
@@ -30,3 +30,12 @@ export function listEntries(slug: string, page = 1, limit = 20): Promise<Entries
 export function getEntry(slug: string, id: string): Promise<PublicEntryResponse> {
   return get(`/public/${slug}/${id}`);
 }
+
+export function listPages(): Promise<ClientPage[]> {
+  return get('/public/pages');
+}
+
+export function getPage(slug: string): Promise<ClientPage> {
+  return get(`/public/pages/${slug}`);
+}
+

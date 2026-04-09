@@ -3,15 +3,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { getAllSchemas } from '@/lib/utils';
+import { useSchemas } from '@/contexts/SchemaContext';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { schemas } = useSchemas();
 
-  const [schemas, setSchemas] = useState<ContentTypeDefinition[]>([]);
   const [contentOpen, setContentOpen] = useState(false);
 
   const isOnContentRoute =
@@ -22,12 +22,6 @@ export default function Sidebar() {
   useEffect(() => {
     if (isOnContentRoute) setContentOpen(true);
   }, [isOnContentRoute]);
-
-  useEffect(() => {
-    getAllSchemas().then(({ data }) => {
-      if (data) setSchemas(data);
-    });
-  }, []);
 
   const handleLogout = () => {
     logout();

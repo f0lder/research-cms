@@ -1,11 +1,11 @@
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { PublicBlock, FieldType } from '@research-cms/shared-types';
+import { FieldBlock, FieldType } from '@research-cms/shared-types';
 import { C } from '@/lib/theme';
 
-function BlockValue({ block }: { block: PublicBlock }) {
+function BlockValue({ block }: { block: FieldBlock }) {
   if (block.value === null || block.value === undefined || block.value === '') return null;
 
-  switch (block.type) {
+  switch (block.fieldType) {
     case FieldType.MEDIA: {
       const media = typeof block.value === 'object' && block.value !== null
         ? block.value as { url?: string; mimeType?: string; title?: string; caption?: string; altText?: string }
@@ -58,7 +58,7 @@ function BlockValue({ block }: { block: PublicBlock }) {
   }
 }
 
-export function Block({ block }: { block: PublicBlock }) {
+export function Block({ block }: { block: FieldBlock }) {
   if (block.value === null || block.value === undefined || block.value === '') return null;
   return (
     <View style={s.block}>

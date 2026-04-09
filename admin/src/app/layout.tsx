@@ -1,5 +1,6 @@
 import './global.css';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { SchemaProvider } from '@/contexts/SchemaContext';
 
 export const metadata = {
   title: 'CMS Admin',
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <SchemaProvider>{children}</SchemaProvider>
+        </AuthProvider>
       </body>
     </html>
   );

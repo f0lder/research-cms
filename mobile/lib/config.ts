@@ -16,4 +16,4 @@ function getApiUrl(): string {
 }
 
 export const API_URL = getApiUrl();
-export const API_KEY = 'cms_89e59920d429a18b1b7b84f4af6f8695a99afe5ee6de4892';
+export const API_KEY = 'cms_b7b346647f8841c8bc18c785df53e71d8ca967a120ebc850';

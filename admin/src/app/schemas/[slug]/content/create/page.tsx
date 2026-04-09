@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
-import { getSchema, extractParam, adminRoutes } from '@/lib/utils';
+import { extractParam, adminRoutes } from '@/lib/utils';
+import { getSchema } from '@/app/actions';
 import ContentForm from '@/components/content/ContentForm';
 
 export default function ContentCreatePage() {
@@ -17,11 +18,17 @@ export default function ContentCreatePage() {
 
   useEffect(() => {
     if (!slug) return;
-    getSchema(slug).then(({ data, error: err }) => {
-      if (err) setError(err);
-      else if (data) setSchema(data);
-      setLoading(false);
-    });
+    (async () => {
+      try {
+        const { data, error: err } = await getSchema(slug);
+        if (err) setError(err);
+        else if (data) setSchema(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load schema');
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [slug]);
 
   if (loading) return <div className="p-8 font-mono text-sm text-zinc-400">Loading…</div>;

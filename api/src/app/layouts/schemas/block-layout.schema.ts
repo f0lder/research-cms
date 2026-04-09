@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { BlockLayout, BlockDefinition } from '@research-cms/shared-types';
+import { BlockLayout, Block } from '@research-cms/shared-types';
 
 export type BlockLayoutDocument = HydratedDocument<BlockLayoutModel>;
 
@@ -10,7 +10,7 @@ export class BlockLayoutModel implements BlockLayout {
   schemaSlug: string;
 
   @Prop({ type: [Object], default: [] })
-  blocks: BlockDefinition[];
+  blocks: Block[];
 }
 
 export const BlockLayoutSchema = SchemaFactory.createForClass(BlockLayoutModel);

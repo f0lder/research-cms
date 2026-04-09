@@ -2,7 +2,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import Select from 'react-select';
 import { LogEntry } from '@research-cms/shared-types';
-import { getLogs, getLogTags, clearLogs, formatDateTime } from '@/lib/utils';
+import { formatDateTime } from '@/lib/utils';
+import { getLogs, getLogTags, clearLogs } from '@/app/actions';
+import { TableSkeleton } from '@/components/skeletons';
 
 // ── Tag styling ───────────────────────────────────────────────────────────────
 const TAG_STYLES: Record<string, string> = {

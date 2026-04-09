@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomBytes } from 'crypto';
 import { ApiKeyModel, ApiKeyDocument } from './schemas/api-key.schema';
-import { BlockDefinition } from '@research-cms/shared-types';
+import { Block } from '@research-cms/shared-types';
 import { LogsService } from '../logs/logs.service';
 
 @Injectable()
@@ -46,11 +46,21 @@ export class ApiKeysService {
     return doc;
   }
 
+  async setHomePage(id: string, pageId: string | null): Promise<ApiKeyDocument> {
+    const doc = await this.model.findByIdAndUpdate(
+      id,
+      { $set: { homePage: pageId } },
+      { returnDocument: 'after' },
+    ).exec();
+    if (!doc) throw new NotFoundException('Client not found');
+    return doc;
+  }
+
   /**
    * Upserts the block layout for a specific schema on this client.
    * Uses a two-step pull-then-push to simulate an atomic upsert on the subdocument array.
    */
-  async upsertLayout(id: string, schemaSlug: string, blocks: BlockDefinition[]): Promise<ApiKeyDocument> {
+  async upsertLayout(id: string, schemaSlug: string, blocks: Block[]): Promise<ApiKeyDocument> {
     // Try to update the existing layout entry for this schema
     let doc = await this.model.findOneAndUpdate(
       { _id: id, 'layouts.schemaSlug': schemaSlug },

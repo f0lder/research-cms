@@ -8,6 +8,7 @@ import { ApiKeysModule } from './api-keys/api-keys.module';
 import { PublicModule } from './public/public.module';
 import { LogsModule } from './logs/logs.module';
 import { MediaModule } from './media/media.module';
+import { PagesModule } from './pages/pages.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MediaModule } from './media/media.module';
     ContentModule,
     LayoutsModule,
     ApiKeysModule,
+    PagesModule,
     PublicModule,
   ],
 })

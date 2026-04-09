@@ -2,51 +2,66 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { Stack, router, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { listSchemas } from '@/lib/api';
+import { listSchemas, listPages } from '@/lib/api';
 import { Sidebar } from '@/components/Sidebar';
 import { C } from '@/lib/theme';
+import { ClientPage } from '@research-cms/shared-types';
 
 type Schema = { slug: string; name: string };
-type SchemasCtx = {
+
+type AppCtx = {
   schemas: Schema[];
+  pages: ClientPage[];
   loading: boolean;
   error: string;
   openSidebar: () => void;
 };
 
-const SchemasContext = createContext<SchemasCtx>({
+const AppContext = createContext<AppCtx>({
   schemas: [],
+  pages: [],
   loading: true,
   error: '',
   openSidebar: () => {},
 });
-export const useSchemasContext = () => useContext(SchemasContext);
+
+export const useSchemasContext = () => useContext(AppContext);
 
 export default function RootLayout() {
   const [schemas, setSchemas] = useState<Schema[]>([]);
+  const [pages, setPages] = useState<ClientPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
-  const activeSlug = pathname.split('/').filter(Boolean)[0] ?? null;
+  const segments = pathname.split('/').filter(Boolean);
+  // For /pages/<slug> routes, use the page slug; for /<schemaSlug> use that directly
+  const activeSlug = segments[0] === 'pages' ? (segments[1] ?? null) : (segments[0] ?? null);
 
   useEffect(() => {
-    listSchemas()
-      .then(setSchemas)
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+    Promise.all([
+      listSchemas().catch(() => [] as Schema[]),
+      listPages().catch(() => [] as ClientPage[]),
+    ]).then(([s, p]) => {
+      setSchemas(s);
+      setPages(p);
+      setLoading(false);
+    }).catch((e: Error) => {
+      setError(e.message);
+      setLoading(false);
+    });
   }, []);
 
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
 
-  const handleSelect = useCallback((slug: string) => {
+  const handleSelect = useCallback((path: string) => {
     setSidebarOpen(false);
-    router.push(`/${slug}` as never);
+    router.push(path as never);
   }, []);
 
   return (
-    <SchemasContext.Provider value={{ schemas, loading, error, openSidebar }}>
+    <AppContext.Provider value={{ schemas, pages, loading, error, openSidebar }}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -64,11 +79,12 @@ export default function RootLayout() {
       <Sidebar
         visible={sidebarOpen}
         schemas={schemas}
+        pages={pages}
         activeSlug={activeSlug}
         onSelect={handleSelect}
         onClose={() => setSidebarOpen(false)}
       />
-    </SchemasContext.Provider>
+    </AppContext.Provider>
   );
 }
 

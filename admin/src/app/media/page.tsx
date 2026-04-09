@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { MediaEntry } from '@research-cms/shared-types';
-import { getMediaLibrary, uploadMedia, updateMedia, deleteMedia, formatDateTime } from '@/lib/utils';
+import { uploadMedia, formatDateTime } from '@/lib/utils';
+import { getMediaLibrary, updateMedia, deleteMedia } from '@/app/actions';
+import { MediaGridSkeleton } from '@/components/skeletons';
 
 export default function MediaPage() {
   const [items, setItems] = useState<MediaEntry[]>([]);
@@ -20,7 +22,14 @@ export default function MediaPage() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    (async () => {
+      const res = await getMediaLibrary();
+      if (res.error) setError(res.error);
+      else setItems(res.data ?? []);
+      setLoading(false);
+    })();
+  }, []);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -48,8 +57,9 @@ export default function MediaPage() {
     setSaving(true);
     const res = await updateMedia(selected._id, editDraft);
     if (res.data) {
-      setItems(prev => prev.map(i => i._id === selected._id ? res.data! : i));
-      setSelected(res.data);
+      const updated = res.data;
+      setItems(prev => prev.map(i => i._id === selected._id ? updated : i));
+      setSelected(updated);
     }
     setSaving(false);
   };
@@ -79,7 +89,7 @@ export default function MediaPage() {
         {/* Grid */}
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
-            <p className="text-sm text-zinc-400">Loading…</p>
+            <MediaGridSkeleton />
           ) : items.length === 0 ? (
             <div className="border-2 border-dashed border-zinc-200 p-16 text-center">
               <p className="text-zinc-400 mb-4">No media files yet.</p>

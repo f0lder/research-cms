@@ -5,7 +5,8 @@ import CreatableSelect from 'react-select/creatable';
 import Select from 'react-select';
 import { FieldDefinition, FieldType, FieldValue, MediaEntry } from '@research-cms/shared-types';
 // MediaEntry used below for MEDIA field state typing
-import { getAllEntries, getEntryTitle } from '@/lib/utils';
+import { getAllEntries, getMediaLibrary } from '@/app/actions';
+import { getEntryTitle } from '@/lib/utils';
 
 const MediaPickerModal = dynamic(() => import('./MediaPickerModal'), { ssr: false });
 
@@ -50,14 +51,15 @@ export default function DynamicFieldInput({
     if (!targetSlug) return;
 
     setReferenceLoading(true);
-    getAllEntries(targetSlug).then(({ data }) => {
+    (async () => {
+      const { data } = await getAllEntries(targetSlug);
       if (data) {
         setReferenceOptions(
           data.items.map(entry => ({ value: entry._id ?? '', label: getEntryTitle(entry) }))
         );
       }
       setReferenceLoading(false);
-    });
+    })();
   }, [field.config]);
 
   const rs = reactSelectStyles(disabled);
@@ -151,11 +153,13 @@ export default function DynamicFieldInput({
       useEffect(() => {
         if (!value) { setResolved(null); return; }
         // value is the entry _id; fetch library and find it
-        import('@/lib/utils').then(({ getMediaLibrary }) =>
-          getMediaLibrary().then(res => {
-            setResolved(res.data?.find(m => m._id === value) ?? null);
-          })
-        );
+        (async () => {
+          const res = await getMediaLibrary();
+          if (res.data) {
+            const found = res.data.find((m) => m._id === String(value));
+            setResolved(found ?? null);
+          }
+        })();
       }, [value]);
 
       return (

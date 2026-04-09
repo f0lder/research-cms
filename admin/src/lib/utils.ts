@@ -1,5 +1,5 @@
 import { API_URL } from '@/config';
-import { ContentTypeDefinition, ContentEntry, FieldValue, BlockLayout, BlockDefinition, Client, LogEntry } from '@research-cms/shared-types';
+import { ContentEntry } from '@research-cms/shared-types';
 
 // ── HTTP ──────────────────────────────────────────────────────────────────────
 
@@ -15,9 +15,16 @@ async function apiRequest<T>(
 ): Promise<{ data?: T; error?: string }> {
   try {
     const { method = 'GET', body, headers = {} } = options;
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    
+    // Get token from localStorage on client-side
+    let token: string | null = null;
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('token');
+    }
+    
     const config: RequestInit = {
       method,
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...(token && { Authorization: `Bearer ${token}` }),
@@ -70,6 +77,8 @@ export const adminRoutes = {
   clients:       '/clients',
   clientDetail:  (id: string) => `/clients/${id}`,
   clientLayout:  (id: string, slug: string) => `/clients/${id}/layout/${slug}`,
+  clientPageNew: (id: string) => `/clients/${id}/pages/new`,
+  clientPageEdit:(id: string, pageId: string) => `/clients/${id}/pages/${pageId}`,
 };
 
 /** Extract a single string from Next.js dynamic route params (handles string | string[]). */
@@ -151,72 +160,7 @@ export function formatDateTime(date: string | Date): string {
   return new Date(date).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-// ── Schema API ────────────────────────────────────────────────────────────────
-
-export const getAllSchemas = () =>
-  api.get<ContentTypeDefinition[]>('/schemas');
-
-export const getSystemSchemas = () =>
-  api.get<ContentTypeDefinition[]>('/schemas/system');
-
-export const getSchema = (slug: string) =>
-  api.get<ContentTypeDefinition>(`/schemas/${slug}`);
-
-export const createSchema = (payload: Omit<ContentTypeDefinition, '_id'>) =>
-  api.post<ContentTypeDefinition>('/schemas', payload);
-
-export const updateSchema = (slug: string, payload: Partial<ContentTypeDefinition>) =>
-  api.put<ContentTypeDefinition>(`/schemas/${slug}`, payload);
-
-export const deleteSchema = (slug: string) =>
-  api.delete(`/schemas/${slug}`);
-
-// ── Content API ───────────────────────────────────────────────────────────────
-
-export const getAllEntries = (schemaSlug: string, page = 1, limit = 50) =>
-  api.get<{ items: ContentEntry[]; total: number; page: number; limit: number }>(
-    `/content/${schemaSlug}?page=${page}&limit=${limit}`
-  );
-
-export const getEntry = (schemaSlug: string, id: string) =>
-  api.get<ContentEntry>(`/content/${schemaSlug}/${id}`);
-
-export const createEntry = (schemaSlug: string, data: Record<string, FieldValue>) =>
-  api.post<ContentEntry>(`/content/${schemaSlug}`, { data });
-
-export const updateEntry = (schemaSlug: string, id: string, data: Record<string, FieldValue>) =>
-  api.put<ContentEntry>(`/content/${schemaSlug}/${id}`, { data });
-
-export const deleteEntry = (schemaSlug: string, id: string) =>
-  api.delete(`/content/${schemaSlug}/${id}`);
-
-// ── Layout API ────────────────────────────────────────────────────────────────
-
-/** Fetch the global default layout for a schema (used as the base when editing client layouts). */
-export const getLayout = (schemaSlug: string) =>
-  api.get<BlockLayout>(`/layouts/${schemaSlug}`);
-
-// ── Clients API ───────────────────────────────────────────────────────────────
-
-export const getAllClients = () =>
-  api.get<Client[]>('/clients');
-
-export const getClient = (id: string) =>
-  api.get<Client>(`/clients/${id}`);
-
-export const createClient = (name: string) =>
-  api.post<Client>('/clients', { name });
-
-export const updateClientSchemas = (id: string, allowedSchemas: string[]) =>
-  api.patch<Client>(`/clients/${id}/schemas`, { allowedSchemas });
-
-export const upsertClientLayout = (id: string, schemaSlug: string, blocks: BlockDefinition[]) =>
-  api.put<Client>(`/clients/${id}/layouts/${schemaSlug}`, { blocks });
-
-export const deleteClient = (id: string) =>
-  api.delete(`/clients/${id}`);
-
-// ── Media API ─────────────────────────────────────────────────────────────────
+// ── Media Upload (Client-Side Only) ───────────────────────────────────────────
 
 export interface StorageResult {
   key: string;
@@ -241,28 +185,3 @@ export async function uploadMedia(file: File, title?: string): Promise<import('@
   if (!res.ok) throw new Error(json.message ?? 'Upload failed');
   return json;
 }
-
-export const getMediaLibrary = () =>
-  api.get<import('@research-cms/shared-types').MediaEntry[]>('/media/library');
-
-export const updateMedia = (id: string, data: { title?: string; caption?: string; altText?: string }) =>
-  api.patch<import('@research-cms/shared-types').MediaEntry>(`/media/${id}`, data);
-
-export const deleteMedia = (id: string) => api.delete(`/media/${id}`);
-
-// ── Logs API ──────────────────────────────────────────────────────────────────
-
-export const getLogs = (params: { tags?: string[]; search?: string; limit?: number; offset?: number } = {}) => {
-  const q = new URLSearchParams();
-  if (params.tags?.length) q.set('tags', params.tags.join(','));
-  if (params.search) q.set('search', params.search);
-  if (params.limit != null) q.set('limit', String(params.limit));
-  if (params.offset != null) q.set('offset', String(params.offset));
-  return api.get<{ entries: LogEntry[]; total: number }>(`/logs?${q}`);
-};
-
-export const getLogTags = () =>
-  api.get<string[]>('/logs/tags');
-
-export const clearLogs = () =>
-  api.delete('/logs');

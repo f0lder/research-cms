@@ -7,13 +7,18 @@ import { useSchemasContext } from '@/src/app/_layout';
 import { C, shared } from '@/lib/theme';
 
 export default function IndexScreen() {
-  const { schemas, loading, error } = useSchemasContext();
+  const { schemas, pages, loading, error } = useSchemasContext();
 
   useEffect(() => {
-    if (!loading && schemas.length > 0) {
+    if (loading) return;
+    // Prefer pages navigation when the client has published pages
+    if (pages.length > 0) {
+      const home = pages.find(p => p.isHome) ?? pages[0];
+      router.replace(`/pages/${home.slug}` as never);
+    } else if (schemas.length > 0) {
       router.replace(`/${schemas[0].slug}` as never);
     }
-  }, [schemas, loading]);
+  }, [schemas, pages, loading]);
 
   if (!API_KEY) return <NoKeyNotice />;
 
@@ -28,8 +33,8 @@ export default function IndexScreen() {
     );
   }
 
-  if (schemas.length === 0) {
-    return <Text style={shared.empty}>No content types found. Create one in the admin.</Text>;
+  if (!loading && pages.length === 0 && schemas.length === 0) {
+    return <Text style={shared.empty}>No content available. Set up pages or schemas in the admin.</Text>;
   }
 
   return null;

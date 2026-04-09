@@ -34,11 +34,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const { data } = await api.get<User>('/auth/me');
+    // Ensure token is also in cookie for server-side requests
+    await fetch('/api/auth/set-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    }).catch(console.error);
+
+    const { data, error } = await api.get<User>('/auth/me');
     if (data) {
       setUser(data);
-    } else {
+    } else if (error) {
+      console.error('Auth check failed:', error);
       localStorage.removeItem('token');
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(console.error);
     }
     setIsLoading(false);
   };
@@ -50,9 +59,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) throw new Error(error);
+    if (!data) throw new Error('No response data');
 
-    localStorage.setItem('token', data!.access_token);
-    setUser(data!.user);
+    const token = data.access_token;
+    localStorage.setItem('token', token);
+    setUser(data.user);
+
+    // Set token as HTTP-only cookie for server-side requests
+    await fetch('/api/auth/set-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    }).catch(console.error);
   };
 
   const register = async (email: string, password: string, name: string) => {
@@ -63,14 +81,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) throw new Error(error);
+    if (!data) throw new Error('No response data');
 
-    localStorage.setItem('token', data!.access_token);
-    setUser(data!.user);
+    const token = data.access_token;
+    localStorage.setItem('token', token);
+    setUser(data.user);
+
+    // Set token as HTTP-only cookie for server-side requests
+    await fetch('/api/auth/set-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    }).catch(console.error);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
+    // Clear HTTP-only cookie
+    fetch('/api/auth/logout', { method: 'POST' }).catch(console.error);
   };
 
   return (

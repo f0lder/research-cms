@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ContentTypeDefinition, ContentEntry, FieldDefinition, FieldType, FieldValue } from '@research-cms/shared-types';
-import { getSchema, getAllEntries, deleteEntry, formatDate, formatDateTime, getEntryTitle, extractParam, adminRoutes, truncateString } from '@/lib/utils';
+import { getSchema, getAllEntries, deleteEntry } from '@/app/actions';
+import { extractParam, adminRoutes, formatDate, formatDateTime, getEntryTitle, truncateString } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
 // ── Cell renderer ──────────────────────────────────────────────────────────────
@@ -131,10 +132,10 @@ export default function SchemaDetailPage() {
     setLoading(true);
     const [schemaRes, entriesRes] = await Promise.all([getSchema(slug), getAllEntries(slug)]);
     if (schemaRes.error) { setError(schemaRes.error); setLoading(false); return; }
+    if (entriesRes.error) { setError(entriesRes.error); setLoading(false); return; }
     const schemaData = schemaRes.data ?? null;
     setSchema(schemaData);
     setEntries(entriesRes.data?.items ?? []);
-    setLoading(false);
 
     // Fetch referenced + media entries so cells can resolve IDs to values
     if (schemaData) {
@@ -154,6 +155,7 @@ export default function SchemaDetailPage() {
         setRefCache(cache);
       }
     }
+    setLoading(false);
   }, [slug]);
 
   useEffect(() => { if (slug) load(); }, [slug, load]);

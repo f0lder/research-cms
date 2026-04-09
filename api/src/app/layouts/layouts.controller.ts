@@ -5,7 +5,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/schemas/user.schema';
-import { BlockDefinition } from '@research-cms/shared-types';
+import { Block } from '@research-cms/shared-types';
 
 @Controller('layouts')
 @UseGuards(JwtAuthGuard)
@@ -32,7 +32,7 @@ export class LayoutsController {
   @Roles(UserRole.ADMIN)
   upsert(
     @Param('schemaSlug') schemaSlug: string,
-    @Body() body: { blocks: BlockDefinition[] },
+    @Body() body: { blocks: Block[] },
   ) {
     return this.layoutsService.upsert(schemaSlug, body.blocks);
   }

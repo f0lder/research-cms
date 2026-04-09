@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { MediaEntry } from '@research-cms/shared-types';
-import { getMediaLibrary, uploadMedia, deleteMedia } from '@/lib/utils';
+import { getMediaLibrary, deleteMedia } from '@/app/actions';
+import { uploadMedia } from '@/lib/utils';
 
 interface MediaPickerModalProps {
   currentId?: string;
@@ -68,7 +69,7 @@ export default function MediaPickerModal({ currentId, onSelect, onClose }: Media
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white w-[880px] max-w-[95vw] max-h-[85vh] flex flex-col shadow-xl">
+      <div className="relative bg-white w-220 max-w-[95vw] max-h-[85vh] flex flex-col shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-200">
           <h2 className="text-sm font-semibold text-zinc-800">Media Library</h2>

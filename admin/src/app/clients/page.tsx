@@ -2,7 +2,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Client } from '@research-cms/shared-types';
-import { getAllClients, createClient, deleteClient, formatDateTime, adminRoutes } from '@/lib/utils';
+import { createClient, deleteClient, getAllClients } from '@/app/actions';
+import { formatDateTime, adminRoutes } from '@/lib/utils';
+import { ListSkeleton } from '@/components/skeletons';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ClientsPage() {
@@ -16,11 +18,12 @@ export default function ClientsPage() {
   const [revealedId, setRevealedId] = useState<string | null>(null);
 
   useEffect(() => {
-    getAllClients().then(({ data, error: err }) => {
+    (async () => {
+      const { data, error: err } = await getAllClients();
       if (err) setError(err);
       else setClients(data ?? []);
       setLoading(false);
-    });
+    })();
   }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -56,14 +59,25 @@ export default function ClientsPage() {
 
   const maskKey = (key: string) => `${key.slice(0, 12)}${'·'.repeat(16)}${key.slice(-4)}`;
 
-  if (loading) return <div className="p-8 font-mono text-sm text-zinc-400">Loading…</div>;
+  if (loading) return (
+    <div className="page">
+      <div className="mb-8 flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="h-8 bg-zinc-200 rounded w-48 animate-pulse" />
+          <div className="h-4 bg-zinc-100 rounded w-32 animate-pulse" />
+        </div>
+        <div className="h-10 bg-zinc-200 rounded w-32 animate-pulse" />
+      </div>
+      <ListSkeleton items={5} />
+    </div>
+  );
 
   return (
     <div className="p-8 font-mono max-w-4xl">
       <h1 className="page-heading mb-1">Clients</h1>
       <p className="page-sub mb-6">
         Each client authenticates via <code className="font-mono">X-API-Key</code> and can have
-        its own block layout per content type — overriding the global design.
+        its own pages and block layouts per content type.
       </p>
 
       {error && <div className="alert-error mb-4">{error}</div>}

@@ -13,7 +13,9 @@ export class ApiKeyGuard implements CanActivate {
     const doc = await this.apiKeysService.validateAndTrack(key);
     if (!doc) throw new UnauthorizedException('Invalid or inactive API key');
 
-    // Attach scope and client-specific layouts to request
+    // Attach client identity, scope, layout overrides, and home page to request
+    request.clientId = String(doc._id);
+    request.homePageId = doc.homePage ?? null;
     request.apiKeyAllowedSchemas = doc.allowedSchemas;
     request.clientLayouts = new Map(
       (doc.layouts ?? []).map(l => [l.schemaSlug, l.blocks]),

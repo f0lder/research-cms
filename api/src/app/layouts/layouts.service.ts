@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { BlockLayoutModel, BlockLayoutDocument } from './schemas/block-layout.schema';
-import { BlockDefinition, BlockLayout, ContentTypeDefinition } from '@research-cms/shared-types';
+import { Block, BlockLayout, ContentTypeDefinition, FieldBlock } from '@research-cms/shared-types';
 
 @Injectable()
 export class LayoutsService {
@@ -17,9 +17,8 @@ export class LayoutsService {
 
   /**
    * Save (upsert) a layout for a schema.
-   * If no layout exists yet, derives blocks from the schema fields.
    */
-  async upsert(schemaSlug: string, blocks: BlockDefinition[]): Promise<BlockLayoutDocument> {
+  async upsert(schemaSlug: string, blocks: Block[]): Promise<BlockLayoutDocument> {
     return this.model.findOneAndUpdate(
       { schemaSlug },
       { $set: { blocks } },
@@ -28,50 +27,71 @@ export class LayoutsService {
   }
 
   /**
-   * Bootstrap a default layout from a schema definition (called when first
-   * opening the layout editor — all fields visible, ordered by schema order).
+   * Bootstrap a default layout from a schema definition — returns FieldBlock[] for each schema field.
    */
   bootstrapFromSchema(schema: Pick<ContentTypeDefinition, 'slug' | 'fields'>): BlockLayout {
     return {
       schemaSlug: schema.slug,
       blocks: schema.fields.map((f, i) => ({
+        type: 'field' as const,
         fieldName: f.name,
         label: f.label,
-        type: f.type,
+        fieldType: f.type,
+        value: null,
         visible: true,
         order: i,
-      })),
+      } as FieldBlock)),
     };
   }
 
   /**
    * Merge a saved block list against the current schema fields:
-   * - Drop blocks whose fieldName no longer exists in the schema
-   * - Update label/type from the live schema (handles renames/type changes)
-   * - Append blocks for new schema fields not yet in the saved layout
-   * Falls back to bootstrapFromSchema when saved is null.
+   * - Preserve static blocks (heading, text, archive)
+   * - Drop field blocks whose fieldName no longer exists in the schema
+   * - Update field block label/type from the live schema
+   * - Append field blocks for new schema fields
+   * Returns bootstrap layout when saved is null.
    */
   syncWithSchema(
     schema: Pick<ContentTypeDefinition, 'slug' | 'fields'>,
-    saved: BlockDefinition[] | null,
-  ): BlockDefinition[] {
+    saved: Block[] | null,
+  ): Block[] {
     if (!saved) return this.bootstrapFromSchema(schema).blocks;
 
     const fieldMap = new Map(schema.fields.map(f => [f.name, f]));
 
-    const retained: BlockDefinition[] = [];
+    // Keep static blocks and valid field blocks
+    const retained: Block[] = [];
     for (const b of saved) {
-      const f = fieldMap.get(b.fieldName);
-      if (f) retained.push({ ...b, label: f.label, type: f.type });
+      if (b.type === 'field') {
+        const f = fieldMap.get((b as FieldBlock).fieldName);
+        if (f) {
+          retained.push({
+            ...(b as FieldBlock),
+            label: f.label,
+            fieldType: f.type,
+          } as FieldBlock);
+        }
+      } else {
+        // Keep static blocks as-is
+        retained.push(b);
+      }
     }
 
-    const retainedNames = new Set(retained.map(b => b.fieldName));
-    const appended: BlockDefinition[] = schema.fields
-      .filter(f => !retainedNames.has(f.name))
+    // Add new field blocks for schema fields not yet in layout
+    const retainedFieldNames = new Set(
+      retained
+        .filter((b): b is FieldBlock => b.type === 'field')
+        .map(b => b.fieldName)
+    );
+    const appended: FieldBlock[] = schema.fields
+      .filter(f => !retainedFieldNames.has(f.name))
       .map((f, i) => ({
+        type: 'field' as const,
         fieldName: f.name,
         label: f.label,
-        type: f.type,
+        fieldType: f.type,
+        value: null,
         visible: true,
         order: retained.length + i,
       }));

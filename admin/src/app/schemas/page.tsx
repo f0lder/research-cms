@@ -1,9 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
-import { getAllSchemas, getSystemSchemas, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSchemas } from '@/contexts/SchemaContext';
 
 function SchemaRow({ schema, isAdmin }: { schema: ContentTypeDefinition; isAdmin: boolean }) {
   return (
@@ -42,19 +42,10 @@ function SchemaRow({ schema, isAdmin }: { schema: ContentTypeDefinition; isAdmin
 export default function SchemasPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const [schemas, setSchemas] = useState<ContentTypeDefinition[]>([]);
-  const [systemSchemas, setSystemSchemas] = useState<ContentTypeDefinition[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    Promise.all([getAllSchemas(), getSystemSchemas()]).then(([user, system]) => {
-      if (user.data) setSchemas(user.data);
-      if (system.data) setSystemSchemas(system.data);
-      setLoading(false);
-    });
-  }, []);
+  const { schemas, systemSchemas, loading, error } = useSchemas();
 
   if (loading) return <div className="p-8 font-mono text-sm text-zinc-400">Loading…</div>;
+  if (error) return <div className="p-8"><div className="alert-error">{error}</div></div>;
 
   return (
     <div className="page">
