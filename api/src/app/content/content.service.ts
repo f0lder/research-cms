@@ -57,51 +57,51 @@ export class ContentService {
 
 			if (missing) continue;
 
-			switch (field.type as FieldType) {
-				case FieldType.NUMBER:
+			switch (field.type) {
+				case 'number':
 					if (typeof value !== 'number' && isNaN(Number(value))) {
 						errors.push(`"${field.label || field.name}" must be a number`);
 					}
 					break;
-				case FieldType.BOOLEAN:
+				case 'boolean':
 					if (typeof value !== 'boolean') {
 						errors.push(`"${field.label || field.name}" must be a boolean`);
 					}
 					break;
-				case FieldType.DATE:
-				case FieldType.DATETIME:
+				case 'date':
+				case 'datetime':
 					if (isNaN(Date.parse(String(value)))) {
 						errors.push(`"${field.label || field.name}" must be a valid date`);
 					}
 					break;
-				case FieldType.EMAIL:
+				case 'email':
 					if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value))) {
 						errors.push(`"${field.label || field.name}" must be a valid email`);
 					}
 					break;
-				case FieldType.URL:
+				case 'url':
 					try { new URL(String(value)); } catch {
 						errors.push(`"${field.label || field.name}" must be a valid URL`);
 					}
 					break;
-				case FieldType.SELECT: {
-					const opts = field.config?.type === 'select' ? field.config.options : [];
+				case 'select': {
+					const opts = (field.config?.type === 'select' ? field.config.options : []) as string[];
 					if (opts.length > 0 && !opts.includes(String(value))) {
 						errors.push(`"${field.label || field.name}" must be one of: ${opts.join(', ')}`);
 					}
 					break;
 				}
-				case FieldType.TAGS:
+				case 'tags':
 					if (!Array.isArray(value)) {
 						errors.push(`"${field.label || field.name}" must be an array of strings`);
 					}
 					break;
-				case FieldType.MEDIA:
-				case FieldType.REFERENCE: {
+				case 'media':
+				case 'reference': {
 					if (typeof value !== 'string' || !isValidObjectId(value)) {
 						errors.push(`"${field.label || field.name}" must be a valid entry ID`);
 					} else {
-						const targetSlug = field.type === FieldType.MEDIA
+						const targetSlug = field.type === 'media'
 							? MEDIA_SCHEMA_SLUG
 							: (field.config?.type === 'reference' ? field.config.targetSlug : schemaSlug);
 						const label = field.label || field.name;
@@ -114,15 +114,16 @@ export class ContentService {
 					}
 					break;
 				}
-				case FieldType.REFERENCES: {
+				case 'references': {
 					if (!Array.isArray(value) || value.some(v => !isValidObjectId(v))) {
 						errors.push(`"${field.label || field.name}" must be an array of valid entry IDs`);
 					} else if (value.length > 0) {
 						const targetSlug = field.config?.type === 'references' ? field.config.targetSlug : schemaSlug;
 						const label = field.label || field.name;
+						const validIds = value as string[];
 						referenceChecks.push(
-							this.model.countDocuments({ _id: { $in: value }, schemaSlug: targetSlug }).then(found => {
-								if (found !== value.length) errors.push(`"${label}" contains one or more entries that do not exist`);
+							this.model.countDocuments({ _id: { $in: validIds }, schemaSlug: targetSlug }).then(found => {
+								if (found !== validIds.length) errors.push(`"${label}" contains one or more entries that do not exist`);
 							})
 						);
 					}

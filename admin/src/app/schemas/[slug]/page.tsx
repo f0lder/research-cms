@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ContentTypeDefinition, ContentEntry, FieldDefinition, FieldType, FieldValue } from '@research-cms/shared-types';
+import { ContentTypeDefinition, ContentEntry, FieldDefinition, FieldValue } from '@research-cms/shared-types';
 import { getSchema, getAllEntries, deleteEntry } from '@/app/actions';
 import { extractParam, adminRoutes, formatDate, formatDateTime, getEntryTitle, truncateString } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,12 +20,12 @@ function CellValue({
   }
 
   switch (field.type) {
-    case FieldType.BOOLEAN:
+    case 'boolean':
       return value
         ? <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 font-mono">Yes</span>
         : <span className="text-xs bg-zinc-100 text-zinc-400 px-1.5 py-0.5 font-mono">No</span>;
 
-    case FieldType.MEDIA: {
+    case 'media': {
       const mediaUrl = refCache[String(value)]?.data?.url;
       if (!mediaUrl) return <span className="text-zinc-300 text-xs font-mono">—</span>;
       return (
@@ -38,7 +38,7 @@ function CellValue({
       );
     }
 
-    case FieldType.REFERENCE: {
+    case 'reference': {
       const id = String(value);
       const targetSlug = field.config?.type === 'reference' ? field.config.targetSlug : '';
       const entry = refCache[id];
@@ -51,7 +51,7 @@ function CellValue({
       );
     }
 
-    case FieldType.REFERENCES: {
+    case 'references': {
       const arr = Array.isArray(value) ? value : [];
       if (arr.length === 0) return <span className="text-zinc-300">—</span>;
       const targetSlug = field.config?.type === 'references' ? field.config.targetSlug : '';
@@ -72,7 +72,7 @@ function CellValue({
       );
     }
 
-    case FieldType.TAGS: {
+    case 'tags': {
       const arr = Array.isArray(value) ? value : [];
       if (arr.length === 0) return <span className="text-zinc-300">—</span>;
       return (
@@ -85,22 +85,22 @@ function CellValue({
       );
     }
 
-    case FieldType.SELECT:
+    case 'select':
       return <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-0.5 font-mono">{String(value)}</span>;
 
-    case FieldType.DATE:
+    case 'date':
       return <span className="text-xs text-zinc-500">{formatDate(String(value))}</span>;
 
-    case FieldType.DATETIME:
+    case 'datetime':
       return <span className="text-xs text-zinc-500">{formatDateTime(String(value))}</span>;
 
-    case FieldType.NUMBER:
+    case 'number':
       return <span className="font-mono text-sm">{String(value)}</span>;
 
-    case FieldType.EMAIL:
+    case 'email':
       return <a href={`mailto:${value}`} className="text-blue-600 hover:underline text-sm truncate max-w-xs block">{String(value)}</a>;
 
-    case FieldType.URL:
+    case 'url':
       return <a href={String(value)} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm truncate max-w-xs block">{String(value)}</a>;
 
     default: {
@@ -141,11 +141,11 @@ export default function SchemaDetailPage() {
     if (schemaData) {
       const refSlugs = [...new Set(
         schemaData.fields
-          .filter(f => f.type === FieldType.REFERENCE || f.type === FieldType.REFERENCES)
+          .filter(f => f.type === 'reference' || f.type === 'references')
           .map(f => (f.config?.type === 'reference' || f.config?.type === 'references') ? f.config.targetSlug : null)
           .filter((s): s is string => !!s)
       )];
-      const hasMedia = schemaData.fields.some(f => f.type === FieldType.MEDIA);
+      const hasMedia = schemaData.fields.some(f => f.type === 'media');
       const slugsToFetch = hasMedia ? [...refSlugs, 'media'] : refSlugs;
 
       if (slugsToFetch.length > 0) {

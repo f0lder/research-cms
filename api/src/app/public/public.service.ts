@@ -57,7 +57,7 @@ export class PublicService {
     fieldMap: Map<string, { type: FieldType }>,
   ): Promise<Map<string, MediaEntry | null>> {
     const mediaIds = blocks
-      .filter((b): b is FieldBlock => b.type === 'field' && fieldMap.get((b as FieldBlock).fieldName)?.type === FieldType.MEDIA)
+      .filter((b): b is FieldBlock => b.type === 'field' && fieldMap.get((b as FieldBlock).fieldName)?.type === 'media')
       .map(b => data[(b as FieldBlock).fieldName])
       .filter((v): v is string => typeof v === 'string');
 
@@ -108,7 +108,7 @@ export class PublicService {
         const fieldBlock = b as FieldBlock;
         const field = fieldMap.get(fieldBlock.fieldName);
         const raw = data[fieldBlock.fieldName] ?? null;
-        const value = field?.type === FieldType.MEDIA && typeof raw === 'string'
+        const value = field?.type === 'media' && typeof raw === 'string'
           ? mediaMap.get(raw) ?? null
           : (raw as FieldValue | null);
 

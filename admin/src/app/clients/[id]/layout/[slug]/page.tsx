@@ -10,7 +10,7 @@ import {
   SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Block, ContentTypeDefinition, FieldType, FieldDefinition } from '@research-cms/shared-types';
+import { Block, ContentTypeDefinition, FieldDefinition } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { getSchema, getAllSchemas, getLayout, upsertLayout } from '@/app/actions';
 
@@ -101,19 +101,19 @@ function FieldBlockEditor({
   schemaFields: FieldDefinition[];
 }) {
   const typeLabel = {
-    [FieldType.TEXT]: 'Text',
-    [FieldType.TEXTAREA]: 'Textarea',
-    [FieldType.EMAIL]: 'Email',
-    [FieldType.URL]: 'URL',
-    [FieldType.NUMBER]: 'Number',
-    [FieldType.DATE]: 'Date',
-    [FieldType.DATETIME]: 'DateTime',
-    [FieldType.BOOLEAN]: 'Boolean',
-    [FieldType.MEDIA]: 'Media',
-    [FieldType.SELECT]: 'Select',
-    [FieldType.TAGS]: 'Tags',
-    [FieldType.REFERENCE]: 'Reference',
-    [FieldType.REFERENCES]: 'References',
+    ['text']: 'Text',
+    ['textarea']: 'Textarea',
+    ['email']: 'Email',
+    ['url']: 'URL',
+    ['number']: 'Number',
+    ['date']: 'Date',
+    ['datetime']: 'DateTime',
+    ['boolean']: 'Boolean',
+    ['media']: 'Media',
+    ['select']: 'Select',
+    ['tags']: 'Tags',
+    ['reference']: 'Reference',
+    ['references']: 'References',
   }[block.fieldType] || String(block.fieldType);
 
   const fieldOptions: Option[] = schemaFields.map(f => ({ value: f.name, label: f.label }));
@@ -273,7 +273,7 @@ export default function EntryDetailLayoutPage() {
       heading: { type: 'heading', text: '', level: 2 },
       text: { type: 'text', content: '' },
       archive: { type: 'archive', schemaSlug: schemas[0]?.slug ?? '', limit: 5 },
-      field: { type: 'field', fieldName: '', label: '', fieldType: FieldType.TEXT, value: null, visible: true, order: blocks.length },
+      field: { type: 'field', fieldName: '', label: '', fieldType: 'text', value: null, visible: true, order: blocks.length },
     };
     setBlocks(prev => [...prev, defaults[type]]);
   };

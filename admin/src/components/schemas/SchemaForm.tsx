@@ -1,15 +1,15 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FieldType, FieldDefinition, FieldConfig, ContentTypeDefinition } from '@research-cms/shared-types';
+import { FieldDefinition, FieldConfig, ContentTypeDefinition } from '@research-cms/shared-types';
 import { getAllSchemas, createSchema, updateSchema, deleteSchema } from '@/app/actions';
 import { generateSlugFromName, validateSlug, generateRandomId, getErrorMessage } from '@/lib/utils';
 import FieldInput from './FieldInput';
 
 const DEFAULT_FIELDS: FieldDefinition[] = [
-  { name: 'title', label: 'Title', type: FieldType.TEXT, required: true },
-  { name: 'status', label: 'Status', type: FieldType.SELECT, required: true, config: { type: 'select', options: ['draft', 'published', 'private'] } },
-  { name: 'excerpt', label: 'Excerpt', type: FieldType.TEXTAREA, required: false },
+  { name: 'title', label: 'Title', type: 'text', required: true },
+  { name: 'status', label: 'Status', type: 'select', required: true, config: { type: 'select', options: ['draft', 'published', 'private'] } },
+  { name: 'excerpt', label: 'Excerpt', type: 'textarea', required: false },
 ];
 
 interface SchemaFormProps {
@@ -52,7 +52,7 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
   };
 
   const addField = () => {
-    setFields(prev => [...prev, { name: '', label: '', type: FieldType.TEXT, required: false }]);
+    setFields(prev => [...prev, { name: '', label: '', type: 'text', required: false }]);
     setFieldIds(prev => [...prev, generateRandomId()]);
   };
 

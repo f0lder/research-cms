@@ -9,31 +9,31 @@ type SelectOption = { value: string; label: string };
 
 const FIELD_TYPE_OPTIONS = [
   { label: 'Text', options: [
-    { value: FieldType.TEXT,      label: 'Text' },
-    { value: FieldType.TEXTAREA,  label: 'Textarea' },
-    { value: FieldType.EMAIL,     label: 'Email' },
-    { value: FieldType.URL,       label: 'URL' },
+    { value: 'text',      label: 'Text' },
+    { value: 'textarea',  label: 'Textarea' },
+    { value: 'email',     label: 'Email' },
+    { value: 'url',       label: 'URL' },
   ]},
   { label: 'Numeric', options: [
-    { value: FieldType.NUMBER,    label: 'Number' },
+    { value: 'number',    label: 'Number' },
   ]},
   { label: 'Date / Time', options: [
-    { value: FieldType.DATE,      label: 'Date' },
-    { value: FieldType.DATETIME,  label: 'Date & Time' },
+    { value: 'date',      label: 'Date' },
+    { value: 'datetime',  label: 'Date & Time' },
   ]},
   { label: 'Toggle', options: [
-    { value: FieldType.BOOLEAN,   label: 'Boolean' },
+    { value: 'boolean',   label: 'Boolean' },
   ]},
   { label: 'Media', options: [
-    { value: FieldType.MEDIA, label: 'Media' },
+    { value: 'media', label: 'Media' },
   ]},
   { label: 'Choice', options: [
-    { value: FieldType.SELECT,    label: 'Select' },
-    { value: FieldType.TAGS,      label: 'Tags' },
+    { value: 'select',    label: 'Select' },
+    { value: 'tags',      label: 'Tags' },
   ]},
   { label: 'Relations', options: [
-    { value: FieldType.REFERENCE,  label: 'Reference (one)' },
-    { value: FieldType.REFERENCES, label: 'References (many)' },
+    { value: 'reference',  label: 'Reference (one)' },
+    { value: 'references', label: 'References (many)' },
   ]},
 ];
 
@@ -102,10 +102,10 @@ export default function FieldInput({
 
   const handleTypeChange = (newType: FieldType) => {
     onUpdate(index, 'type', newType);
-    if (newType === FieldType.SELECT)          onUpdate(index, 'config', { type: 'select', options: [] });
-    else if (newType === FieldType.TAGS)       onUpdate(index, 'config', { type: 'tags' });
-    else if (newType === FieldType.REFERENCE)  onUpdate(index, 'config', { type: 'reference', targetSlug: '' });
-    else if (newType === FieldType.REFERENCES) onUpdate(index, 'config', { type: 'references', targetSlug: '' });
+    if (newType === 'select')          onUpdate(index, 'config', { type: 'select', options: [] });
+    else if (newType === 'tags')       onUpdate(index, 'config', { type: 'tags' });
+    else if (newType === 'reference')  onUpdate(index, 'config', { type: 'reference', targetSlug: '' });
+    else if (newType === 'references') onUpdate(index, 'config', { type: 'references', targetSlug: '' });
     else                                       onUpdate(index, 'config', undefined);
   };
 
@@ -127,9 +127,9 @@ export default function FieldInput({
       ? field.config.options.map(o => ({ value: o, label: o }))
       : [];
 
-  const needsConfig = field.type === FieldType.SELECT
-    || field.type === FieldType.REFERENCE
-    || field.type === FieldType.REFERENCES;
+  const needsConfig = field.type === 'select'
+    || field.type === 'reference'
+    || field.type === 'references';
 
   return (
     <div className={`border border-zinc-200 mb-2 ${disabled ? 'bg-zinc-50' : 'bg-white'}`}>
@@ -207,7 +207,7 @@ export default function FieldInput({
       {/* Config row — only for types that need extra options */}
       {needsConfig && (
         <div className="border-t border-zinc-100 px-3 py-2.5 bg-zinc-50">
-          {field.type === FieldType.SELECT && (
+          {field.type === 'select' && (
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-zinc-400 font-mono shrink-0">options:</span>
               <CreatableSelect<SelectOption, true>
@@ -224,7 +224,7 @@ export default function FieldInput({
               />
             </div>
           )}
-          {(field.type === FieldType.REFERENCE || field.type === FieldType.REFERENCES) && (
+          {(field.type === 'reference' || field.type === 'references') && (
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-zinc-400 font-mono shrink-0">target:</span>
               <Select<SelectOption>
@@ -235,7 +235,7 @@ export default function FieldInput({
                   : null}
                 onChange={opt => {
                   if (!opt) return;
-                  const t = field.type === FieldType.REFERENCE ? 'reference' : 'references';
+                  const t = field.type === 'reference' ? 'reference' : 'references';
                   onUpdate(index, 'config', { type: t, targetSlug: opt.value });
                 }}
                 isDisabled={disabled}

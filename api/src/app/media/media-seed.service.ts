@@ -10,12 +10,12 @@ const MEDIA_SCHEMA = {
   slug: MEDIA_SCHEMA_SLUG,
   system: true,
   fields: [
-    { name: 'title',    label: 'Title',    type: FieldType.TEXT,     required: true },
-    { name: 'url',      label: 'File URL', type: FieldType.TEXT,     required: true },
-    { name: 'caption',  label: 'Caption',  type: FieldType.TEXTAREA, required: false },
-    { name: 'altText',  label: 'Alt Text', type: FieldType.TEXT,     required: false },
-    { name: 'mimeType', label: 'MIME Type',type: FieldType.TEXT,     required: false },
-    { name: 'fileSize', label: 'File Size',type: FieldType.NUMBER,   required: false },
+    { name: 'title',    label: 'Title',    type: 'text',     required: true },
+    { name: 'url',      label: 'File URL', type: 'text',     required: true },
+    { name: 'caption',  label: 'Caption',  type: 'textarea', required: false },
+    { name: 'altText',  label: 'Alt Text', type: 'text',     required: false },
+    { name: 'mimeType', label: 'MIME Type',type: 'text',     required: false },
+    { name: 'fileSize', label: 'File Size',type: 'number',   required: false },
   ],
 };
 

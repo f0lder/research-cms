@@ -6,7 +6,7 @@ function BlockValue({ block }: { block: FieldBlock }) {
   if (block.value === null || block.value === undefined || block.value === '') return null;
 
   switch (block.fieldType) {
-    case FieldType.MEDIA: {
+    case 'media': {
       const media = typeof block.value === 'object' && block.value !== null
         ? block.value as { url?: string; mimeType?: string; title?: string; caption?: string; altText?: string }
         : null;
@@ -28,15 +28,15 @@ function BlockValue({ block }: { block: FieldBlock }) {
         </View>
       );
     }
-    case FieldType.BOOLEAN:
+    case 'boolean':
       return (
         <View style={[s.badge, block.value ? s.badgeGreen : s.badgeGray]}>
           <Text style={s.badgeText}>{block.value ? 'Yes' : 'No'}</Text>
         </View>
       );
-    case FieldType.SELECT:
+    case 'select':
       return <View style={s.badge}><Text style={s.badgeText}>{String(block.value)}</Text></View>;
-    case FieldType.TAGS: {
+    case 'tags': {
       const arr = Array.isArray(block.value) ? block.value : [];
       return (
         <View style={s.tagRow}>
@@ -46,12 +46,12 @@ function BlockValue({ block }: { block: FieldBlock }) {
         </View>
       );
     }
-    case FieldType.TEXTAREA:
+    case 'textarea':
       return <Text style={s.textarea}>{String(block.value)}</Text>;
-    case FieldType.NUMBER:
+    case 'number':
       return <Text style={s.mono}>{String(block.value)}</Text>;
-    case FieldType.DATE:
-    case FieldType.DATETIME:
+    case 'date':
+    case 'datetime':
       return <Text style={s.meta}>{new Date(String(block.value)).toLocaleString()}</Text>;
     default:
       return <Text style={s.text}>{String(block.value)}</Text>;

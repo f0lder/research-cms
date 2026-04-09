@@ -17,9 +17,9 @@ function buildDefaults(schema: ContentTypeDefinition, initial?: ContentEntry): R
   for (const field of schema.fields) {
     if (initial?.data && field.name in initial.data) {
       defaults[field.name] = initial.data[field.name];
-    } else if (field.type === FieldType.BOOLEAN) {
+    } else if (field.type === 'boolean') {
       defaults[field.name] = false;
-    } else if (field.type === FieldType.TAGS || field.type === FieldType.REFERENCES) {
+    } else if (field.type === 'tags' || field.type === 'references') {
       defaults[field.name] = [];
     } else {
       defaults[field.name] = '';
@@ -63,7 +63,7 @@ export default function ContentForm({ mode, schema, initialData, onSuccess }: Co
 
       {schema.fields.map(field => (
         <div key={field.name} className="field-wrap">
-          {field.type !== FieldType.BOOLEAN && (
+          {field.type !== 'boolean' && (
             <label className="field-label">
               {field.label}
               {field.required && <span className="text-red-500 ml-0.5">*</span>}

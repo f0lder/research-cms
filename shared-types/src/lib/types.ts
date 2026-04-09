@@ -1,32 +1,56 @@
-export enum FieldType {
-  // Text
-  TEXT = 'text',
-  TEXTAREA = 'textarea',
-  EMAIL = 'email',
-  URL = 'url',
-  // Numeric
-  NUMBER = 'number',
-  // Date / time
-  DATE = 'date',
-  DATETIME = 'datetime',
-  // Toggle
-  BOOLEAN = 'boolean',
-  // Media (reference to the built-in media schema — use mimeType to distinguish image/video/etc.)
-  MEDIA = 'media',
-  // Choice
-  SELECT = 'select',
-  TAGS = 'tags',
-  // Relations
-  REFERENCE = 'reference',
-  REFERENCES = 'references',
-}
+// ── Field Types (open for extensions via plugins) ────────────────────────────
 
-/** Per-type metadata carried alongside a field definition. */
-export type FieldConfig =
+/** Built-in field types — well-typed, autocompleted. */
+export type BuiltInFieldType =
+  | 'text'
+  | 'textarea'
+  | 'email'
+  | 'url'
+  | 'number'
+  | 'date'
+  | 'datetime'
+  | 'boolean'
+  | 'media'
+  | 'select'
+  | 'tags'
+  | 'reference'
+  | 'references';
+
+/** Open field type — built-in or any plugin-defined string. */
+export type FieldType = BuiltInFieldType | (string & {});
+
+/** Built-in field configurations — well-typed for autocomplete. */
+export type BuiltInFieldConfig =
   | { type: 'select'; options: string[] }
   | { type: 'tags' }
   | { type: 'reference'; targetSlug: string }
   | { type: 'references'; targetSlug: string };
+
+/** Plugin field configurations — arbitrary for extensibility. */
+export type PluginFieldConfig = {
+  type: string;
+  [key: string]: unknown;
+};
+
+/** Per-type metadata — built-in or plugin-defined. */
+export type FieldConfig = BuiltInFieldConfig | PluginFieldConfig;
+
+/** Built-in field values — serializable to JSON. */
+export type BuiltInFieldValue = string | number | boolean | string[];
+
+/** Plugin field values — arbitrary serializable structures. */
+export type PluginFieldValue = Record<string, unknown> | unknown[];
+
+/** Field value as stored in database. */
+export type FieldValue = BuiltInFieldValue | PluginFieldValue;
+
+/** Field value after population (resolved references + plugin metadata). */
+export type ResolvedFieldValue =
+  | FieldValue
+  | ContentEntry
+  | MediaEntry
+  | ContentEntry[]
+  | null;
 
 export interface FieldDefinition {
   name: string;
@@ -47,9 +71,6 @@ export interface ContentTypeDefinition {
   createdAt?: string;
   updatedAt?: string;
 }
-
-/** All possible values a content field can hold. */
-export type FieldValue = string | number | boolean | string[];
 
 /** A single content entry whose shape is defined by a ContentTypeDefinition. */
 export interface ContentEntry {
@@ -104,9 +125,11 @@ export interface FieldBlock {
   fieldName: string;
   label: string;
   fieldType: FieldType;
-  value: FieldValue | MediaEntry | null;
+  value: ResolvedFieldValue;
   visible: boolean;
   order: number;
+  /** Plugin extra resolved data for this field. */
+  meta?: Record<string, unknown>;
 }
 
 /** Block that displays a heading. */

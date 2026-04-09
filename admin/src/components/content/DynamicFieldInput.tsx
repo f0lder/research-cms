@@ -65,7 +65,7 @@ export default function DynamicFieldInput({
   const rs = reactSelectStyles(disabled);
 
   switch (field.type as FieldType) {
-    case FieldType.TEXTAREA:
+    case 'textarea':
       return (
         <textarea
           value={String(value ?? '')}
@@ -76,7 +76,7 @@ export default function DynamicFieldInput({
         />
       );
 
-    case FieldType.NUMBER:
+    case 'number':
       return (
         <input
           type="number"
@@ -87,7 +87,7 @@ export default function DynamicFieldInput({
         />
       );
 
-    case FieldType.BOOLEAN:
+    case 'boolean':
       return (
         <label className={`flex items-center gap-2 text-sm text-zinc-700 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
           <input
@@ -100,7 +100,7 @@ export default function DynamicFieldInput({
         </label>
       );
 
-    case FieldType.DATE:
+    case 'date':
       return (
         <input
           type="date"
@@ -111,7 +111,7 @@ export default function DynamicFieldInput({
         />
       );
 
-    case FieldType.DATETIME:
+    case 'datetime':
       return (
         <input
           type="datetime-local"
@@ -122,7 +122,7 @@ export default function DynamicFieldInput({
         />
       );
 
-    case FieldType.EMAIL:
+    case 'email':
       return (
         <input
           type="email"
@@ -133,7 +133,7 @@ export default function DynamicFieldInput({
         />
       );
 
-    case FieldType.URL:
+    case 'url':
       return (
         <input
           type="url"
@@ -145,7 +145,7 @@ export default function DynamicFieldInput({
         />
       );
 
-    case FieldType.MEDIA: {
+    case 'media': {
       const [pickerOpen, setPickerOpen] = useState(false);
       const [resolved, setResolved] = useState<MediaEntry | null>(null);
 
@@ -192,7 +192,7 @@ export default function DynamicFieldInput({
       );
     }
 
-    case FieldType.SELECT: {
+    case 'select': {
       const options = field.config?.type === 'select'
         ? field.config.options.map(o => ({ value: o, label: o }))
         : [];
@@ -210,7 +210,7 @@ export default function DynamicFieldInput({
       );
     }
 
-    case FieldType.TAGS: {
+    case 'tags': {
       const tagValues: SelectOption[] = Array.isArray(value)
         ? (value as string[]).map(v => ({ value: v, label: v }))
         : [];
@@ -229,7 +229,7 @@ export default function DynamicFieldInput({
       );
     }
 
-    case FieldType.REFERENCE: {
+    case 'reference': {
       const refValue = referenceOptions.find(o => o.value === value) ?? null;
       return (
         <Select<SelectOption>
@@ -247,7 +247,7 @@ export default function DynamicFieldInput({
       );
     }
 
-    case FieldType.REFERENCES: {
+    case 'references': {
       const refValues = Array.isArray(value)
         ? referenceOptions.filter(o => (value as string[]).includes(o.value))
         : [];
