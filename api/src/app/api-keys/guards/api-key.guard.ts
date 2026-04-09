@@ -1,9 +1,14 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ApiKeysService } from '../api-keys.service';
+import { CmsEvents, ApiKeyUsedEvent } from '../../events';
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
-  constructor(private readonly apiKeysService: ApiKeysService) {}
+  constructor(
+    private readonly apiKeysService: ApiKeysService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -26,6 +31,12 @@ export class ApiKeyGuard implements CanActivate {
     if (schemaSlug && doc.allowedSchemas.length > 0 && !doc.allowedSchemas.includes(schemaSlug)) {
       throw new ForbiddenException(`This key does not have access to "${schemaSlug}"`);
     }
+
+    // Fire-and-forget — usage tracking must not delay the response
+    this.eventEmitter.emit(
+      CmsEvents.APIKEY_USED,
+      new ApiKeyUsedEvent(String(doc._id), schemaSlug ?? 'unknown', request.path, new Date().toISOString()),
+    );
 
     return true;
   }

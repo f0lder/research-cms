@@ -182,6 +182,43 @@ export async function clearLogs() {
   return serverApi.delete(`/logs`);
 }
 
+// ── Webhooks ───────────────────────────────────────────────────────────────
+
+export interface Webhook {
+  _id?: string;
+  name: string;
+  url: string;
+  events: string[];
+  schemas: string[];
+  active: boolean;
+  secret?: string | null;
+  successCount: number;
+  failureCount: number;
+  lastTriggeredAt?: string | null;
+  lastError?: string | null;
+  createdAt?: string;
+}
+
+export async function getAllWebhooks() {
+  return serverApi.get<Webhook[]>(`/webhooks`);
+}
+
+export async function getWebhook(id: string) {
+  return serverApi.get<Webhook>(`/webhooks/${id}`);
+}
+
+export async function createWebhook(data: Omit<Webhook, '_id' | 'successCount' | 'failureCount' | 'lastTriggeredAt' | 'lastError' | 'createdAt'>) {
+  return serverApi.post<Webhook>(`/webhooks`, data);
+}
+
+export async function updateWebhook(id: string, data: Partial<Webhook>) {
+  return serverApi.put<Webhook>(`/webhooks/${id}`, data);
+}
+
+export async function deleteWebhook(id: string) {
+  return serverApi.delete(`/webhooks/${id}`);
+}
+
 // ── Users ──────────────────────────────────────────────────────────────────
 
 interface UserEntry {

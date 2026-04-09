@@ -5,10 +5,12 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { StorageService } from './storage.interface';
 import { ContentService } from '../content/content.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { MEDIA_SCHEMA_SLUG, MediaEntry } from '@research-cms/shared-types';
+import { CmsEvents, MediaUploadedEvent, MediaDeletedEvent } from '../events';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -19,6 +21,7 @@ export class MediaController {
   constructor(
     private readonly storage: StorageService,
     private readonly contentService: ContentService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /** Upload a file and create a media entry. Returns the full media entry. */
@@ -47,6 +50,11 @@ export class MediaController {
       fileSize: result.size,
     });
 
+    this.eventEmitter.emit(
+      CmsEvents.MEDIA_UPLOADED,
+      new MediaUploadedEvent(String(entry._id), result.url, result.mimeType, result.size),
+    );
+
     return this.toMediaEntry(entry);
   }
 
@@ -73,10 +81,10 @@ export class MediaController {
   async delete(@Param('id') id: string) {
     const entry = await this.contentService.findOne(MEDIA_SCHEMA_SLUG, id);
     const url = String(entry.data.url ?? '');
-    // Extract key from URL (last path segment)
     const key = url.split('/').pop();
     if (key && !key.includes('..')) await this.storage.delete(key);
     await this.contentService.delete(MEDIA_SCHEMA_SLUG, id);
+    this.eventEmitter.emit(CmsEvents.MEDIA_DELETED, new MediaDeletedEvent(id, url));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

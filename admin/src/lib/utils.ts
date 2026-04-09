@@ -79,6 +79,9 @@ export const adminRoutes = {
   clientLayout:  (id: string, slug: string) => `/clients/${id}/layout/${slug}`,
   clientPageNew: (id: string) => `/clients/${id}/pages/new`,
   clientPageEdit:(id: string, pageId: string) => `/clients/${id}/pages/${pageId}`,
+  webhooks:       '/webhooks',
+  webhookNew:     '/webhooks/new',
+  webhookEdit:    (id: string) => `/webhooks/${id}`,
 };
 
 /** Extract a single string from Next.js dynamic route params (handles string | string[]). */

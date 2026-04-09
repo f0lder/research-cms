@@ -1,10 +1,17 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, isValidObjectId } from 'mongoose';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ContentEntryModel, ContentEntryDocument } from './schemas/content-entry.schema';
 import { SchemaService } from '../schema/schema.service';
 import { FieldType, FieldValue, MEDIA_SCHEMA_SLUG } from '@research-cms/shared-types';
 import { LogsService } from '../logs/logs.service';
+import {
+  CmsEvents,
+  ContentCreatedEvent,
+  ContentUpdatedEvent,
+  ContentDeletedEvent,
+} from '../events';
 
 @Injectable()
 export class ContentService {
@@ -12,6 +19,7 @@ export class ContentService {
 		@InjectModel(ContentEntryModel.name) private model: Model<ContentEntryDocument>,
 		private readonly schemaService: SchemaService,
 		private readonly logsService: LogsService,
+		private readonly eventEmitter: EventEmitter2,
 	) {}
 
 	// ─── Validation ────────────────────────────────────────────────────────────
@@ -161,8 +169,11 @@ export class ContentService {
 	async create(schemaSlug: string, data: Record<string, FieldValue>): Promise<ContentEntryDocument> {
 		await this.validateData(schemaSlug, data, false);
 		const entry = await this.model.create({ schemaSlug, data });
-		// Fire-and-forget — logging failures must not affect the write response
 		void this.logsService.log(`Entry created in "${schemaSlug}"`, ['content', 'create'], { schemaSlug, id: String(entry._id) });
+		this.eventEmitter.emit(
+			CmsEvents.CONTENT_CREATED,
+			new ContentCreatedEvent(schemaSlug, String(entry._id), entry.data as Record<string, unknown>),
+		);
 		return entry;
 	}
 
@@ -173,21 +184,25 @@ export class ContentService {
 	): Promise<ContentEntryDocument> {
 		const entry = await this.findOne(schemaSlug, id);
 		await this.validateData(schemaSlug, data, true);
+		const previousData = { ...entry.data } as Record<string, unknown>;
 		const updated = await this.model.findByIdAndUpdate(
 			entry._id,
 			// Merges only at the top level — other fields are preserved unchanged
 			{ $set: { data: { ...entry.data, ...data } } },
 			{ returnDocument: 'after' },
 		).exec();
-		// Fire-and-forget — logging failures must not affect the write response
 		void this.logsService.log(`Entry updated in "${schemaSlug}"`, ['content', 'update'], { schemaSlug, id });
+		this.eventEmitter.emit(
+			CmsEvents.CONTENT_UPDATED,
+			new ContentUpdatedEvent(schemaSlug, id, previousData, updated.data as Record<string, unknown>),
+		);
 		return updated;
 	}
 
 	async delete(schemaSlug: string, id: string): Promise<void> {
 		const entry = await this.findOne(schemaSlug, id);
 		await this.model.findByIdAndDelete(entry._id).exec();
-		// Fire-and-forget — logging failures must not affect the write response
 		void this.logsService.log(`Entry deleted from "${schemaSlug}"`, ['content', 'delete'], { schemaSlug, id });
+		this.eventEmitter.emit(CmsEvents.CONTENT_DELETED, new ContentDeletedEvent(schemaSlug, id));
 	}
 }

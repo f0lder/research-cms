@@ -1,10 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ContentType, ContentTypeDocument } from './schemas/content-type.schema';
 import { ContentEntryModel, ContentEntryDocument } from '../content/schemas/content-entry.schema';
 import { ContentTypeDefinition, FieldDefinition } from '@research-cms/shared-types';
 import { LogsService } from '../logs/logs.service';
+import { CmsEvents, SchemaCreatedEvent, SchemaUpdatedEvent, SchemaDeletedEvent } from '../events';
 
 @Injectable()
 export class SchemaService {
@@ -12,6 +14,7 @@ export class SchemaService {
 		@InjectModel(ContentType.name) private model: Model<ContentTypeDocument>,
 		@InjectModel(ContentEntryModel.name) private entryModel: Model<ContentEntryDocument>,
 		private readonly logsService: LogsService,
+		private readonly eventEmitter: EventEmitter2,
 	) {}
 
 	/** Validates that a slug contains only URL-safe characters. */
@@ -36,6 +39,7 @@ export class SchemaService {
 		try {
 			const schema = await this.model.create(data);
 			void this.logsService.log(`Schema created: "${data.name}" (${data.slug})`, ['schema', 'create'], { slug: data.slug });
+			this.eventEmitter.emit(CmsEvents.SCHEMA_CREATED, new SchemaCreatedEvent(schema.slug, schema.name));
 			return schema;
 		} catch (error) {
 			if (error.code === 11000) {
@@ -118,6 +122,7 @@ export class SchemaService {
 
 			const updated = await this.findOne(newSlug);
 			void this.logsService.log(`Schema renamed: "${slug}" → "${newSlug}"`, ['schema', 'update'], { slug: newSlug });
+			this.eventEmitter.emit(CmsEvents.SCHEMA_UPDATED, new SchemaUpdatedEvent(newSlug, slug, updated.name));
 			return updated;
 		}
 
@@ -130,6 +135,7 @@ export class SchemaService {
 			).exec();
 			if (!updated) throw new BadRequestException('Schema update failed');
 			void this.logsService.log(`Schema updated: "${updated.name}" (${updated.slug})`, ['schema', 'update'], { slug: updated.slug });
+			this.eventEmitter.emit(CmsEvents.SCHEMA_UPDATED, new SchemaUpdatedEvent(updated.slug, updated.slug, updated.name));
 			return updated;
 		} catch (error) {
 			if (error.code === 11000) {
@@ -167,5 +173,6 @@ export class SchemaService {
 		}
 
 		void this.logsService.log(`Schema deleted: "${schema.name}" (${slug})`, ['schema', 'delete'], { slug });
+		this.eventEmitter.emit(CmsEvents.SCHEMA_DELETED, new SchemaDeletedEvent(slug, schema.name));
 	}
 }
