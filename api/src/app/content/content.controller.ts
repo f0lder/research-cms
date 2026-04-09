@@ -20,14 +20,6 @@ export class ContentController {
 		return this.contentService.findAll(schemaSlug, Number(page) || 1, Number(limit) || 50);
 	}
 
-	@Get(':schemaSlug/:id')
-	findOne(
-		@Param('schemaSlug') schemaSlug: string,
-		@Param('id') id: string
-	) {
-		return this.contentService.findOne(schemaSlug, id);
-	}
-
 	@Post(':schemaSlug')
 	@UseGuards(RolesGuard)
 	@Roles(UserRole.ADMIN, UserRole.EDITOR)
@@ -36,6 +28,46 @@ export class ContentController {
 		@Body() body: { data: Record<string, FieldValue> }
 	) {
 		return this.contentService.create(schemaSlug, body.data);
+	}
+
+	// ─── Special Routes (must be before generic :id routes) ─────────────────
+
+	@Get(':schemaSlug/search')
+	search(
+		@Param('schemaSlug') schemaSlug: string,
+		@Query('q') query: string,
+		@Query('limit') limit?: string
+	) {
+		return this.contentService.search(schemaSlug, query, Number(limit) || 20);
+	}
+
+	@Get(':schemaSlug/trash')
+	trash(
+		@Param('schemaSlug') schemaSlug: string,
+		@Query('page') page?: string,
+		@Query('limit') limit?: string
+	) {
+		return this.contentService.findTrash(schemaSlug, Number(page) || 1, Number(limit) || 50);
+	}
+
+	@Put(':schemaSlug/bulk-status')
+	@UseGuards(RolesGuard)
+	@Roles(UserRole.ADMIN, UserRole.EDITOR)
+	bulkUpdateStatus(
+		@Param('schemaSlug') schemaSlug: string,
+		@Body() body: { ids: string[]; status: string }
+	) {
+		return this.contentService.bulkUpdateStatus(schemaSlug, body.ids, body.status);
+	}
+
+	// ─── Generic ID Routes ─────────────────────────────────────────────────
+
+	@Get(':schemaSlug/:id')
+	findOne(
+		@Param('schemaSlug') schemaSlug: string,
+		@Param('id') id: string
+	) {
+		return this.contentService.findOne(schemaSlug, id);
 	}
 
 	@Put(':schemaSlug/:id')
@@ -58,5 +90,38 @@ export class ContentController {
 		@Param('id') id: string
 	) {
 		return this.contentService.delete(schemaSlug, id);
+	}
+
+	// ─── Nested ID Routes ─────────────────────────────────────────────────
+
+	@Get(':schemaSlug/:id/restore')
+	@UseGuards(RolesGuard)
+	@Roles(UserRole.ADMIN)
+	restore(
+		@Param('schemaSlug') schemaSlug: string,
+		@Param('id') id: string
+	) {
+		return this.contentService.restore(schemaSlug, id);
+	}
+
+	@Post(':schemaSlug/:id/duplicate')
+	@UseGuards(RolesGuard)
+	@Roles(UserRole.ADMIN, UserRole.EDITOR)
+	duplicate(
+		@Param('schemaSlug') schemaSlug: string,
+		@Param('id') id: string
+	) {
+		return this.contentService.duplicate(schemaSlug, id);
+	}
+
+	@Delete(':schemaSlug/:id/permanent')
+	@HttpCode(204)
+	@UseGuards(RolesGuard)
+	@Roles(UserRole.ADMIN)
+	permanentlyDelete(
+		@Param('schemaSlug') schemaSlug: string,
+		@Param('id') id: string
+	) {
+		return this.contentService.permanentlyDelete(schemaSlug, id);
 	}
 }

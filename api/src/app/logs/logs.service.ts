@@ -44,4 +44,40 @@ export class LogsService {
   async clear(): Promise<void> {
     await this.model.deleteMany({}).exec();
   }
+
+  /**
+	 * Get formatted activity feed grouped by day with pagination
+	 * Returns human-readable activity timeline
+	 */
+	async getActivityFeed(limit = 100, offset = 0): Promise<{ date: string; activities: Array<{ time: string; message: string }> }[]> {
+		const logs = (await this.model.find({}).sort({ createdAt: -1 }).skip(offset).limit(limit).lean().exec()) as any[];
+		// Group logs by date
+		const grouped: Record<string, any[]> = {};
+		logs.forEach(log => {
+			const createdDate = log.createdAt instanceof Date ? log.createdAt : new Date(log.createdAt);
+			const date = createdDate.toLocaleDateString('en-US', {
+				weekday: 'long',
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+			});
+			if (!grouped[date]) grouped[date] = [];
+			grouped[date].push(log);
+		});
+
+		// Convert to readable format
+		return Object.entries(grouped).map(([date, activities]) => ({
+			date,
+			activities: activities.map(log => {
+				const createdDate = log.createdAt instanceof Date ? log.createdAt : new Date(log.createdAt);
+				return {
+					time: createdDate.toLocaleTimeString('en-US', {
+						hour: '2-digit',
+						minute: '2-digit',
+					}),
+					message: log.message,
+				};
+			}),
+		}));
+	}
 }

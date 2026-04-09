@@ -31,6 +31,14 @@ export class LogsController {
     return this.logsService.distinctTags();
   }
 
+  @Get('activity-feed')
+  getActivityFeed(
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
+  ) {
+    return this.logsService.getActivityFeed(Number(limit) || 100, Number(offset) || 0);
+  }
+
   @Delete()
   @HttpCode(204)
   clear() {

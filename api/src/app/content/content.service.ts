@@ -4,7 +4,7 @@ import { Model, isValidObjectId } from 'mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ContentEntryModel, ContentEntryDocument } from './schemas/content-entry.schema';
 import { SchemaService } from '../schema/schema.service';
-import { FieldType, FieldValue, MEDIA_SCHEMA_SLUG } from '@research-cms/shared-types';
+import { FieldValue, MEDIA_SCHEMA_SLUG } from '@research-cms/shared-types';
 import { LogsService } from '../logs/logs.service';
 import {
   CmsEvents,
@@ -22,6 +22,16 @@ export class ContentService {
 		private readonly eventEmitter: EventEmitter2,
 	) {}
 
+	// ─── Query Helpers (normalize common patterns) ────────────────────────────────
+
+	private getActiveQuery(schemaSlug: string) {
+		return { schemaSlug, deletedAt: null };
+	}
+
+	private getTrashQuery(schemaSlug: string) {
+		return { schemaSlug, deletedAt: { $exists: true, $ne: null } };
+	}
+
 	// ─── Validation ────────────────────────────────────────────────────────────
 
 	/**
@@ -37,7 +47,13 @@ export class ContentService {
 		const errors: string[] = [];
 
 		// Reject fields not defined in the schema
-		const allowed = new Set(resolvedSchema.fields.map(f => f.name));
+		const allowed = new Set([
+			...resolvedSchema.fields.map(f => f.name),
+			'status',
+			'publishAt',
+			'deletedAt',
+			'version',
+		]);
 		for (const key of Object.keys(data)) {
 			if (!allowed.has(key)) errors.push(`Unknown field: "${key}"`);
 		}
@@ -149,9 +165,10 @@ export class ContentService {
 		limit: number;
 	}> {
 		await this.schemaService.findOne(schemaSlug);
+		const query = this.getActiveQuery(schemaSlug);
 		const [items, total] = await Promise.all([
-			this.model.find({ schemaSlug }).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).exec(),
-			this.model.countDocuments({ schemaSlug }),
+			this.model.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).exec(),
+			this.model.countDocuments(query),
 		]);
 		return { items, total, page, limit };
 	}
@@ -160,7 +177,7 @@ export class ContentService {
 		if (!isValidObjectId(id)) {
 			throw new BadRequestException(`Invalid entry ID: "${id}"`);
 		}
-		const entry = await this.model.findOne({ _id: id, schemaSlug }).exec();
+		const entry = await this.model.findOne({ ...this.getActiveQuery(schemaSlug), _id: id }).exec();
 		if (!entry) {
 			throw new NotFoundException(`Entry "${id}" not found in schema "${schemaSlug}"`);
 		}
@@ -169,7 +186,23 @@ export class ContentService {
 
 	async create(schemaSlug: string, data: Record<string, FieldValue>): Promise<ContentEntryDocument> {
 		await this.validateData(schemaSlug, data, false);
-		const entry = await this.model.create({ schemaSlug, data });
+		
+		// Extract system fields (top-level) from input data
+		const systemFields = ['status', 'publishAt', 'deletedAt', 'version'];
+		const fieldData: Record<string, FieldValue> = {};
+		const createFields: Record<string, any> = { schemaSlug };
+		
+		for (const key in data) {
+			if (systemFields.includes(key)) {
+				createFields[key] = data[key];
+			} else {
+				fieldData[key] = data[key];
+			}
+		}
+		
+		createFields.data = fieldData;
+		const entry = await this.model.create(createFields);
+		
 		void this.logsService.log(`Entry created in "${schemaSlug}"`, ['content', 'create'], { schemaSlug, id: String(entry._id) });
 		this.eventEmitter.emit(
 			CmsEvents.CONTENT_CREATED,
@@ -185,13 +218,34 @@ export class ContentService {
 	): Promise<ContentEntryDocument> {
 		const entry = await this.findOne(schemaSlug, id);
 		await this.validateData(schemaSlug, data, true);
+		
+		// Extract system fields (top-level) from input data
+		const systemFields = ['status', 'publishAt', 'deletedAt', 'version'];
+		const fieldData: Record<string, FieldValue> = {};
+		const updateFields: Record<string, any> = {};
+		
+		for (const key in data) {
+			if (systemFields.includes(key)) {
+				updateFields[key] = data[key];
+			} else {
+				fieldData[key] = data[key];
+			}
+		}
+		
 		const previousData = { ...entry.data } as Record<string, unknown>;
+		
+		// Build update object: merge schema fields into data object, set system fields at top-level
+		const updateObject = { $set: { data: { ...entry.data, ...fieldData } } };
+		if (Object.keys(updateFields).length > 0) {
+			Object.assign(updateObject.$set, updateFields);
+		}
+		
 		const updated = await this.model.findByIdAndUpdate(
 			entry._id,
-			// Merges only at the top level — other fields are preserved unchanged
-			{ $set: { data: { ...entry.data, ...data } } },
+			updateObject,
 			{ returnDocument: 'after' },
 		).exec();
+		
 		void this.logsService.log(`Entry updated in "${schemaSlug}"`, ['content', 'update'], { schemaSlug, id });
 		this.eventEmitter.emit(
 			CmsEvents.CONTENT_UPDATED,
@@ -202,8 +256,108 @@ export class ContentService {
 
 	async delete(schemaSlug: string, id: string): Promise<void> {
 		const entry = await this.findOne(schemaSlug, id);
-		await this.model.findByIdAndDelete(entry._id).exec();
-		void this.logsService.log(`Entry deleted from "${schemaSlug}"`, ['content', 'delete'], { schemaSlug, id });
+		// Soft delete — mark as deleted instead of removing
+		await this.model.findByIdAndUpdate(entry._id, { $set: { deletedAt: new Date() } }).exec();
+		void this.logsService.log(`Entry moved to trash in "${schemaSlug}"`, ['content', 'delete'], { schemaSlug, id });
 		this.eventEmitter.emit(CmsEvents.CONTENT_DELETED, new ContentDeletedEvent(schemaSlug, id));
+	}
+
+	// ─── Advanced Operations ─────────────────────────────────────────────────────
+
+	/** Permanently remove a soft-deleted entry */
+	async permanentlyDelete(schemaSlug: string, id: string): Promise<void> {
+		if (!isValidObjectId(id)) throw new BadRequestException('Invalid entry ID');
+		await this.schemaService.findOne(schemaSlug);
+		const deleted = await this.model.findByIdAndDelete(id).exec();
+		if (!deleted) throw new NotFoundException('Entry not found');
+		void this.logsService.log(`Entry permanently deleted from "${schemaSlug}"`, ['content', 'delete'], { schemaSlug, id });
+	}
+
+	/** Restore a soft-deleted entry from trash */
+	async restore(schemaSlug: string, id: string): Promise<ContentEntryDocument> {
+		if (!isValidObjectId(id)) throw new BadRequestException('Invalid entry ID');
+		await this.schemaService.findOne(schemaSlug);
+		const restored = await this.model.findByIdAndUpdate(
+			id,
+			{ $set: { deletedAt: null } },
+			{ new: true }
+		).exec();
+		if (!restored) throw new NotFoundException('Entry not found');
+		void this.logsService.log(`Entry restored in "${schemaSlug}"`, ['content', 'restore'], { schemaSlug, id });
+		return restored;
+	}
+
+	/** Duplicate an entry as a new draft */
+	async duplicate(schemaSlug: string, id: string): Promise<ContentEntryDocument> {
+		const entry = await this.findOne(schemaSlug, id);
+		const duplicated = await this.model.create({
+			schemaSlug,
+			data: { ...entry.data },
+			status: 'draft',
+			version: 1,
+		});
+		void this.logsService.log(`Entry duplicated in "${schemaSlug}"`, ['content', 'create'], { schemaSlug, originalId: id, newId: duplicated._id });
+		this.eventEmitter.emit(CmsEvents.CONTENT_CREATED, new ContentCreatedEvent(schemaSlug, duplicated._id.toString(), duplicated.data, 'admin'));
+		return duplicated;
+	}
+
+	/** Update status for multiple entries with validation */
+	async bulkUpdateStatus(schemaSlug: string, ids: string[], status: string): Promise<{ modifiedCount: number }> {
+		await this.schemaService.findOne(schemaSlug);
+		
+		// Validate status value
+		const validStatuses = ['draft', 'published', 'scheduled', 'archived'];
+		if (!validStatuses.includes(status)) {
+			throw new BadRequestException(`Status must be one of: ${validStatuses.join(', ')}`);
+		}
+		
+		const validIds = ids.filter(id => isValidObjectId(id));
+		if (validIds.length === 0) throw new BadRequestException('No valid entry IDs provided');
+		
+		const result = await this.model.updateMany(
+			{ ...this.getActiveQuery(schemaSlug), _id: { $in: validIds } },
+			{ $set: { status } }
+		).exec();
+		
+		void this.logsService.log(`Bulk status update in "${schemaSlug}"`, ['content', 'update'], { schemaSlug, count: result.modifiedCount, status });
+		return { modifiedCount: result.modifiedCount };
+	}
+
+	/** Search entries by full-text query with proper text index */
+	async search(schemaSlug: string, query: string, limit = 20): Promise<ContentEntryDocument[]> {
+		await this.schemaService.findOne(schemaSlug);
+		
+		// Sanitize query for MongoDB — escape special regex chars
+		const sanitized = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		
+		return this.model.find(
+			{
+				...this.getActiveQuery(schemaSlug),
+				$or: [
+					{ $text: { $search: sanitized } },  // Full-text search on indexed fields
+					{ 'data': { $regex: sanitized, $options: 'i' } },  // Fallback: regex search on all data
+				],
+			},
+			{ score: { $meta: 'textScore' } }
+		)
+			.sort({ score: { $meta: 'textScore' } })
+			.limit(limit)
+			.exec();
+	}
+
+	/** Get soft-deleted entries (trash) */
+	async findTrash(schemaSlug: string, page = 1, limit = 50): Promise<{
+		items: ContentEntryDocument[];
+		total: number;
+		page: number;
+		limit: number;
+	}> {
+		await this.schemaService.findOne(schemaSlug);
+		const query = this.getTrashQuery(schemaSlug);
+		const [items, total] = await Promise.all([
+			this.model.find(query).sort({ deletedAt: -1 }).skip((page - 1) * limit).limit(limit).exec(),
+			this.model.countDocuments(query),
+		]);
+		return { items, total, page, limit };
 	}
 }

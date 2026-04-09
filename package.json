@@ -65,6 +65,7 @@
     "@nestjs/mongoose": "^11.0.4",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/schedule": "^6.1.1",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.3.1",
     "expo": "~55.0.0",

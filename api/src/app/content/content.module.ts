@@ -4,6 +4,7 @@ import { ContentService } from './content.service';
 import { ContentController } from './content.controller';
 import { ContentEntryModel, ContentEntrySchema } from './schemas/content-entry.schema';
 import { SchemaModule } from '../schema/schema.module';
+import { ScheduledPublishingService } from './scheduled-publishing.service';
 
 @Module({
 	imports: [
@@ -13,7 +14,7 @@ import { SchemaModule } from '../schema/schema.module';
 		SchemaModule,
 	],
 	controllers: [ContentController],
-	providers: [ContentService],
+	providers: [ContentService, ScheduledPublishingService],
 	exports: [ContentService],
 })
 export class ContentModule {}

@@ -33,6 +33,8 @@ export default function ContentForm({ mode, schema, initialData, onSuccess }: Co
   const [formData, setFormData] = useState<Record<string, FieldValue>>(
     () => buildDefaults(schema, initialData)
   );
+  const [status, setStatus] = useState<string>(initialData?.status ?? 'draft');
+  const [publishAt, setPublishAt] = useState<string>(initialData?.publishAt ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,10 +47,16 @@ export default function ContentForm({ mode, schema, initialData, onSuccess }: Co
     setSaving(true);
     setError(null);
 
+    const entryData = {
+      ...formData,
+      status,
+      ...(publishAt && { publishAt }),
+    };
+
     const result =
       mode === 'create'
-        ? await createEntry(schema.slug, formData)
-        : await updateEntry(schema.slug, initialData?._id ?? '', formData);
+        ? await createEntry(schema.slug, entryData)
+        : await updateEntry(schema.slug, initialData?._id ?? '', entryData);
 
     setSaving(false);
     if (result.error) { setError(result.error); return; }
@@ -77,6 +85,43 @@ export default function ContentForm({ mode, schema, initialData, onSuccess }: Co
           />
         </div>
       ))}
+
+      {/* Publishing section */}
+      <div className="mt-8 pt-6 border-t border-zinc-200">
+        <h3 className="text-sm font-semibold text-zinc-700 mb-4">Publishing</h3>
+
+        {/* Status */}
+        <div className="field-wrap">
+          <label className="field-label">Status</label>
+          <select
+            value={status}
+            onChange={e => setStatus(e.target.value)}
+            disabled={saving}
+            className="field-input"
+          >
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+
+        {/* Publish at (if scheduled) */}
+        {status === 'scheduled' && (
+          <div className="field-wrap">
+            <label className="field-label">Publish at</label>
+            <input
+              type="datetime-local"
+              value={publishAt}
+              onChange={e => setPublishAt(e.target.value)}
+              disabled={saving}
+              className="field-input"
+              min={new Date().toISOString().slice(0, 16)}
+              required
+            />
+          </div>
+        )}
+      </div>
 
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 

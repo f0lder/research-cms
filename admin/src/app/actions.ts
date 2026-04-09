@@ -68,6 +68,38 @@ export async function deleteEntry(slug: string, id: string) {
   return serverApi.delete(`/content/${slug}/${id}`);
 }
 
+export async function duplicateEntry(slug: string, id: string) {
+  return serverApi.post<ContentEntry>(`/content/${slug}/${id}/duplicate`, {});
+}
+
+export async function bulkUpdateStatus(
+  slug: string,
+  ids: string[],
+  status: 'draft' | 'published' | 'scheduled' | 'archived'
+) {
+  return serverApi.put(`/content/${slug}/bulk-status`, { ids, status });
+}
+
+export async function restoreEntry(slug: string, id: string) {
+  return serverApi.get<ContentEntry>(`/content/${slug}/${id}/restore`);
+}
+
+export async function permanentlyDeleteEntry(slug: string, id: string) {
+  return serverApi.delete(`/content/${slug}/${id}/permanent`);
+}
+
+export async function searchEntries(slug: string, query: string) {
+  return serverApi.get<{ items: ContentEntry[] }>(`/content/${slug}/search?q=${encodeURIComponent(query)}`);
+}
+
+export async function getTrash(slug: string) {
+  return serverApi.get<{ items: ContentEntry[] }>(`/content/${slug}/trash`);
+}
+
+export async function getActivityFeed(limit = 100, offset = 0) {
+  return serverApi.get<Array<{ date: string; activities: Array<{ time: string; message: string }> }>>(`/logs/activity-feed?limit=${limit}&offset=${offset}`);
+}
+
 // ── Clients ────────────────────────────────────────────────────────────────
 
 export async function getAllClients() {

@@ -78,6 +78,14 @@ export interface ContentEntry {
   schemaSlug: string;
   /** Keyed by field name, values depend on FieldType. */
   data: Record<string, FieldValue>;
+  /** Publishing status — draft, scheduled, published, archived. */
+  status?: 'draft' | 'published' | 'scheduled' | 'archived';
+  /** Soft delete marker — if set, entry is in trash. */
+  deletedAt?: string;
+  /** Publish at this time (for scheduled publishing). */
+  publishAt?: string;
+  /** Version number for content versioning. */
+  version?: number;
   createdAt?: string;
   updatedAt?: string;
 }
