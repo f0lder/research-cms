@@ -36,9 +36,10 @@ export class ContentController {
 	search(
 		@Param('schemaSlug') schemaSlug: string,
 		@Query('q') query: string,
+		@Query('page') page?: string,
 		@Query('limit') limit?: string
 	) {
-		return this.contentService.search(schemaSlug, query, Number(limit) || 20);
+		return this.contentService.search(schemaSlug, query, Number(page) || 1, Number(limit) || 20);
 	}
 
 	@Get(':schemaSlug/trash')
@@ -94,7 +95,7 @@ export class ContentController {
 
 	// ─── Nested ID Routes ─────────────────────────────────────────────────
 
-	@Get(':schemaSlug/:id/restore')
+	@Put(':schemaSlug/:id/restore')
 	@UseGuards(RolesGuard)
 	@Roles(UserRole.ADMIN)
 	restore(

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ContentTypeDefinition, ContentEntry, FieldType, FieldValue } from '@research-cms/shared-types';
+import { ContentTypeDefinition, ContentEntry, FieldValue } from '@research-cms/shared-types';
 import { createEntry, updateEntry } from '@/app/actions';
 import DynamicFieldInput from './DynamicFieldInput';
 

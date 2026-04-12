@@ -13,6 +13,8 @@ export class LogEntryModel {
 
   @Prop({ type: Object, default: null })
   meta: Record<string, unknown> | null;
+
+  createdAt?: Date;
 }
 
 export const LogEntrySchema = SchemaFactory.createForClass(LogEntryModel);

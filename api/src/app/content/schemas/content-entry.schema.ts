@@ -7,10 +7,10 @@ export type ContentEntryDocument = HydratedDocument<ContentEntryModel>;
 @Schema({ timestamps: true })
 export class ContentEntryModel {
 	@Prop({ required: true, index: true })
-	schemaSlug: string;
+	schemaSlug!: string;
 
 	@Prop({ type: Object, required: true })
-	data: Record<string, FieldValue>;
+	data!: Record<string, FieldValue>;
 
 	@Prop({ default: 'draft', index: true })
 	status?: 'draft' | 'published' | 'scheduled' | 'archived';

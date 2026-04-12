@@ -124,7 +124,7 @@ export default function FieldInput({
 
   const selectOptionValues: SelectOption[] =
     field.config?.type === 'select'
-      ? field.config.options.map(o => ({ value: o, label: o }))
+      ? (field.config.options as string[]).map((o: string) => ({ value: o, label: o }))
       : [];
 
   const needsConfig = field.type === 'select'

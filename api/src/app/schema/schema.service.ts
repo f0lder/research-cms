@@ -42,10 +42,11 @@ export class SchemaService {
 			this.eventEmitter.emit(CmsEvents.SCHEMA_CREATED, new SchemaCreatedEvent(schema.slug, schema.name));
 			return schema;
 		} catch (error) {
-			if (error.code === 11000) {
+			const mongoError = error as { code?: number; message?: string };
+			if (mongoError.code === 11000) {
 				throw new BadRequestException(`Schema with slug "${data.slug}" already exists`);
 			}
-			throw new BadRequestException(error.message);
+			throw new BadRequestException(mongoError.message || 'Schema creation failed');
 		}
 	}
 
@@ -138,10 +139,11 @@ export class SchemaService {
 			this.eventEmitter.emit(CmsEvents.SCHEMA_UPDATED, new SchemaUpdatedEvent(updated.slug, updated.slug, updated.name));
 			return updated;
 		} catch (error) {
-			if (error.code === 11000) {
+			const mongoError = error as { code?: number; message?: string };
+			if (mongoError.code === 11000) {
 				throw new BadRequestException(`Schema with slug "${data.slug}" already exists`);
 			}
-			throw new BadRequestException(error.message);
+			throw new BadRequestException(mongoError.message || 'Schema update failed');
 		}
 	}
 

@@ -10,7 +10,7 @@ import {
   SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Block, ContentTypeDefinition, FieldDefinition } from '@research-cms/shared-types';
+import { Block, ContentTypeDefinition, FieldDefinition, BuiltInFieldType } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { getSchema, getAllSchemas, getLayout, upsertLayout } from '@/app/actions';
 
@@ -100,21 +100,23 @@ function FieldBlockEditor({
   onChange: (b: AdminBlock) => void;
   schemaFields: FieldDefinition[];
 }) {
-  const typeLabel = {
-    ['text']: 'Text',
-    ['textarea']: 'Textarea',
-    ['email']: 'Email',
-    ['url']: 'URL',
-    ['number']: 'Number',
-    ['date']: 'Date',
-    ['datetime']: 'DateTime',
-    ['boolean']: 'Boolean',
-    ['media']: 'Media',
-    ['select']: 'Select',
-    ['tags']: 'Tags',
-    ['reference']: 'Reference',
-    ['references']: 'References',
-  }[block.fieldType] || String(block.fieldType);
+  const typeLabelMap = {
+    'text': 'Text',
+    'textarea': 'Textarea',
+    'email': 'Email',
+    'url': 'URL',
+    'number': 'Number',
+    'date': 'Date',
+    'datetime': 'DateTime',
+    'boolean': 'Boolean',
+    'media': 'Media',
+    'select': 'Select',
+    'tags': 'Tags',
+    'reference': 'Reference',
+    'references': 'References',
+  } as const satisfies Record<BuiltInFieldType, string>;
+
+  const typeLabel = (typeLabelMap as Record<string, string>)[block.fieldType] || String(block.fieldType);
 
   const fieldOptions: Option[] = schemaFields.map(f => ({ value: f.name, label: f.label }));
 

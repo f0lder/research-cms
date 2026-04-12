@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 import { getAllSchemas, getSystemSchemas } from '@/app/actions';
 
@@ -18,8 +18,14 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
   const [systemSchemas, setSystemSchemas] = useState<ContentTypeDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Track in-flight fetch to prevent duplicate requests in StrictMode
+  const fetchingRef = useRef(false);
 
   const fetchSchemas = async () => {
+    if (fetchingRef.current) return; // Bail if already fetching
+    fetchingRef.current = true;
+    
     try {
       setLoading(true);
       setError(null);
@@ -43,6 +49,7 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
       setError(err instanceof Error ? err.message : 'Failed to fetch schemas');
     } finally {
       setLoading(false);
+      fetchingRef.current = false;
     }
   };
 

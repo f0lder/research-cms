@@ -58,6 +58,11 @@ export class ContentService {
 			if (!allowed.has(key)) errors.push(`Unknown field: "${key}"`);
 		}
 
+		// Validate scheduled publishing: if status is 'scheduled', publishAt must be set
+		if (data.status === 'scheduled' && !data.publishAt) {
+			errors.push('"publishAt" is required when status is "scheduled"');
+		}
+
 		// Collect reference existence checks so they run in parallel instead of sequentially
 		const referenceChecks: Promise<void>[] = [];
 
@@ -110,6 +115,8 @@ export class ContentService {
 				case 'tags':
 					if (!Array.isArray(value)) {
 						errors.push(`"${field.label || field.name}" must be an array of strings`);
+					} else if (value.length > 0 && !value.every(v => typeof v === 'string')) {
+						errors.push(`"${field.label || field.name}" array items must all be strings`);
 					}
 					break;
 				case 'media':
@@ -121,10 +128,15 @@ export class ContentService {
 							? MEDIA_SCHEMA_SLUG
 							: (field.config?.type === 'reference' ? field.config.targetSlug : schemaSlug);
 						const label = field.label || field.name;
+						const refId = value as string;
 						// Queue the existence check — resolved below in parallel
-						referenceChecks.push(
-							this.model.exists({ _id: value, schemaSlug: targetSlug }).then(exists => {
-								if (!exists) errors.push(`"${label}" references an entry that does not exist`);
+					// Use chainable API to avoid Mongoose generic filter typing issues
+					referenceChecks.push(
+						this.model.findOne()
+							.where('_id').equals(refId)
+							.where('schemaSlug').equals(targetSlug)
+							.select('_id').lean().exec().then(doc => {
+								if (!doc) errors.push(`"${label}" references an entry that does not exist`);
 							})
 						);
 					}
@@ -137,9 +149,13 @@ export class ContentService {
 						const targetSlug = field.config?.type === 'references' ? field.config.targetSlug : schemaSlug;
 						const label = field.label || field.name;
 						const validIds = value as string[];
-						referenceChecks.push(
-							this.model.countDocuments({ _id: { $in: validIds }, schemaSlug: targetSlug }).then(found => {
-								if (found !== validIds.length) errors.push(`"${label}" contains one or more entries that do not exist`);
+					// Use chainable API to avoid Mongoose generic filter typing issues
+					referenceChecks.push(
+						this.model.find()
+							.where('schemaSlug').equals(targetSlug)
+							.where('_id').in(validIds)
+							.select('_id').lean().exec().then(docs => {
+								if (docs.length !== validIds.length) errors.push(`"${label}" contains one or more entries that do not exist`);
 							})
 						);
 					}
@@ -190,7 +206,7 @@ export class ContentService {
 		// Extract system fields (top-level) from input data
 		const systemFields = ['status', 'publishAt', 'deletedAt', 'version'];
 		const fieldData: Record<string, FieldValue> = {};
-		const createFields: Record<string, any> = { schemaSlug };
+		const createFields: Record<string, FieldValue | Date | null | string> = { schemaSlug };
 		
 		for (const key in data) {
 			if (systemFields.includes(key)) {
@@ -222,7 +238,7 @@ export class ContentService {
 		// Extract system fields (top-level) from input data
 		const systemFields = ['status', 'publishAt', 'deletedAt', 'version'];
 		const fieldData: Record<string, FieldValue> = {};
-		const updateFields: Record<string, any> = {};
+		const updateFields: Record<string, FieldValue | Date | null> = {};
 		
 		for (const key in data) {
 			if (systemFields.includes(key)) {
@@ -245,6 +261,10 @@ export class ContentService {
 			updateObject,
 			{ returnDocument: 'after' },
 		).exec();
+		
+		if (!updated) {
+			throw new NotFoundException(`Entry "${id}" not found`);
+		}
 		
 		void this.logsService.log(`Entry updated in "${schemaSlug}"`, ['content', 'update'], { schemaSlug, id });
 		this.eventEmitter.emit(
@@ -283,6 +303,9 @@ export class ContentService {
 			{ new: true }
 		).exec();
 		if (!restored) throw new NotFoundException('Entry not found');
+		if (restored.schemaSlug !== schemaSlug) {
+			throw new NotFoundException('Entry not found in this schema');
+		}
 		void this.logsService.log(`Entry restored in "${schemaSlug}"`, ['content', 'restore'], { schemaSlug, id });
 		return restored;
 	}
@@ -323,26 +346,47 @@ export class ContentService {
 		return { modifiedCount: result.modifiedCount };
 	}
 
-	/** Search entries by full-text query with proper text index */
-	async search(schemaSlug: string, query: string, limit = 20): Promise<ContentEntryDocument[]> {
-		await this.schemaService.findOne(schemaSlug);
+	/** Search entries by field values with pagination */
+	async search(
+		schemaSlug: string,
+		query: string,
+		page = 1,
+		limit = 20,
+	): Promise<{
+		items: ContentEntryDocument[];
+		total: number;
+		page: number;
+		limit: number;
+	}> {
+		const schema = await this.schemaService.findOne(schemaSlug);
+		if (!query || query.trim().length === 0) {
+			return { items: [], total: 0, page, limit };
+		}
 		
-		// Sanitize query for MongoDB — escape special regex chars
-		const sanitized = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		// Build case-insensitive regex search across all string fields
+		const regex = { $regex: query, $options: 'i' };
+		const stringFieldNames = schema.fields
+			.filter(f => ['text', 'textarea', 'email', 'url', 'select'].includes(f.type))
+			.map(f => `data.${f.name}`);
 		
-		return this.model.find(
-			{
-				...this.getActiveQuery(schemaSlug),
-				$or: [
-					{ $text: { $search: sanitized } },  // Full-text search on indexed fields
-					{ 'data': { $regex: sanitized, $options: 'i' } },  // Fallback: regex search on all data
-				],
-			},
-			{ score: { $meta: 'textScore' } }
-		)
-			.sort({ score: { $meta: 'textScore' } })
-			.limit(limit)
-			.exec();
+		const searchQuery = {
+			...this.getActiveQuery(schemaSlug),
+			...(stringFieldNames.length > 0
+				? { $or: stringFieldNames.map(field => ({ [field]: regex })) }
+				: {}),
+		};
+		
+		const [items, total] = await Promise.all([
+			this.model
+				.find(searchQuery)
+				.sort({ createdAt: -1 })
+				.skip((page - 1) * limit)
+				.limit(limit)
+				.exec(),
+			this.model.countDocuments(searchQuery),
+		]);
+		
+		return { items, total, page, limit };
 	}
 
 	/** Get soft-deleted entries (trash) */

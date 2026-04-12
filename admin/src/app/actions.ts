@@ -12,8 +12,7 @@ import {
   BlockLayout,
   FieldDefinition,
   FieldValue,
-  PageBlock,
-  BlockDefinition,
+  Block,
 } from '@research-cms/shared-types';
 
 // ── Schemas ────────────────────────────────────────────────────────────────
@@ -27,7 +26,7 @@ export async function getAllSchemas() {
 }
 
 export async function getSystemSchemas() {
-  return serverApi.get<ContentTypeDefinition[]>(`/schemas?system=true`);
+  return serverApi.get<ContentTypeDefinition[]>(`/schemas/system`);
 }
 
 export async function createSchema(data: {
@@ -81,19 +80,21 @@ export async function bulkUpdateStatus(
 }
 
 export async function restoreEntry(slug: string, id: string) {
-  return serverApi.get<ContentEntry>(`/content/${slug}/${id}/restore`);
+	return serverApi.put<ContentEntry>(`/content/${slug}/${id}/restore`, {});
 }
 
 export async function permanentlyDeleteEntry(slug: string, id: string) {
-  return serverApi.delete(`/content/${slug}/${id}/permanent`);
+	return serverApi.delete(`/content/${slug}/${id}/permanent`);
 }
 
-export async function searchEntries(slug: string, query: string) {
-  return serverApi.get<{ items: ContentEntry[] }>(`/content/${slug}/search?q=${encodeURIComponent(query)}`);
+export async function searchEntries(slug: string, query: string, page = 1, limit = 20) {
+	return serverApi.get<{ items: ContentEntry[]; total: number; page: number; limit: number }>(
+		`/content/${slug}/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
+	);
 }
 
 export async function getTrash(slug: string) {
-  return serverApi.get<{ items: ContentEntry[] }>(`/content/${slug}/trash`);
+	return serverApi.get<{ items: ContentEntry[] }>(`/content/${slug}/trash`);
 }
 
 export async function getActivityFeed(limit = 100, offset = 0) {
@@ -142,7 +143,7 @@ export async function getClientPage(clientId: string, pageId: string) {
 
 export async function createClientPage(
   clientId: string,
-  data: { title: string; slug: string; status?: string; blocks?: PageBlock[] }
+  data: { title: string; slug: string; status?: string; blocks?: Block[] }
 ) {
   return serverApi.post<ClientPage>(`/clients/${clientId}/pages`, data);
 }
@@ -150,7 +151,7 @@ export async function createClientPage(
 export async function updateClientPage(
   clientId: string,
   pageId: string,
-  data: Partial<{ title: string; slug: string; status: string; blocks: PageBlock[] }>
+  data: Partial<{ title: string; slug: string; status: string; blocks: Block[] }>
 ) {
   return serverApi.put<ClientPage>(`/clients/${clientId}/pages/${pageId}`, data);
 }

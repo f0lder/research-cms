@@ -44,18 +44,24 @@ export default function DynamicFieldInput({
   const [referenceLoading, setReferenceLoading] = useState(false);
 
   useEffect(() => {
-    const targetSlug =
-      field.config?.type === 'reference' || field.config?.type === 'references'
-        ? field.config.targetSlug
-        : null;
-    if (!targetSlug) return;
+    const targetSlug = (() => {
+      if (field.config?.type === 'reference' && 'targetSlug' in field.config) {
+        return field.config.targetSlug;
+      }
+      if (field.config?.type === 'references' && 'targetSlug' in field.config) {
+        return field.config.targetSlug;
+      }
+      return null;
+    })();
+    
+    if (!targetSlug || typeof targetSlug !== 'string') return;
 
     setReferenceLoading(true);
     (async () => {
-      const { data } = await getAllEntries(targetSlug);
-      if (data) {
+      const result = await getAllEntries(targetSlug);
+      if (result.data?.items) {
         setReferenceOptions(
-          data.items.map(entry => ({ value: entry._id ?? '', label: getEntryTitle(entry) }))
+          result.data.items.map(entry => ({ value: entry._id ?? '', label: getEntryTitle(entry) }))
         );
       }
       setReferenceLoading(false);
@@ -156,7 +162,7 @@ export default function DynamicFieldInput({
         (async () => {
           const res = await getMediaLibrary();
           if (res.data) {
-            const found = res.data.find((m) => m._id === String(value));
+            const found = res.data.find((m: MediaEntry) => m._id === String(value));
             setResolved(found ?? null);
           }
         })();
@@ -194,13 +200,13 @@ export default function DynamicFieldInput({
 
     case 'select': {
       const options = field.config?.type === 'select'
-        ? field.config.options.map(o => ({ value: o, label: o }))
+        ? (field.config.options as string[]).map((o: string) => ({ value: o, label: o }))
         : [];
       return (
         <Select<SelectOption>
           instanceId={`content-select-${field.name}`}
           options={options}
-          value={options.find(o => o.value === value) ?? null}
+          value={options.find((o: SelectOption) => o.value === value) ?? null}
           onChange={opt => onChange(field.name, opt?.value ?? '')}
           isDisabled={disabled}
           isClearable
@@ -212,7 +218,7 @@ export default function DynamicFieldInput({
 
     case 'tags': {
       const tagValues: SelectOption[] = Array.isArray(value)
-        ? (value as string[]).map(v => ({ value: v, label: v }))
+        ? (value as string[]).map((v: string) => ({ value: v, label: v }))
         : [];
       return (
         <CreatableSelect<SelectOption, true>

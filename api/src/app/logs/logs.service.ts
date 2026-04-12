@@ -50,9 +50,9 @@ export class LogsService {
 	 * Returns human-readable activity timeline
 	 */
 	async getActivityFeed(limit = 100, offset = 0): Promise<{ date: string; activities: Array<{ time: string; message: string }> }[]> {
-		const logs = (await this.model.find({}).sort({ createdAt: -1 }).skip(offset).limit(limit).lean().exec()) as any[];
+		const logs = await this.model.find({}).sort({ createdAt: -1 }).skip(offset).limit(limit).lean().exec() as unknown as (LogEntryModel & { createdAt: Date })[];
 		// Group logs by date
-		const grouped: Record<string, any[]> = {};
+		const grouped: Record<string, (LogEntryModel & { createdAt: Date })[]> = {};
 		logs.forEach(log => {
 			const createdDate = log.createdAt instanceof Date ? log.createdAt : new Date(log.createdAt);
 			const date = createdDate.toLocaleDateString('en-US', {
