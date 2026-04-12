@@ -61,7 +61,7 @@ export const api = {
   post:   <T>(endpoint: string, body: unknown) => apiRequest<T>(endpoint, { method: 'POST',  body }),
   put:    <T>(endpoint: string, body: unknown) => apiRequest<T>(endpoint, { method: 'PUT',   body }),
   patch:  <T>(endpoint: string, body: unknown) => apiRequest<T>(endpoint, { method: 'PATCH', body }),
-  delete: <T>(endpoint: string)              => apiRequest<T>(endpoint, { method: 'DELETE' }),
+  delete: <T>(endpoint: string, body?: unknown) => apiRequest<T>(endpoint, body ? { method: 'DELETE', body } : { method: 'DELETE' }),
 };
 
 // ── Routing ───────────────────────────────────────────────────────────────────

@@ -25,6 +25,7 @@ export function EntryTableToolbar({
 		toggleCol,
 		clearSelection,
 		handleBulkStatus,
+		handleBulkDelete,
 	} = useEntryList();
 
 	return (
@@ -54,6 +55,12 @@ export function EntryTableToolbar({
 						className="btn-secondary text-xs px-3 py-1"
 					>
 						Apply
+					</button>
+					<button
+						onClick={() => handleBulkDelete(slug)}
+						className="btn-secondary text-xs px-3 py-1 text-red-600 border-red-200 hover:bg-red-50"
+					>
+						Delete {selectedCount}
 					</button>
 					<button
 						onClick={clearSelection}

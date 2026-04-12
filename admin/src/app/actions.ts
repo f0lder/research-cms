@@ -97,6 +97,10 @@ export async function getTrash(slug: string) {
 	return serverApi.get<{ items: ContentEntry[] }>(`/content/${slug}/trash`);
 }
 
+export async function bulkDeleteEntries(slug: string, ids: string[]) {
+	return serverApi.delete(`/content/${slug}/bulk`, { ids });
+}
+
 export async function rebuildIndex(slug: string) {
 	return serverApi.post<{ message: string; docsCount: number }>(`/content/${slug}/rebuild-index`, {});
 }

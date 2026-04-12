@@ -61,6 +61,16 @@ export class ContentController {
 		return this.contentService.bulkUpdateStatus(schemaSlug, body.ids, body.status);
 	}
 
+	@Delete(':schemaSlug/bulk')
+	@UseGuards(RolesGuard)
+	@Roles(UserRole.ADMIN, UserRole.EDITOR)
+	bulkDelete(
+		@Param('schemaSlug') schemaSlug: string,
+		@Body() body: { ids: string[] }
+	) {
+		return this.contentService.bulkDelete(schemaSlug, body.ids);
+	}
+
 	@Post(':schemaSlug/rebuild-index')
 	@UseGuards(RolesGuard)
 	@Roles(UserRole.ADMIN)

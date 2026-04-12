@@ -370,6 +370,22 @@ export class ContentService {
 		return { modifiedCount: result.modifiedCount };
 	}
 
+	/** Bulk soft delete (move to trash) */
+	async bulkDelete(schemaSlug: string, ids: string[]): Promise<{ modifiedCount: number }> {
+		await this.schemaService.findOne(schemaSlug);
+		
+		const validIds = ids.filter(id => isValidObjectId(id));
+		if (validIds.length === 0) throw new BadRequestException('No valid entry IDs provided');
+		
+		const result = await this.model.updateMany(
+			{ ...this.getActiveQuery(schemaSlug), _id: { $in: validIds } },
+			{ $set: { deletedAt: new Date() } }
+		).exec();
+		
+		void this.logsService.log(`Bulk delete in "${schemaSlug}"`, ['content', 'delete'], { schemaSlug, ids: validIds, count: result.modifiedCount });
+		return { modifiedCount: result.modifiedCount };
+	}
+
 	/** Rebuild text indices for a schema's entries */
 	async rebuildIndex(schemaSlug: string): Promise<{ message: string; docsCount: number }> {
 		await this.schemaService.findOne(schemaSlug);

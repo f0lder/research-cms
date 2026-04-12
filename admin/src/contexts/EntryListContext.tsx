@@ -7,6 +7,7 @@ import {
 	restoreEntry,
 	permanentlyDeleteEntry,
 	bulkUpdateStatus,
+	bulkDeleteEntries,
 	searchEntries,
 	getAllEntries,
 } from '@/app/actions';
@@ -48,6 +49,7 @@ interface EntryListContextType {
 	handleRestore: (slug: string, id: string) => Promise<void>;
 	handlePermanentDelete: (slug: string, id: string) => Promise<void>;
 	handleBulkStatus: (slug: string) => Promise<void>;
+	handleBulkDelete: (slug: string) => Promise<void>;
 	toggleCol: (key: string, schemaId: string | undefined) => void;
 	toggleSelected: (id: string) => void;
 	toggleAllSelected: () => void;
@@ -163,6 +165,31 @@ export function EntryListProvider({ children }: { children: ReactNode }) {
 		[bulkStatus, selected]
 	);
 
+	const handleBulkDelete = useCallback(
+		async (slug: string) => {
+			if (selected.size === 0) return;
+			if (!confirm(`Delete ${selected.size} entries? They'll be moved to trash.`)) return;
+			const ids = Array.from(selected);
+			try {
+				const res = await bulkDeleteEntries(slug, ids);
+				if (res.error) {
+					console.error('Bulk delete error:', res.error);
+					alert('Error deleting entries: ' + res.error);
+					return;
+				}
+				alert(`Deleted ${ids.length} entries`);
+				setEntries(prev => prev.filter(e => !ids.includes(e._id || '')));
+				const movedToTrash = entries.filter(e => ids.includes(e._id || ''));
+				setTrashEntries(prev => [...prev, ...movedToTrash]);
+				setSelected(new Set());
+			} catch (err) {
+				console.error('Bulk delete exception:', err);
+				alert('Error: ' + (err instanceof Error ? err.message : 'Unknown error'));
+			}
+		},
+		[selected, entries]
+	);
+
 	const toggleCol = useCallback((key: string, schemaId: string | undefined) => {
 		setVisibleCols(prev => {
 			const next = prev.includes(key) ? prev.filter(c => c !== key) : [...prev, key];
@@ -232,6 +259,7 @@ export function EntryListProvider({ children }: { children: ReactNode }) {
 		handleRestore,
 		handlePermanentDelete,
 		handleBulkStatus,
+		handleBulkDelete,
 		toggleCol,
 		toggleSelected,
 		toggleAllSelected,
