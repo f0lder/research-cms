@@ -5,6 +5,7 @@
     "jsx": "react-native",
     "strict": true,
     "moduleResolution": "bundler",
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": [

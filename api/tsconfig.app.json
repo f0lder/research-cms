@@ -2,6 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../dist/out-tsc",
+    "ignoreDeprecations": "6.0",
     "module": "commonjs",
     "types": ["node"],
     "experimentalDecorators": true,
