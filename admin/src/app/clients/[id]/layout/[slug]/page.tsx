@@ -310,11 +310,11 @@ export default function EntryDetailLayoutPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  if (loading) return <div className="p-8 font-mono text-sm text-zinc-400">Loading…</div>;
-  if (error) return <div className="p-8"><div className="alert-error">{error}</div></div>;
+  if (loading) return <div className="page text-sm text-zinc-400">Loading…</div>;
+  if (error) return <div className="page"><div className="alert-error">{error}</div></div>;
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="page">
       {/* Breadcrumb */}
       <p className="breadcrumb mb-6 font-mono text-sm">
         <Link href={adminRoutes.clients}>Clients</Link>

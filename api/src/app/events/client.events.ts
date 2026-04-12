@@ -18,5 +18,6 @@ export class ApiKeyUsedEvent {
     public readonly schemaSlug: string,
     public readonly endpoint: string,
     public readonly timestamp: string,
+    public readonly ipAddress: string,
   ) {}
 }

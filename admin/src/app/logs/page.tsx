@@ -103,7 +103,7 @@ export default function LogsPage() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="p-8 font-mono">
+    <div className="page">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="page-heading">Logs</h1>

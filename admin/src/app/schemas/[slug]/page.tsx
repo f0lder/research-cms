@@ -115,9 +115,9 @@ function SchemaDetailPageContent() {
 		}
 	}, [schema, setVisibleCols]);
 
-	if (loading) return <div className="p-8 font-mono text-sm text-zinc-400">Loading…</div>;
+	if (loading) return <div className="page text-sm text-zinc-400">Loading…</div>;
 	if (error || !schema) {
-		return <div className="p-8"><div className="alert-error">{error || 'Schema not found'}</div></div>;
+		return <div className="page"><div className="alert-error">{error || 'Schema not found'}</div></div>;
 	}
 
 	const visibleFields = schema.fields.filter(f => visibleCols.includes(f.name));
@@ -130,7 +130,7 @@ function SchemaDetailPageContent() {
 	};
 
 	return (
-		<div className="p-8 font-mono">
+		<div className="page">
 			<EntryListPageHeader schema={schema} slug={slug} isAdmin={isAdmin} />
 			<TabNavigation
 				tab={tab}

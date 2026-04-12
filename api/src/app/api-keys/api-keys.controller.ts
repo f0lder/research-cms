@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Delete, Patch, Put, Body, Param, HttpCode, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Put, Body, Param, Query, HttpCode, UseGuards } from '@nestjs/common';
 import { ApiKeysService } from './api-keys.service';
+import { ApiKeyUsageService } from './apikey-usage.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -10,7 +11,10 @@ import { Block } from '@research-cms/shared-types';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class ApiKeysController {
-  constructor(private readonly apiKeysService: ApiKeysService) {}
+  constructor(
+    private readonly apiKeysService: ApiKeysService,
+    private readonly apiKeyUsageService: ApiKeyUsageService,
+  ) {}
 
   @Get()
   findAll() {
@@ -41,6 +45,21 @@ export class ApiKeysController {
     @Body() body: { pageId: string | null },
   ) {
     return this.apiKeysService.setHomePage(id, body.pageId);
+  }
+
+  @Get(':id/usage')
+  getUsage(
+    @Param('id') id: string,
+    @Query('days') days?: string,
+  ) {
+    const daysNum = days ? parseInt(days, 10) : 30;
+    return this.apiKeyUsageService.getUsage(id, daysNum);
+  }
+
+  @Delete(':id/usage')
+  @HttpCode(204)
+  clearUsage(@Param('id') id: string) {
+    return this.apiKeyUsageService.clearUsage(id);
   }
 
   @Put(':id/layouts/:schemaSlug')

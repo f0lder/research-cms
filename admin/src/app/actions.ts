@@ -131,6 +131,16 @@ export async function setClientHomePage(id: string, pageId: string | null) {
   return serverApi.put<Client>(`/clients/${id}/home-page`, { pageId });
 }
 
+export async function getClientUsage(id: string, days = 30) {
+  return serverApi.get<{ date: string; userCount: number; users: string[]; schemas: Record<string, number> }[]>(
+    `/clients/${id}/usage?days=${days}`
+  );
+}
+
+export async function clearClientUsage(id: string) {
+  return serverApi.delete(`/clients/${id}/usage`);
+}
+
 // ── Client Pages ───────────────────────────────────────────────────────────
 
 export async function listClientPages(clientId: string) {

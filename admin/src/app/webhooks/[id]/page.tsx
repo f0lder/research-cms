@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { Webhook } from '@research-cms/shared-types';
 import { extractParam } from '@/lib/utils';
-import { getWebhook, createWebhook, updateWebhook, type Webhook } from '@/app/actions';
+import { getWebhook, createWebhook, updateWebhook } from '@/app/actions';
 
 const ALL_EVENTS = [
   'content.created',
@@ -93,10 +94,10 @@ export default function WebhookEditorPage() {
     }
   };
 
-  if (loading) return <div className="p-8 text-sm text-zinc-400 font-mono">Loading…</div>;
+  if (loading) return <div className="page text-sm text-zinc-400">Loading…</div>;
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="page">
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.push('/webhooks')}

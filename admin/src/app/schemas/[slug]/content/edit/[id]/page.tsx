@@ -48,7 +48,7 @@ export default function ContentEditPage() {
   
   if (error || !schema || !entry) {
     return (
-      <div className="p-8">
+      <div className="page">
         <div className="alert-error">{error || 'Entry not found'}</div>
       </div>
     );

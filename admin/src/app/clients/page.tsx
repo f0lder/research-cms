@@ -73,7 +73,7 @@ export default function ClientsPage() {
   );
 
   return (
-    <div className="p-8 font-mono max-w-4xl">
+    <div className="page">
       <h1 className="page-heading mb-1">Clients</h1>
       <p className="page-sub mb-6">
         Each client authenticates via <code className="font-mono">X-API-Key</code> and can have
@@ -83,7 +83,7 @@ export default function ClientsPage() {
       {error && <div className="alert-error mb-4">{error}</div>}
 
       {/* Create form */}
-      <form onSubmit={handleCreate} className="flex gap-2 mb-8">
+      <form onSubmit={handleCreate} className="flex flex-col md:flex-row gap-2 mb-8">
         <input
           type="text"
           placeholder="Client name (e.g. iOS App, Website)"
@@ -91,7 +91,7 @@ export default function ClientsPage() {
           onChange={e => setNewName(e.target.value)}
           className="field-input flex-1"
         />
-        <button type="submit" disabled={creating || !newName.trim()} className="btn-primary">
+        <button type="submit" disabled={creating || !newName.trim()} className="btn-primary whitespace-nowrap">
           {creating ? 'Creating…' : 'Create client'}
         </button>
       </form>
@@ -108,8 +108,8 @@ export default function ClientsPage() {
             const isCopied = copiedId === client._id;
 
             return (
-              <div key={client._id} className="px-4 py-4 hover:bg-zinc-50">
-                <div className="flex items-center gap-4 flex-wrap">
+              <div key={client._id} className="px-3 md:px-4 py-4 hover:bg-zinc-50">
+                <div className="space-y-3 md:space-y-0 md:flex md:items-center md:gap-4 md:flex-wrap">
                   {/* Name → links to detail */}
                   <div className="min-w-36">
                     <Link
@@ -124,9 +124,9 @@ export default function ClientsPage() {
                   </div>
 
                   {/* Key value */}
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-1 min-w-0 md:flex-1">
                     <code
-                      className="text-[11px] font-mono text-zinc-500 truncate cursor-pointer hover:text-zinc-700"
+                      className="text-[11px] font-mono text-zinc-500 truncate cursor-pointer hover:text-zinc-700 flex-1"
                       onClick={() => setRevealedId(isRevealed ? null : (client._id ?? null))}
                       title={isRevealed ? 'Click to hide' : 'Click to reveal'}
                     >
@@ -143,39 +143,42 @@ export default function ClientsPage() {
                   {/* Hits + last used */}
                   <div className="text-xs text-zinc-400 font-mono shrink-0">
                     <span className="text-zinc-600 font-semibold">{client.hits.toLocaleString()}</span> hits
-                    {client.lastUsedAt && <span className="ml-2">· {formatDateTime(client.lastUsedAt)}</span>}
+                    {client.lastUsedAt && <span className="ml-2 hidden md:inline">· {formatDateTime(client.lastUsedAt)}</span>}
                   </div>
 
                   {/* Schema access badges */}
                   {client.allowedSchemas.length > 0 && (
                     <div className="flex gap-1 flex-wrap">
-                      {client.allowedSchemas.map(slug => (
+                      {client.allowedSchemas.slice(0, 3).map(slug => (
                         <span key={slug} className="text-[10px] bg-zinc-100 text-zinc-600 px-2 py-0.5 font-mono">
                           {slug}
                         </span>
                       ))}
+                      {client.allowedSchemas.length > 3 && (
+                        <span className="text-[10px] text-zinc-400">+{client.allowedSchemas.length - 3}</span>
+                      )}
                     </div>
                   )}
 
                   {/* Custom layouts badge */}
                   {client.layouts.length > 0 && (
-                    <span className="text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 font-mono">
-                      {client.layouts.length} custom layout{client.layouts.length !== 1 ? 's' : ''}
+                    <span className="text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 font-mono whitespace-nowrap">
+                      {client.layouts.length} layout{client.layouts.length !== 1 ? 's' : ''}
                     </span>
                   )}
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 ml-auto shrink-0">
+                  <div className="flex items-center gap-2 md:ml-auto shrink-0">
                     <Link
                       href={adminRoutes.clientDetail(client._id!)}
-                      className="text-[11px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-1 bg-white hover:border-zinc-400 transition-colors font-mono no-underline"
+                      className="flex-1 md:flex-initial text-center md:text-left text-[11px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-1 bg-white hover:border-zinc-400 transition-colors font-mono no-underline"
                     >
                       Configure
                     </Link>
                     <button
                       onClick={() => client._id && handleDelete(client._id, client.name)}
                       disabled={deletingId === client._id}
-                      className="btn-danger text-xs px-3 py-1"
+                      className="btn-danger text-xs px-3 py-1 flex-initial"
                     >
                       {deletingId === client._id ? '…' : 'Delete'}
                     </button>
@@ -188,7 +191,7 @@ export default function ClientsPage() {
       )}
 
       {/* Usage example */}
-      <div className="mt-8 p-4 border border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
+      <div className="box-info">
         <p className="font-semibold text-zinc-600 mb-2">Usage example</p>
         <pre className="font-mono text-[11px] whitespace-pre-wrap">{`curl http://localhost:3000/public/<schema-slug> \\
   -H "X-API-Key: <client-key>"`}</pre>

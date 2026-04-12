@@ -33,9 +33,10 @@ export class ApiKeyGuard implements CanActivate {
     }
 
     // Fire-and-forget — usage tracking must not delay the response
+    const ipAddress = request.ip || request.socket?.remoteAddress || 'unknown';
     this.eventEmitter.emit(
       CmsEvents.APIKEY_USED,
-      new ApiKeyUsedEvent(String(doc._id), schemaSlug ?? 'unknown', request.path, new Date().toISOString()),
+      new ApiKeyUsedEvent(String(doc._id), schemaSlug ?? 'unknown', request.path, new Date().toISOString(), ipAddress),
     );
 
     return true;

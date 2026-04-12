@@ -76,6 +76,7 @@ export const adminRoutes = {
   contentEdit:   (slug: string, id: string) => `/schemas/${slug}/content/edit/${id}`,
   clients:       '/clients',
   clientDetail:  (id: string) => `/clients/${id}`,
+  clientUsage:   (id: string) => `/clients/${id}/usage`,
   clientLayout:  (id: string, slug: string) => `/clients/${id}/layout/${slug}`,
   clientPageNew: (id: string) => `/clients/${id}/pages/new`,
   clientPageEdit:(id: string, pageId: string) => `/clients/${id}/pages/${pageId}`,

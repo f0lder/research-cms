@@ -257,18 +257,18 @@ export default function PageEditorPage() {
     }
   };
 
-  if (loading) return <div className="p-8 font-mono text-sm text-zinc-400">Loading…</div>;
+  if (loading) return <div className="page text-sm text-zinc-400">Loading…</div>;
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="page">
         <div className="alert-error">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="p-8 font-mono max-w-3xl">
+    <div className="page">
       {/* Breadcrumb */}
       <p className="breadcrumb mb-6">
         <Link href={adminRoutes.clients}>Clients</Link>

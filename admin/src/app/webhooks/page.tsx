@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { Webhook } from '@research-cms/shared-types';
 import { formatDateTime } from '@/lib/utils';
-import { getAllWebhooks, deleteWebhook, updateWebhook, testWebhook, type Webhook } from '@/app/actions';
+import { getAllWebhooks, deleteWebhook, updateWebhook, testWebhook } from '@/app/actions';
 
 export default function WebhooksPage() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
@@ -54,10 +55,10 @@ export default function WebhooksPage() {
     setTimeout(() => setTestResult(null), 4000);
   };
 
-  if (loading) return <div className="p-8 text-sm text-zinc-400 font-mono">Loading…</div>;
+  if (loading) return <div className="page text-sm text-zinc-400">Loading…</div>;
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="page">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold font-mono mb-1">Webhooks</h1>

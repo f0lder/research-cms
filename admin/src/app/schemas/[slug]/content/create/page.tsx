@@ -31,11 +31,11 @@ export default function ContentCreatePage() {
     })();
   }, [slug]);
 
-  if (loading) return <div className="p-8 font-mono text-sm text-zinc-400">Loading…</div>;
+  if (loading) return <div className="page text-sm text-zinc-400">Loading…</div>;
 
   if (error || !schema) {
     return (
-      <div className="p-8">
+      <div className="page">
         <div className="alert-error">{error || 'Schema not found'}</div>
       </div>
     );

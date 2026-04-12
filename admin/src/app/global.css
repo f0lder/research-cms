@@ -63,10 +63,16 @@
   .panel {
     @apply border border-zinc-200 bg-white p-5;
   }
+  .section {
+    @apply mb-6 border border-zinc-200 p-3 md:p-4;
+  }
+  .box-info {
+    @apply mt-8 p-4 border border-zinc-200 bg-zinc-50 text-xs text-zinc-500;
+  }
 
   /* ── Page shell ──────────────────────────────────── */
   .page {
-    @apply p-8 font-mono max-w-4xl;
+    @apply p-8 font-mono;
   }
   .page-heading {
     @apply text-lg font-bold text-zinc-900 mb-1;

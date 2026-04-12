@@ -133,7 +133,7 @@ export default function ClientDetailPage() {
 
   if (loading) {
     return (
-      <div className="p-8 font-mono max-w-3xl">
+      <div className="page">
         <div className="mb-6 space-y-2 w-1/2">
           <div className="h-8 bg-zinc-200 rounded animate-pulse" />
           <div className="h-4 bg-zinc-100 rounded animate-pulse" />
@@ -142,7 +142,7 @@ export default function ClientDetailPage() {
       </div>
     );
   }
-  if (error && !client) return <div className="p-8"><div className="alert-error">{error}</div></div>;
+  if (error && !client) return <div className="page"><div className="alert-error">{error}</div></div>;
   if (!client) return null;
 
   const schemaOptions: Option[] = schemas.map(s => ({ value: s.slug, label: s.name }));
@@ -150,7 +150,7 @@ export default function ClientDetailPage() {
   const pageTree = buildTree(pages);
 
   return (
-    <div className="p-8 font-mono max-w-3xl">
+    <div className="page">
       <p className="breadcrumb mb-6">
         <Link href={adminRoutes.clients}>Clients</Link>
         <span className="mx-1">/</span>
@@ -160,31 +160,36 @@ export default function ClientDetailPage() {
       {error && <div className="alert-error mb-4">{error}</div>}
 
       {/* ── Header ─────────────────────────────────── */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6 mb-6">
+        <div className="min-w-0">
           <h1 className="page-heading">{client.name}</h1>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <span className="text-xs text-zinc-400">
               <span className="text-zinc-600 font-semibold">{client.hits.toLocaleString()}</span> hits
             </span>
-            {client.lastUsedAt && <span className="text-xs text-zinc-400">· last used {formatDateTime(client.lastUsedAt)}</span>}
+            {client.lastUsedAt && <span className="text-xs text-zinc-400 hidden sm:inline">· last used {formatDateTime(client.lastUsedAt)}</span>}
             {!client.active && <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 font-mono">inactive</span>}
           </div>
         </div>
-        <button onClick={handleDeleteClient} disabled={deletingClient} className="btn-danger text-xs px-3 py-1.5">
-          {deletingClient ? 'Deleting…' : 'Delete client'}
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+          <Link href={adminRoutes.clientUsage(id)} className="btn-primary text-xs px-3 py-1.5 no-underline text-center">
+            Usage
+          </Link>
+          <button onClick={handleDeleteClient} disabled={deletingClient} className="btn-danger text-xs px-3 py-1.5 whitespace-nowrap">
+            {deletingClient ? 'Deleting…' : 'Delete client'}
+          </button>
+        </div>
       </div>
 
       {/* ── API Key ─────────────────────────────────── */}
-      <section className="mb-6 border border-zinc-200 p-4">
+      <section className="section">
         <p className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold mb-3">API Key</p>
-        <div className="flex items-center gap-3">
-          <code className="text-[11px] font-mono text-zinc-500 cursor-pointer hover:text-zinc-700 flex-1 truncate"
+        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+          <code className="text-[11px] font-mono text-zinc-500 cursor-pointer hover:text-zinc-700 flex-1 truncate px-2 py-1.5 bg-zinc-50 rounded"
             onClick={() => setRevealKey(r => !r)} title={revealKey ? 'Click to hide' : 'Click to reveal'}>
             {revealKey ? client.key : maskKey(client.key)}
           </code>
-          <button onClick={copyKey} className="shrink-0 text-[10px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-0.5 bg-white hover:border-zinc-400 transition-colors font-mono">
+          <button onClick={copyKey} className="shrink-0 text-[10px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-0.5 bg-white hover:border-zinc-400 transition-colors font-mono whitespace-nowrap">
             {copiedKey ? '✓ copied' : 'copy'}
           </button>
         </div>
@@ -192,11 +197,11 @@ export default function ClientDetailPage() {
       </section>
 
       {/* ── Schema access ───────────────────────────── */}
-      <section className="mb-6 border border-zinc-200 p-4">
+      <section className="section">
         <p className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold mb-3">Schema Access</p>
         <p className="text-xs text-zinc-400 mb-3">Leave empty to allow all content types. Select specific types to restrict.</p>
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
+        <div className="flex flex-col md:flex-row md:items-start gap-3">
+          <div className="flex-1 min-w-0">
             <Select<Option, true>
               isMulti options={schemaOptions} value={schemaValue}
               onChange={opts => setPendingSchemas(opts.map(o => o.value))}
@@ -222,13 +227,13 @@ export default function ClientDetailPage() {
       </section>
 
       {/* ── Pages ───────────────────────────────────── */}
-      <section className="mb-6 border border-zinc-200 p-4">
-        <div className="flex items-center justify-between mb-3">
+      <section className="section">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
           <div>
             <p className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold">Pages</p>
             <p className="text-xs text-zinc-400 mt-0.5">Custom pages with a block editor, served via the public API.</p>
           </div>
-          <Link href={adminRoutes.clientPageNew(id)} className="btn-primary text-xs px-3 py-1.5 no-underline">
+          <Link href={adminRoutes.clientPageNew(id)} className="btn-primary text-xs px-3 py-1.5 no-underline text-center md:text-left whitespace-nowrap">
             + New page
           </Link>
         </div>
@@ -292,7 +297,7 @@ export default function ClientDetailPage() {
       </section>
 
       {/* ── Block layouts ───────────────────────────── */}
-      <section className="border border-zinc-200 p-4">
+      <section className="section">
         <p className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold mb-1">Block Layouts</p>
         <p className="text-xs text-zinc-400 mb-4">
           Customise which fields are visible and in what order for this client.
@@ -304,18 +309,18 @@ export default function ClientDetailPage() {
             {visibleSchemas.map(schema => {
               const hasCustom = client.layouts.some(l => l.schemaSlug === schema.slug);
               return (
-                <div key={schema.slug} className="flex items-center justify-between py-3">
-                  <div>
+                <div key={schema.slug} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 py-3">
+                  <div className="min-w-0">
                     <span className="text-sm text-zinc-700">{schema.name}</span>
                     <span className="ml-2 text-[10px] text-zinc-400 font-mono">{schema.slug}</span>
                     {hasCustom
-                      ? <span className="ml-2 text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 font-mono">customised</span>
+                      ? <span className="ml-2 text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 font-mono whitespace-nowrap">customised</span>
                       : <span className="ml-2 text-[10px] text-zinc-400 font-mono">not customised</span>
                     }
                   </div>
                   {client._id && (
                     <Link href={adminRoutes.clientLayout(client._id, schema.slug)}
-                      className="text-[11px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-1 bg-white hover:border-zinc-400 transition-colors font-mono no-underline">
+                      className="text-[11px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-1 bg-white hover:border-zinc-400 transition-colors font-mono no-underline text-center md:text-left whitespace-nowrap">
                       Edit layout
                     </Link>
                   )}

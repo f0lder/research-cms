@@ -44,8 +44,8 @@ export default function SchemasPage() {
   const isAdmin = user?.role === 'admin';
   const { schemas, systemSchemas, loading, error } = useSchemas();
 
-  if (loading) return <div className="p-8 font-mono text-sm text-zinc-400">Loading…</div>;
-  if (error) return <div className="p-8"><div className="alert-error">{error}</div></div>;
+  if (loading) return <div className="page text-sm text-zinc-400">Loading…</div>;
+  if (error) return <div className="page"><div className="alert-error">{error}</div></div>;
 
   return (
     <div className="page">
