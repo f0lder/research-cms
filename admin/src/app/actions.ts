@@ -97,6 +97,10 @@ export async function getTrash(slug: string) {
 	return serverApi.get<{ items: ContentEntry[] }>(`/content/${slug}/trash`);
 }
 
+export async function rebuildIndex(slug: string) {
+	return serverApi.post<{ message: string; docsCount: number }>(`/content/${slug}/rebuild-index`, {});
+}
+
 export async function getVersions(slug: string, id: string) {
 	return serverApi.get<Array<{ entryId: string; schemaSlug: string; data: Record<string, unknown>; version: number; createdAt: string }>>(`/content/${slug}/${id}/versions`);
 }

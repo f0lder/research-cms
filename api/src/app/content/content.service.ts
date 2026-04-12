@@ -370,7 +370,21 @@ export class ContentService {
 		return { modifiedCount: result.modifiedCount };
 	}
 
-	/** Search entries by field values with pagination */
+	/** Rebuild text indices for a schema's entries */
+	async rebuildIndex(schemaSlug: string): Promise<{ message: string; docsCount: number }> {
+		await this.schemaService.findOne(schemaSlug);
+		
+		// Count documents before rebuilding
+		const docsCount = await this.model.countDocuments({ schemaSlug });
+		
+		// Rebuild all indices on the model
+		await this.model.syncIndexes();
+		
+		void this.logsService.log(`Text indices rebuilt for "${schemaSlug}" (${docsCount} documents indexed)`, ['content', 'maintenance'], { schemaSlug, docsCount });
+		return { message: `Rebuilt indices for ${docsCount} documents`, docsCount };
+	}
+
+	/** Search entries using MongoDB full-text search with pagination */
 	async search(
 		schemaSlug: string,
 		query: string,
@@ -382,28 +396,19 @@ export class ContentService {
 		page: number;
 		limit: number;
 	}> {
-		const schema = await this.schemaService.findOne(schemaSlug);
 		if (!query || query.trim().length === 0) {
 			return { items: [], total: 0, page, limit };
 		}
 		
-		// Build case-insensitive regex search across all string fields
-		const regex = { $regex: query, $options: 'i' };
-		const stringFieldNames = schema.fields
-			.filter(f => ['text', 'textarea', 'email', 'url', 'select'].includes(f.type))
-			.map(f => `data.${f.name}`);
-		
 		const searchQuery = {
 			...this.getActiveQuery(schemaSlug),
-			...(stringFieldNames.length > 0
-				? { $or: stringFieldNames.map(field => ({ [field]: regex })) }
-				: {}),
+			$text: { $search: query },
 		};
 		
 		const [items, total] = await Promise.all([
 			this.model
-				.find(searchQuery)
-				.sort({ createdAt: -1 })
+				.find(searchQuery, { score: { $meta: 'textScore' } })
+				.sort({ score: { $meta: 'textScore' } })
 				.skip((page - 1) * limit)
 				.limit(limit)
 				.exec(),

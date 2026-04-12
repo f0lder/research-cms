@@ -33,5 +33,5 @@ export class ContentEntryModel {
 
 export const ContentEntrySchema = SchemaFactory.createForClass(ContentEntryModel);
 
-// Add text index for full-text search across all data fields
-ContentEntrySchema.index({ 'data': 'text' });
+// Add wildcard text index for full-text search across all data fields
+ContentEntrySchema.index({ '$**': 'text' });

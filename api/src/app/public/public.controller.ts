@@ -81,7 +81,23 @@ export class PublicController {
     );
   }
 
-  @Get(':schemaSlug/:id')
+@Get(':schemaSlug/search')
+	async search(
+		@Param('schemaSlug') schemaSlug: string,
+		@Query('q') query?: string,
+		@Query('page') page?: string,
+		@Query('limit') limit?: string,
+		@Req() req?: PublicRequest,
+	) {
+		return this.publicService.search(
+			schemaSlug,
+			query || '',
+			Number(page) || 1,
+			Number(limit) || 20,
+		);
+	}
+
+	@Get(':schemaSlug/:id')
   findOne(
     @Param('schemaSlug') schemaSlug: string,
     @Param('id') id: string,

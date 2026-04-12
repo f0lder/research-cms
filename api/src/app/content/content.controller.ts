@@ -61,6 +61,13 @@ export class ContentController {
 		return this.contentService.bulkUpdateStatus(schemaSlug, body.ids, body.status);
 	}
 
+	@Post(':schemaSlug/rebuild-index')
+	@UseGuards(RolesGuard)
+	@Roles(UserRole.ADMIN)
+	rebuildIndex(@Param('schemaSlug') schemaSlug: string) {
+		return this.contentService.rebuildIndex(schemaSlug);
+	}
+
 	// ─── Generic ID Routes ─────────────────────────────────────────────────
 
 	@Get(':schemaSlug/:id')

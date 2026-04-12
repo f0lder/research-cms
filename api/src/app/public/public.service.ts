@@ -196,4 +196,42 @@ export class PublicService {
       createdAt: entry.createdAt?.toISOString?.() ?? undefined,
     };
   }
+
+  async search(
+    schemaSlug: string,
+    query: string,
+    page = 1,
+    limit = 20,
+    clientLayouts: Map<string, Block[]> = new Map(),
+  ): Promise<{ items: PublicEntryResponse[]; total: number; page: number; limit: number }> {
+    if (!query || query.trim().length === 0) {
+      return { items: [], total: 0, page, limit };
+    }
+
+    // Fetch schema and search results in parallel
+    const [schema, entries, total] = await Promise.all([
+      this.schemaService.findOne(schemaSlug),
+      this.entryModel
+        .find({ schemaSlug, ...PUBLISHED_FILTER, $text: { $search: query } }, { score: { $meta: 'textScore' } })
+        .sort({ score: { $meta: 'textScore' } })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec(),
+      this.entryModel.countDocuments({ schemaSlug, ...PUBLISHED_FILTER, $text: { $search: query } }),
+    ]);
+
+    // Use the client's layout for this schema; null falls back to schema-bootstrapped defaults
+    const savedBlocks = clientLayouts.get(schemaSlug) ?? null;
+
+    const items = await Promise.all(
+      entries.map(async e => ({
+        _id: String(e._id),
+        schemaSlug: e.schemaSlug,
+        blocks: await this.resolveBlocks(schema, savedBlocks, e.data as Record<string, unknown>),
+        createdAt: e.createdAt?.toISOString?.() ?? undefined,
+      }))
+    );
+
+    return { items, total, page, limit };
+  }
 }
