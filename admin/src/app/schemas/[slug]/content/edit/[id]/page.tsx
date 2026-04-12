@@ -6,6 +6,7 @@ import { ContentTypeDefinition, ContentEntry } from '@research-cms/shared-types'
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { getSchema, getEntry } from '@/app/actions';
 import ContentForm from '@/components/content/ContentForm';
+import { VersionHistory } from '@/components/content/VersionHistory';
 import { FormSkeleton } from '@/components/skeletons';
 
 export default function ContentEditPage() {
@@ -71,6 +72,16 @@ export default function ContentEditPage() {
         schema={schema}
         initialData={entry}
         onSuccess={() => router.push(adminRoutes.schemaDetail(slug))}
+      />
+
+      <VersionHistory
+        schemaSlug={slug}
+        entryId={entry._id ?? ''}
+        currentVersion={entry.version ?? 1}
+        onRestore={() => {
+          // Refresh the page data
+          window.location.reload();
+        }}
       />
     </div>
   );

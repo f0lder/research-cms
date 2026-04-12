@@ -97,6 +97,14 @@ export async function getTrash(slug: string) {
 	return serverApi.get<{ items: ContentEntry[] }>(`/content/${slug}/trash`);
 }
 
+export async function getVersions(slug: string, id: string) {
+	return serverApi.get<Array<{ entryId: string; schemaSlug: string; data: Record<string, unknown>; version: number; createdAt: string }>>(`/content/${slug}/${id}/versions`);
+}
+
+export async function restoreVersion(slug: string, id: string, version: number) {
+	return serverApi.patch<ContentEntry>(`/content/${slug}/${id}/versions/${version}`, {});
+}
+
 export async function getActivityFeed(limit = 100, offset = 0) {
   return serverApi.get<Array<{ date: string; activities: Array<{ time: string; message: string }> }>>(`/logs/activity-feed?limit=${limit}&offset=${offset}`);
 }

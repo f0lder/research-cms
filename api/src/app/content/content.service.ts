@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, isValidObjectId } from 'mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ContentEntryModel, ContentEntryDocument } from './schemas/content-entry.schema';
+import { ContentVersionModel, ContentVersionDocument } from './schemas/content-version.schema';
 import { SchemaService } from '../schema/schema.service';
 import { FieldValue, MEDIA_SCHEMA_SLUG } from '@research-cms/shared-types';
 import { LogsService } from '../logs/logs.service';
@@ -17,6 +18,7 @@ import {
 export class ContentService {
 	constructor(
 		@InjectModel(ContentEntryModel.name) private model: Model<ContentEntryDocument>,
+		@InjectModel(ContentVersionModel.name) private versionModel: Model<ContentVersionDocument>,
 		private readonly schemaService: SchemaService,
 		private readonly logsService: LogsService,
 		private readonly eventEmitter: EventEmitter2,
@@ -235,6 +237,15 @@ export class ContentService {
 		const entry = await this.findOne(schemaSlug, id);
 		await this.validateData(schemaSlug, data, true);
 		
+		// Save current state as a version before overwriting
+		const currentVersion = entry.version ?? 1;
+		await this.versionModel.create({
+			entryId: String(entry._id),
+			schemaSlug,
+			data: entry.data,
+			version: currentVersion,
+		});
+		
 		// Extract system fields (top-level) from input data
 		const systemFields = ['status', 'publishAt', 'deletedAt', 'version'];
 		const fieldData: Record<string, FieldValue> = {};
@@ -251,7 +262,11 @@ export class ContentService {
 		const previousData = { ...entry.data } as Record<string, unknown>;
 		
 		// Build update object: merge schema fields into data object, set system fields at top-level
-		const updateObject = { $set: { data: { ...entry.data, ...fieldData } } };
+		// Also increment version number
+		const updateObject = {
+			$set: { data: { ...entry.data, ...fieldData } },
+			$inc: { version: 1 }
+		};
 		if (Object.keys(updateFields).length > 0) {
 			Object.assign(updateObject.$set, updateFields);
 		}
@@ -403,5 +418,86 @@ export class ContentService {
 			this.model.countDocuments(query),
 		]);
 		return { items, total, page, limit };
+	}
+
+	// ─── Version History ─────────────────────────────────────────────────────
+
+	/** Get version history for an entry, sorted newest first */
+	async getVersions(schemaSlug: string, id: string) {
+		if (!isValidObjectId(id)) {
+			throw new BadRequestException(`Invalid entry ID: "${id}"`);
+		}
+		// Verify entry exists
+		await this.findOne(schemaSlug, id);
+		
+		return this.versionModel
+			.find({ entryId: id, schemaSlug })
+			.sort({ version: -1 })
+			.lean()
+			.exec();
+	}
+
+	/** Restore an entry to a specific version */
+	async restoreVersion(
+		schemaSlug: string,
+		id: string,
+		version: number
+	): Promise<ContentEntryDocument> {
+		if (!isValidObjectId(id)) {
+			throw new BadRequestException(`Invalid entry ID: "${id}"`);
+		}
+		
+		// Find the version to restore
+		const versionDoc = await this.versionModel
+			.findOne({ entryId: id, schemaSlug, version })
+			.exec();
+		
+		if (!versionDoc) {
+			throw new NotFoundException(`Version ${version} not found for entry "${id}"`);
+		}
+		
+		// Get current entry to verify it exists
+		const entry = await this.findOne(schemaSlug, id);
+		
+		// Save current state as a version before restoring
+		const currentVersion = entry.version ?? 1;
+		await this.versionModel.create({
+			entryId: id,
+			schemaSlug,
+			data: entry.data,
+			version: currentVersion,
+		});
+		
+		// Restore to the target version data, increment version
+		const restored = await this.model.findByIdAndUpdate(
+			id,
+			{
+				$set: { data: versionDoc.data },
+				$inc: { version: 1 }
+			},
+			{ returnDocument: 'after' }
+		).exec();
+		
+		if (!restored) {
+			throw new NotFoundException(`Entry "${id}" not found`);
+		}
+		
+		void this.logsService.log(
+			`Entry restored to version ${version} in "${schemaSlug}"`,
+			['content', 'restore-version'],
+			{ schemaSlug, id, version }
+		);
+		
+		this.eventEmitter.emit(
+			CmsEvents.CONTENT_UPDATED,
+			new ContentUpdatedEvent(
+				schemaSlug,
+				id,
+				versionDoc.data as Record<string, unknown>,
+				restored.data as Record<string, unknown>
+			),
+		);
+		
+		return restored;
 	}
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query, HttpCode, UseGuards } from '@nestjs/common';
 import { FieldValue } from '@research-cms/shared-types';
 import { ContentService } from './content.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -124,5 +124,26 @@ export class ContentController {
 		@Param('id') id: string
 	) {
 		return this.contentService.permanentlyDelete(schemaSlug, id);
+	}
+
+	// ─── Version History ────────────────────────────────────────────────────
+
+	@Get(':schemaSlug/:id/versions')
+	getVersions(
+		@Param('schemaSlug') schemaSlug: string,
+		@Param('id') id: string
+	) {
+		return this.contentService.getVersions(schemaSlug, id);
+	}
+
+	@Patch(':schemaSlug/:id/versions/:version')
+	@UseGuards(RolesGuard)
+	@Roles(UserRole.ADMIN, UserRole.EDITOR)
+	restoreVersion(
+		@Param('schemaSlug') schemaSlug: string,
+		@Param('id') id: string,
+		@Param('version') version: string
+	) {
+		return this.contentService.restoreVersion(schemaSlug, id, Number(version));
 	}
 }
