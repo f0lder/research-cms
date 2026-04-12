@@ -21,6 +21,9 @@ export class ContentEntryModel {
 	@Prop({ index: true, sparse: true })
 	publishAt?: Date;
 
+	@Prop({ index: true, sparse: true })
+	unpublishAt?: Date;
+
 	@Prop({ default: 1 })
 	version?: number;
 

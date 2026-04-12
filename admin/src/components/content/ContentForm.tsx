@@ -33,8 +33,8 @@ export default function ContentForm({ mode, schema, initialData, onSuccess }: Co
   const [formData, setFormData] = useState<Record<string, FieldValue>>(
     () => buildDefaults(schema, initialData)
   );
-  const [status, setStatus] = useState<string>(initialData?.status ?? 'draft');
-  const [publishAt, setPublishAt] = useState<string>(initialData?.publishAt ?? '');
+  const [publishAt, setPublishAt] = useState<string>(initialData?.publishAt ? new Date(initialData.publishAt).toISOString().slice(0, 16) : '');
+  const [unpublishAt, setUnpublishAt] = useState<string>(initialData?.unpublishAt ? new Date(initialData.unpublishAt).toISOString().slice(0, 16) : '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,15 +42,45 @@ export default function ContentForm({ mode, schema, initialData, onSuccess }: Co
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSaveDraft = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
 
     const entryData = {
       ...formData,
-      status,
-      ...(publishAt && { publishAt }),
+      status: 'draft',
+      ...(unpublishAt && { unpublishAt }),
+    };
+
+    const result =
+      mode === 'create'
+        ? await createEntry(schema.slug, entryData)
+        : await updateEntry(schema.slug, initialData?._id ?? '', entryData);
+
+    setSaving(false);
+    if (result.error) { setError(result.error); return; }
+    onSuccess?.();
+  };
+
+  const handlePublish = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+
+    // Determine status: if publishAt is in future, schedule it; otherwise publish immediately
+    const pubAt = publishAt ? new Date(publishAt) : null;
+    const shouldSchedule = pubAt && pubAt > new Date();
+    const finalStatus = shouldSchedule ? 'scheduled' : 'published';
+
+    // If publishing immediately without a publishAt date, set it to now
+    const finalPublishAt = publishAt || new Date().toISOString().slice(0, 16);
+
+    const entryData = {
+      ...formData,
+      status: finalStatus,
+      publishAt: finalPublishAt,
+      ...(unpublishAt && { unpublishAt }),
     };
 
     const result =
@@ -64,7 +94,7 @@ export default function ContentForm({ mode, schema, initialData, onSuccess }: Co
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl font-mono">
+    <form className="max-w-2xl font-mono">
       {schema.fields.length === 0 && (
         <p className="text-sm text-zinc-400 italic mb-4">This schema has no fields defined yet.</p>
       )}
@@ -90,50 +120,52 @@ export default function ContentForm({ mode, schema, initialData, onSuccess }: Co
       <div className="mt-8 pt-6 border-t border-zinc-200">
         <h3 className="text-sm font-semibold text-zinc-700 mb-4">Publishing</h3>
 
-        {/* Status */}
+        {/* Publish at (optional) */}
         <div className="field-wrap">
-          <label className="field-label">Status</label>
-          <select
-            value={status}
-            onChange={e => setStatus(e.target.value)}
+          <label className="field-label">Publish at (optional)</label>
+          <input
+            type="datetime-local"
+            value={publishAt}
+            onChange={e => setPublishAt(e.target.value)}
             disabled={saving}
             className="field-input"
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="archived">Archived</option>
-          </select>
+            min={new Date().toISOString().slice(0, 16)}
+          />
+          <p className="text-xs text-zinc-400 mt-1">
+            Leave empty to publish immediately. Set a future date to schedule.
+          </p>
         </div>
 
-        {/* Publish at (if scheduled) */}
-        {status === 'scheduled' && (
-          <div className="field-wrap">
-            <label className="field-label">Publish at</label>
-            <input
-              type="datetime-local"
-              value={publishAt}
-              onChange={e => setPublishAt(e.target.value)}
-              disabled={saving}
-              className="field-input"
-              min={new Date().toISOString().slice(0, 16)}
-              required
-            />
-          </div>
-        )}
+        {/* Unpublish at (optional) */}
+        <div className="field-wrap">
+          <label className="field-label">Unpublish at (optional)</label>
+          <input
+            type="datetime-local"
+            value={unpublishAt}
+            onChange={e => setUnpublishAt(e.target.value)}
+            disabled={saving}
+            className="field-input"
+          />
+          <p className="text-xs text-zinc-400 mt-1">
+            Auto-archive this entry after this date.
+          </p>
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
       <div className="flex gap-3 pt-4 border-t border-zinc-100">
-        <button type="submit" disabled={saving} className="btn-primary">
-          {saving ? 'Saving…' : mode === 'create' ? 'Create entry' : 'Save changes'}
+        <button type="button" onClick={handleSaveDraft} disabled={saving} className="btn-secondary">
+          {saving ? 'Saving…' : 'Save Draft'}
+        </button>
+        <button type="button" onClick={handlePublish} disabled={saving} className="btn-primary">
+          {saving ? 'Publishing…' : 'Publish'}
         </button>
         <button
           type="button"
           onClick={() => router.back()}
           disabled={saving}
-          className="btn-secondary"
+          className="btn-ghost"
         >
           Cancel
         </button>

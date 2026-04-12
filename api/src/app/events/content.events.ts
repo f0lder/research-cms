@@ -24,3 +24,19 @@ export class ContentDeletedEvent {
     public readonly triggeredBy: 'admin' | 'api' = 'admin',
   ) {}
 }
+
+export class ContentPublishedEvent {
+  constructor(
+    public readonly schemaSlug: string,
+    public readonly entryId: string,
+    public readonly trigger: 'manual' | 'scheduled',
+  ) {}
+}
+
+export class ContentUnpublishedEvent {
+  constructor(
+    public readonly schemaSlug: string,
+    public readonly entryId: string,
+    public readonly trigger: 'manual' | 'scheduled',
+  ) {}
+}

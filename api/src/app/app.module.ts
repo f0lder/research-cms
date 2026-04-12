@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { SchemaModule } from './schema/schema.module';
 import { ContentModule } from './content/content.module';
 import { AuthModule } from './auth/auth.module';
@@ -21,6 +22,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
       maxListeners: 20,
       verboseMemoryLeak: true,
     }),
+    ScheduleModule.forRoot(),
     LogsModule,
     MediaModule,
     AuthModule,

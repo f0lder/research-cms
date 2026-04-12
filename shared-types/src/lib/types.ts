@@ -84,6 +84,8 @@ export interface ContentEntry {
   deletedAt?: string;
   /** Publish at this time (for scheduled publishing). */
   publishAt?: string;
+  /** Unpublish at this time (for automatic archiving). */
+  unpublishAt?: string;
   /** Version number for content versioning. */
   version?: number;
   createdAt?: string;

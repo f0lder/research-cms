@@ -14,11 +14,10 @@ import {
   MEDIA_SCHEMA_SLUG,
 } from '@research-cms/shared-types';
 
-// Status field is a convention: schemas with a draft/publish workflow must include
-// a field named "status". Entries with status="published" or no status field at all
-// are served publicly. Entries with status="draft" are excluded.
+// Filter for published entries — uses system-level status field
 const PUBLISHED_FILTER = {
-  $or: [{ 'data.status': 'published' }, { 'data.status': { $exists: false } }],
+  status: 'published',
+  deletedAt: null,
 };
 
 // Reference fields return the raw ObjectId string by design — resolving them would
@@ -183,7 +182,7 @@ export class PublicService {
 
     const [schema, entry] = await Promise.all([
       this.schemaService.findOne(schemaSlug),
-      this.entryModel.findOne({ _id: id, schemaSlug }).exec(),
+      this.entryModel.findOne({ _id: id, schemaSlug, ...PUBLISHED_FILTER }).exec(),
     ]);
 
     if (!entry) throw new NotFoundException('Entry not found');

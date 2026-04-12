@@ -3,6 +3,8 @@ export const CmsEvents = {
   CONTENT_CREATED: 'content.created',
   CONTENT_UPDATED: 'content.updated',
   CONTENT_DELETED: 'content.deleted',
+  CONTENT_PUBLISHED: 'content.published',
+  CONTENT_UNPUBLISHED: 'content.unpublished',
   // Schema
   SCHEMA_CREATED: 'schema.created',
   SCHEMA_UPDATED: 'schema.updated',

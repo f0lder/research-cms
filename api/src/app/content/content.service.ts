@@ -53,6 +53,7 @@ export class ContentService {
 			...resolvedSchema.fields.map(f => f.name),
 			'status',
 			'publishAt',
+			'unpublishAt',
 			'deletedAt',
 			'version',
 		]);
@@ -206,7 +207,7 @@ export class ContentService {
 		await this.validateData(schemaSlug, data, false);
 		
 		// Extract system fields (top-level) from input data
-		const systemFields = ['status', 'publishAt', 'deletedAt', 'version'];
+		const systemFields = ['status', 'publishAt', 'unpublishAt', 'deletedAt', 'version'];
 		const fieldData: Record<string, FieldValue> = {};
 		const createFields: Record<string, FieldValue | Date | null | string> = { schemaSlug };
 		
@@ -216,6 +217,14 @@ export class ContentService {
 			} else {
 				fieldData[key] = data[key];
 			}
+		}
+		
+		// Determine initial status: if publishAt is in future, status should be 'scheduled'
+		const publishAt = createFields.publishAt ? new Date(String(createFields.publishAt)) : null;
+		if (publishAt && publishAt > new Date()) {
+			createFields.status = 'scheduled';
+		} else if (!createFields.status) {
+			createFields.status = 'draft';
 		}
 		
 		createFields.data = fieldData;
@@ -247,7 +256,7 @@ export class ContentService {
 		});
 		
 		// Extract system fields (top-level) from input data
-		const systemFields = ['status', 'publishAt', 'deletedAt', 'version'];
+		const systemFields = ['status', 'publishAt', 'unpublishAt', 'deletedAt', 'version'];
 		const fieldData: Record<string, FieldValue> = {};
 		const updateFields: Record<string, FieldValue | Date | null> = {};
 		
