@@ -20,6 +20,8 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
+      // Middleware now handles auth check before rendering /schemas
+      // No delay needed since we've already ensured the auth cookie is set
       router.push('/schemas');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');

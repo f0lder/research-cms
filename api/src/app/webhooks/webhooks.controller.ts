@@ -36,4 +36,9 @@ export class WebhooksController {
   delete(@Param('id') id: string) {
     return this.webhooksService.delete(id);
   }
+
+  @Post(':id/test')
+  test(@Param('id') id: string) {
+    return this.webhooksService.test(id);
+  }
 }

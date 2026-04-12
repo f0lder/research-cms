@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Model } from 'mongoose';
 import { createHmac } from 'crypto';
+import { Webhook } from '@research-cms/shared-types';
 import { WebhookModel, WebhookDocument } from './schemas/webhook.schema';
 import {
   CmsEvents,
@@ -22,14 +23,11 @@ type AnyEvent =
   | SchemaCreatedEvent  | SchemaUpdatedEvent  | SchemaDeletedEvent
   | MediaUploadedEvent  | MediaDeletedEvent;
 
-export interface WebhookData {
-  name: string;
-  url: string;
-  events?: string[];
-  schemas?: string[];
-  active?: boolean;
-  secret?: string | null;
-}
+/**
+ * DTO for creating/updating webhooks.
+ * Excludes read-only fields (successCount, failureCount, lastTriggeredAt, lastError, createdAt).
+ */
+export type WebhookData = Omit<Webhook, '_id' | 'successCount' | 'failureCount' | 'lastTriggeredAt' | 'lastError' | 'createdAt'>;
 
 @Injectable()
 export class WebhooksService {
@@ -187,5 +185,35 @@ export class WebhooksService {
 
   async delete(id: string): Promise<void> {
     await this.model.findByIdAndDelete(id).exec();
+  }
+
+  // ── Test Endpoint ──────────────────────────────────────────────────────────
+
+  async test(id: string): Promise<{ success: boolean; statusCode?: number; error?: string }> {
+    const webhook = await this.findOne(id);
+    try {
+      const body = {
+        event: 'webhook.test',
+        timestamp: new Date().toISOString(),
+        payload: { message: 'Test webhook from CMS' },
+      };
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+
+      if (webhook.secret) {
+        headers['x-cms-signature'] = createHmac('sha256', webhook.secret)
+          .update(JSON.stringify(body))
+          .digest('hex');
+      }
+
+      const res = await fetch(webhook.url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(5000),
+      });
+      return { success: res.ok, statusCode: res.status };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
   }
 }

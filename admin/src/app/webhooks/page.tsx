@@ -3,12 +3,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { formatDateTime } from '@/lib/utils';
-import { getAllWebhooks, deleteWebhook, updateWebhook, type Webhook } from '@/app/actions';
+import { getAllWebhooks, deleteWebhook, updateWebhook, testWebhook, type Webhook } from '@/app/actions';
 
 export default function WebhooksPage() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [testing, setTesting] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{ id: string; success: boolean; message: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -21,9 +23,9 @@ export default function WebhooksPage() {
   useEffect(() => { load(); }, [load]);
 
   const handleToggle = async (webhook: Webhook) => {
-    const { error: err } = await updateWebhook(webhook._id!, { active: !webhook.active });
+    const { error: err } = await updateWebhook(webhook._id, { active: !webhook.active });
     if (err) { setError(err); return; }
-    setWebhooks(prev => prev.map(w => w._id === webhook._id ? { ...w, active: !w.active } : w));
+    setWebhooks(prev => prev.map(w => w._id === webhook._id ? { ...w, active: !webhook.active } : w));
   };
 
   const handleDelete = async (id: string) => {
@@ -31,6 +33,25 @@ export default function WebhooksPage() {
     const { error: err } = await deleteWebhook(id);
     if (err) { setError(err); return; }
     setWebhooks(prev => prev.filter(w => w._id !== id));
+  };
+
+  const handleTest = async (id: string) => {
+    setTesting(id);
+    setTestResult(null);
+    const { data, error: err } = await testWebhook(id);
+    setTesting(null);
+    if (err) {
+      setTestResult({ id, success: false, message: err });
+    } else if (data) {
+      setTestResult({ 
+        id, 
+        success: data.success, 
+        message: data.success 
+          ? `✓ Success (${data.statusCode})`
+          : `✗ Failed: ${data.error || 'Unknown error'}`
+      });
+    }
+    setTimeout(() => setTestResult(null), 4000);
   };
 
   if (loading) return <div className="p-8 text-sm text-zinc-400 font-mono">Loading…</div>;
@@ -96,10 +117,23 @@ export default function WebhooksPage() {
                   {webhook.lastError && (
                     <span className="text-red-400 truncate max-w-xs">{webhook.lastError}</span>
                   )}
+                  {testResult?.id === webhook._id && (
+                    <span className={testResult.success ? 'text-emerald-600' : 'text-red-500'}>
+                      {testResult.message}
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => handleTest(webhook._id)}
+                  disabled={testing === webhook._id}
+                  className="text-xs text-blue-500 hover:text-blue-700 font-mono bg-transparent border-0 cursor-pointer p-0 disabled:opacity-50 disabled:cursor-wait"
+                  title="Send test payload to verify URL"
+                >
+                  {testing === webhook._id ? 'Testing...' : 'Test'}
+                </button>
                 <Link
                   href={`/webhooks/${webhook._id}`}
                   className="text-xs text-zinc-500 hover:text-zinc-800 font-mono no-underline"
@@ -107,7 +141,7 @@ export default function WebhooksPage() {
                   Edit
                 </Link>
                 <button
-                  onClick={() => handleDelete(webhook._id!)}
+                  onClick={() => handleDelete(webhook._id)}
                   className="text-xs text-red-400 hover:text-red-600 font-mono bg-transparent border-0 cursor-pointer p-0"
                 >
                   Delete

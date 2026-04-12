@@ -1,6 +1,5 @@
 'use server';
 
-import { cookies } from 'next/headers';
 import { serverApi } from '@/lib/server-api';
 import {
   ContentTypeDefinition,
@@ -13,6 +12,7 @@ import {
   FieldDefinition,
   FieldValue,
   Block,
+  Webhook,
 } from '@research-cms/shared-types';
 
 // ── Schemas ────────────────────────────────────────────────────────────────
@@ -217,21 +217,6 @@ export async function clearLogs() {
 
 // ── Webhooks ───────────────────────────────────────────────────────────────
 
-export interface Webhook {
-  _id?: string;
-  name: string;
-  url: string;
-  events: string[];
-  schemas: string[];
-  active: boolean;
-  secret?: string | null;
-  successCount: number;
-  failureCount: number;
-  lastTriggeredAt?: string | null;
-  lastError?: string | null;
-  createdAt?: string;
-}
-
 export async function getAllWebhooks() {
   return serverApi.get<Webhook[]>(`/webhooks`);
 }
@@ -250,6 +235,10 @@ export async function updateWebhook(id: string, data: Partial<Webhook>) {
 
 export async function deleteWebhook(id: string) {
   return serverApi.delete(`/webhooks/${id}`);
+}
+
+export async function testWebhook(id: string) {
+  return serverApi.post<{ success: boolean; statusCode?: number; error?: string }>(`/webhooks/${id}/test`, {});
 }
 
 // ── Users ──────────────────────────────────────────────────────────────────

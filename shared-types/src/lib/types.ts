@@ -229,3 +229,20 @@ export interface Client {
 
 /** @deprecated Use Client instead */
 export type ApiKey = Client;
+
+// ── Webhooks ──────────────────────────────────────────────────────────────────
+
+export interface Webhook {
+  _id: string;
+  name: string;
+  url: string;
+  events: string[];
+  schemas: string[];
+  active: boolean;
+  secret?: string | null;
+  successCount: number;
+  failureCount: number;
+  lastTriggeredAt?: string | null;
+  lastError?: string | null;
+  createdAt?: string;
+}

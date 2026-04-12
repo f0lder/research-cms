@@ -63,14 +63,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const token = data.access_token;
     localStorage.setItem('token', token);
-    setUser(data.user);
 
-    // Set token as HTTP-only cookie for server-side requests
-    await fetch('/api/auth/set-token', {
+    // Set token as HTTP-only cookie FIRST - this is critical for middleware
+    const cookieResponse = await fetch('/api/auth/set-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
-    }).catch(console.error);
+    });
+
+    if (!cookieResponse.ok) {
+      throw new Error('Failed to set authentication cookie');
+    }
+
+    // Only update context AFTER cookie is confirmed set
+    setUser(data.user);
   };
 
   const register = async (email: string, password: string, name: string) => {
@@ -85,14 +91,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const token = data.access_token;
     localStorage.setItem('token', token);
-    setUser(data.user);
 
-    // Set token as HTTP-only cookie for server-side requests
-    await fetch('/api/auth/set-token', {
+    // Set token as HTTP-only cookie FIRST - this is critical for middleware
+    const cookieResponse = await fetch('/api/auth/set-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
-    }).catch(console.error);
+    });
+
+    if (!cookieResponse.ok) {
+      throw new Error('Failed to set authentication cookie');
+    }
+
+    // Only update context AFTER cookie is confirmed set
+    setUser(data.user);
   };
 
   const logout = () => {

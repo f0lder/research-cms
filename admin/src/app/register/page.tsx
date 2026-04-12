@@ -20,6 +20,8 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await register(email, password, name);
+      // Middleware now handles auth check before rendering /schemas
+      // No delay needed since we've already ensured the auth cookie is set
       router.push('/schemas');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registration failed');
