@@ -57,12 +57,17 @@ export class WebhooksService {
   // ── Dispatch ───────────────────────────────────────────────────────────────
 
   private async dispatch(eventName: string, payload: AnyEvent): Promise<void> {
-    const webhooks = await this.model.find({ active: true }).lean().exec();
+    // Filter at DB level: active webhooks that either listen to all events (empty events array)
+    // or specifically to this event
+    const webhooks = await this.model.find({
+      active: true,
+      $or: [
+        { events: { $size: 0 } },  // empty = all events
+        { events: eventName },      // matches this event
+      ],
+    }).lean().exec();
 
     for (const webhook of webhooks) {
-      // Filter by event type (empty = all)
-      if (webhook.events.length > 0 && !webhook.events.includes(eventName)) continue;
-
       // Filter by schema slug for content events (empty = all)
       if (
         webhook.schemas.length > 0 &&
@@ -133,7 +138,10 @@ export class WebhooksService {
     if (event instanceof SchemaUpdatedEvent)  return CmsEvents.SCHEMA_UPDATED;
     if (event instanceof SchemaDeletedEvent)  return CmsEvents.SCHEMA_DELETED;
     if (event instanceof MediaUploadedEvent)  return CmsEvents.MEDIA_UPLOADED;
-    return CmsEvents.MEDIA_DELETED;
+    if (event instanceof MediaDeletedEvent)  return CmsEvents.MEDIA_DELETED;
+
+    const _exhaustiveCheck: never = event;
+    throw new Error(`Unhandled event type: ${_exhaustiveCheck}`);
   }
 
   // ── CRUD ───────────────────────────────────────────────────────────────────
@@ -149,6 +157,11 @@ export class WebhooksService {
   }
 
   async create(data: WebhookData): Promise<WebhookDocument> {
+    try {
+      new URL(data.url);
+    } catch {
+      throw new Error('Invalid URL');
+    }
     return this.model.create({
       name: data.name,
       url: data.url,
@@ -160,6 +173,13 @@ export class WebhooksService {
   }
 
   async update(id: string, data: Partial<WebhookData>): Promise<WebhookDocument> {
+    if (data.url !== undefined) {
+      try {
+        new URL(data.url);
+      } catch {
+        throw new Error('Invalid URL');
+      }
+    }
     const doc = await this.model.findByIdAndUpdate(id, { $set: data }, { returnDocument: 'after' }).exec();
     if (!doc) throw new Error('Webhook not found');
     return doc;
