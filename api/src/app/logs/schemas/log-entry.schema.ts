@@ -6,13 +6,16 @@ export type LogEntryDocument = HydratedDocument<LogEntryModel>;
 @Schema({ timestamps: { createdAt: true, updatedAt: false } })
 export class LogEntryModel {
   @Prop({ required: true })
-  message: string;
+  message?: string;
 
   @Prop({ type: [String], default: [] })
-  tags: string[];
+  tags?: string[];
 
   @Prop({ type: Object, default: null })
-  meta: Record<string, unknown> | null;
+  meta?: Record<string, unknown> | null;
+
+  @Prop({ default: 'info' })
+  level?: string;
 
   createdAt?: Date;
 }

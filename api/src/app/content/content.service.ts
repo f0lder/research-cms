@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, isValidObjectId } from 'mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { format } from 'fast-csv';
 import { ContentEntryModel, ContentEntryDocument } from './schemas/content-entry.schema';
 import { ContentVersionModel, ContentVersionDocument } from './schemas/content-version.schema';
 import { SchemaService } from '../schema/schema.service';
@@ -529,5 +530,46 @@ export class ContentService {
 		);
 		
 		return restored;
+	}
+
+	/** Export entries to CSV */
+	async exportCsv(schemaSlug: string): Promise<string> {
+		const schema = await this.schemaService.findOne(schemaSlug);
+		const entries = await this.model
+			.find({ schemaSlug, deletedAt: null })
+			.sort({ createdAt: -1 })
+			.lean()
+			.exec();
+
+		if (!entries.length) return '';
+
+		// Build headers from schema fields + system fields
+		const fieldNames = schema.fields.map(f => f.name);
+		const headers = ['_id', 'status', 'createdAt', 'updatedAt', ...fieldNames];
+
+		const rows = entries.map(entry => {
+			const row: Record<string, unknown> = {
+				_id: String(entry._id),
+				status: entry.status,
+				createdAt: entry.createdAt?.toISOString() ?? '',
+				updatedAt: entry.updatedAt?.toISOString() ?? '',
+			};
+			for (const field of fieldNames) {
+				const value = entry.data[field];
+				// Flatten arrays to semicolon-separated
+				row[field] = Array.isArray(value) ? value.join(';') : value ?? '';
+			}
+			return row;
+		});
+
+		return new Promise((resolve, reject) => {
+			const chunks: string[] = [];
+			const stream = format({ headers: true });
+			stream.on('data', chunk => chunks.push(chunk.toString()));
+			stream.on('end', () => resolve(chunks.join('')));
+			stream.on('error', reject);
+			rows.forEach(row => stream.write(row));
+			stream.end();
+		});
 	}
 }

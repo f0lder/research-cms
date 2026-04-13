@@ -39,6 +39,17 @@ export class LogsController {
     return this.logsService.getActivityFeed(Number(limit) || 100, Number(offset) || 0);
   }
 
+  @Get('activity')
+  getActivity(
+    @Query('limit') limit?: string,
+    @Query('tag') tag?: string
+  ) {
+    if (tag) {
+      return this.logsService.getActivityByTag(tag, Number(limit) || 50);
+    }
+    return this.logsService.getActivity(Number(limit) || 50);
+  }
+
   @Delete()
   @HttpCode(204)
   clear() {

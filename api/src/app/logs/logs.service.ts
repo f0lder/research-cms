@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { ActivityItem } from '@research-cms/shared-types';
 import { LogEntryModel, LogEntryDocument } from './schemas/log-entry.schema';
 
 export interface LogsQuery {
@@ -75,9 +76,47 @@ export class LogsService {
 						hour: '2-digit',
 						minute: '2-digit',
 					}),
-					message: log.message,
+					message: log.message ?? '',
 				};
 			}),
+		}));
+	}
+
+	/** Get activity feed as structured ActivityItem[] */
+	async getActivity(limit = 50): Promise<ActivityItem[]> {
+		const logs = await this.model
+			.find()
+			.sort({ createdAt: -1 })
+			.limit(limit)
+			.lean()
+			.exec();
+
+		return logs.map(log => ({
+			id: String(log._id),
+			message: log.message ?? '',
+			tags: log.tags ?? [],
+			level: log.level ?? 'info',
+			meta: log.meta ?? undefined,
+			createdAt: log.createdAt?.toISOString() ?? '',
+		}));
+	}
+
+	/** Get activity feed filtered by tag */
+	async getActivityByTag(tag: string, limit = 50): Promise<ActivityItem[]> {
+		const logs = await this.model
+			.find({ tags: tag })
+			.sort({ createdAt: -1 })
+			.limit(limit)
+			.lean()
+			.exec();
+
+		return logs.map(log => ({
+			id: String(log._id),
+			message: log.message ?? '',
+			tags: log.tags ?? [],
+			level: log.level ?? 'info',
+			meta: log.meta ?? undefined,
+			createdAt: log.createdAt?.toISOString() ?? '',
 		}));
 	}
 }

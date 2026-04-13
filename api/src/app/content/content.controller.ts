@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query, HttpCode, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query, HttpCode, UseGuards, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { FieldValue } from '@research-cms/shared-types';
 import { ContentService } from './content.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -76,6 +77,22 @@ export class ContentController {
 	@Roles(UserRole.ADMIN)
 	rebuildIndex(@Param('schemaSlug') schemaSlug: string) {
 		return this.contentService.rebuildIndex(schemaSlug);
+	}
+
+	@Get(':schemaSlug/export/csv')
+	@UseGuards(RolesGuard)
+	@Roles(UserRole.ADMIN, UserRole.EDITOR)
+	async exportCsv(
+		@Param('schemaSlug') schemaSlug: string,
+		@Res() res: Response,
+	) {
+		const csv = await this.contentService.exportCsv(schemaSlug);
+		res.setHeader('Content-Type', 'text/csv');
+		res.setHeader(
+			'Content-Disposition',
+			`attachment; filename="${schemaSlug}-${new Date().toISOString().split('T')[0]}.csv"`
+		);
+		res.send(csv);
 	}
 
 	// ─── Generic ID Routes ─────────────────────────────────────────────────

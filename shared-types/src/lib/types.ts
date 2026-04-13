@@ -188,6 +188,15 @@ export interface LogEntry {
   createdAt?: string;
 }
 
+export interface ActivityItem {
+  id: string;
+  message: string;
+  tags: string[];
+  level: string;
+  meta?: Record<string, unknown>;
+  createdAt: string;
+}
+
 export type PageStatus = 'draft' | 'published';
 
 export interface ClientPage {

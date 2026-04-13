@@ -68,15 +68,15 @@ export class WebhooksService {
     for (const webhook of webhooks) {
       // Filter by schema slug for content events (empty = all)
       if (
-        webhook.schemas.length > 0 &&
+        (webhook.schemas ?? []).length > 0 &&
         (payload instanceof ContentCreatedEvent ||
          payload instanceof ContentUpdatedEvent ||
          payload instanceof ContentDeletedEvent) &&
-        !webhook.schemas.includes(payload.schemaSlug)
+        !(webhook.schemas ?? []).includes(payload.schemaSlug)
       ) continue;
 
       // Non-blocking — failures are logged on the webhook document
-      this.fireWithRetry(webhook._id.toString(), webhook.url, webhook.secret, eventName, payload).catch(() => {
+      this.fireWithRetry(webhook._id.toString(), webhook.url ?? '', webhook.secret ?? null, eventName, payload).catch(() => {
         // Already handled inside fireWithRetry
       });
     }
@@ -205,7 +205,7 @@ export class WebhooksService {
           .digest('hex');
       }
 
-      const res = await fetch(webhook.url, {
+      const res = await fetch(webhook.url ?? '', {
         method: 'POST',
         headers,
         body: JSON.stringify(body),

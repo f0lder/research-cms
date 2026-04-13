@@ -193,3 +193,9 @@ export async function uploadMedia(file: File, title?: string): Promise<import('@
   if (!res.ok) throw new Error(json.message ?? 'Upload failed');
   return json;
 }
+
+// ── Exports ───────────────────────────────────────────────────────────────────
+
+export function getExportCsvUrl(slug: string): string {
+  return `${API_URL}/content/${slug}/export/csv`;
+}

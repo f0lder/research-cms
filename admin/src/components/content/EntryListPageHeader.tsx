@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 import { rebuildIndex } from '@/app/actions';
+import { API_URL } from '@/config';
 
 interface PageHeaderProps {
   schema: ContentTypeDefinition;
@@ -13,6 +14,7 @@ interface PageHeaderProps {
 
 export function EntryListPageHeader({ schema, slug, isAdmin }: PageHeaderProps) {
   const [rebuildLoading, setRebuildLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [rebuildMessage, setRebuildMessage] = useState('');
 
   const handleRebuildIndex = async () => {
@@ -32,7 +34,46 @@ export function EntryListPageHeader({ schema, slug, isAdmin }: PageHeaderProps) 
     } finally {
       setRebuildLoading(false);
     }
-  }
+  };
+
+  const handleExportCsv = async () => {
+    setExportLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const response = await fetch(`${API_URL}/content/${slug}/export/csv`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ message: 'Export failed' }));
+        setRebuildMessage(`✗ ${err.message || 'Export failed'}`);
+        setTimeout(() => setRebuildMessage(''), 3000);
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${slug}-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      setRebuildMessage('✓ CSV exported successfully');
+      setTimeout(() => setRebuildMessage(''), 3000);
+    } catch (error) {
+      setRebuildMessage('✗ Failed to export CSV');
+      setTimeout(() => setRebuildMessage(''), 3000);
+    } finally {
+      setExportLoading(false);
+    }
+  };
   return (
     <>
       {/* Breadcrumb */}
@@ -67,6 +108,14 @@ export function EntryListPageHeader({ schema, slug, isAdmin }: PageHeaderProps) 
                   title="Rebuild search indices for existing entries"
                 >
                   {rebuildLoading ? 'Rebuilding…' : 'Rebuild Index'}
+                </button>
+                <button
+                  onClick={handleExportCsv}
+                  disabled={exportLoading}
+                  className="btn-secondary text-xs"
+                  title="Download CSV export"
+                >
+                  {exportLoading ? 'Exporting…' : 'Export CSV'}
                 </button>
                 <Link href={`/schemas/edit/${slug}`}>
                   <button className="btn-secondary">Edit schema</button>

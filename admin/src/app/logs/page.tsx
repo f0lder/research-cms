@@ -4,7 +4,7 @@ import Select from 'react-select';
 import { LogEntry } from '@research-cms/shared-types';
 import { formatDateTime } from '@/lib/utils';
 import { getLogs, getLogTags, clearLogs } from '@/app/actions';
-import { TableSkeleton } from '@/components/skeletons';
+import { ActivityFeed } from '@/components/ActivityFeed';
 
 // ── Tag styling ───────────────────────────────────────────────────────────────
 const TAG_STYLES: Record<string, string> = {
@@ -112,6 +112,12 @@ export default function LogsPage() {
         <button onClick={handleClear} className="btn-danger text-xs px-3 py-1.5">
           Clear all
         </button>
+      </div>
+
+      {/* Activity Feed */}
+      <div className="mb-8 border border-zinc-200 rounded-md p-6 bg-white">
+        <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+        <ActivityFeed />
       </div>
 
       {/* Filters */}
