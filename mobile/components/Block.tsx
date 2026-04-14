@@ -1,4 +1,5 @@
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
 import { FieldBlock, FieldType } from '@research-cms/shared-types';
 import { C } from '@/lib/theme';
 
@@ -53,16 +54,60 @@ function BlockValue({ block }: { block: FieldBlock }) {
     case 'date':
     case 'datetime':
       return <Text style={s.meta}>{new Date(String(block.value)).toLocaleString()}</Text>;
+    case 'reference': {
+      // Single reference - could be an ID string or an entry object
+      const entryId = typeof block.value === 'string' ? block.value : (block.value as any)?._id;
+      if (!entryId) return null;
+      return (
+        <TouchableOpacity 
+          onPress={() => router.push(`/${block.fieldName === 'author' ? 'users' : 'entries'}/${entryId}`)}
+          style={s.referenceLink}
+        >
+          <Text style={s.referenceLinkText}>
+            {/* Show entry title if resolved, otherwise fallback to ID */}
+            {(block.value as any)?.title || (block.value as any)?.name || entryId.slice(0, 8)}
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+    case 'references': {
+      // Multiple references - array of IDs or entry objects
+      const arr = Array.isArray(block.value) ? block.value : [];
+      return (
+        <View style={s.referenceList}>
+          {arr.map((ref, i) => {
+            const entryId = typeof ref === 'string' ? ref : (ref as any)?._id;
+            if (!entryId) return null;
+            return (
+              <TouchableOpacity
+                key={i}
+                onPress={() => router.push(`/${block.fieldName}/${entryId}`)}
+                style={s.referenceTag}
+              >
+                <Text style={s.referenceTagText}>
+                  {(ref as any)?.title || (ref as any)?.name || entryId.slice(0, 8)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      );
+    }
     default:
       return <Text style={s.text}>{String(block.value)}</Text>;
   }
 }
 
 export function Block({ block }: { block: FieldBlock }) {
+  // Field blocks should have values resolved by the API
+  // If no value, don't render anything
   if (block.value === null || block.value === undefined || block.value === '') return null;
+  
   return (
     <View style={s.block}>
-      <Text style={s.label}>{block.label}</Text>
+      {block.showLabel !== false && block.labelPosition !== 'hidden' && (
+        <Text style={s.label}>{block.label}</Text>
+      )}
       <BlockValue block={block} />
     </View>
   );
@@ -83,6 +128,11 @@ const s = StyleSheet.create({
   tagRow:     { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag:        { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 3, backgroundColor: C.border },
   tagText:    { fontSize: 11, color: C.text, fontFamily: 'monospace' },
+  referenceLink: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 4, backgroundColor: C.border, borderLeftWidth: 3, borderLeftColor: C.accent },
+  referenceLinkText: { fontSize: 14, color: C.accent, fontWeight: '500' },
+  referenceList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  referenceTag: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4, backgroundColor: C.border, borderWidth: 1, borderColor: C.accent },
+  referenceTagText: { fontSize: 13, color: C.accent, fontWeight: '500' },
   caption:    { fontSize: 12, color: C.subText, marginTop: 6, fontStyle: 'italic' },
   filePill:   { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, backgroundColor: C.border, borderRadius: 4 },
   fileTitle:  { fontSize: 14, color: C.text, flex: 1 },

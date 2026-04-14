@@ -170,6 +170,10 @@ export async function upsertLayout(slug: string, blocks: Block[]) {
   return serverApi.put(`/layouts/${slug}`, { blocks });
 }
 
+export async function updateClientLayout(clientId: string, schemaSlug: string, blocks: Block[]) {
+  return serverApi.put<Client>(`/clients/${clientId}/layouts/${schemaSlug}`, { blocks });
+}
+
 // ── Media ──────────────────────────────────────────────────────────────────
 
 export async function getMediaLibrary() {

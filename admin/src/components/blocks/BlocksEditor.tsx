@@ -7,10 +7,9 @@ import {
   SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Block, blockRegistry, ColumnBlock, CardBlock } from '@research-cms/shared-types';
+import { Block, blockRegistry, ColumnBlock } from '@research-cms/shared-types';
 import { MdDelete, MdExpandMore, MdChevronRight, MdDragIndicator } from 'react-icons/md';
 import { BlockConfigForm, AddBlockPanel, NestedBlocksEditor, ColumnsEditor } from '.';
-import { getBlockIcon } from '../../lib/blockIcons';
 
 /**
  * Reusable block editor component with inline nested block editing.
@@ -44,7 +43,23 @@ export function BlocksEditor({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    onBlocksChange(arrayMove(blocks, Number(active.id), Number(over.id)));
+    
+    // Find indices by block ID
+    const activeIndex = blocks.findIndex(b => b.id === active.id);
+    const overIndex = blocks.findIndex(b => b.id === over.id);
+    
+    if (activeIndex === -1 || overIndex === -1) return;
+    
+    // Reorder blocks array
+    const reordered = arrayMove(blocks, activeIndex, overIndex);
+    
+    // Update order field to match new position
+    const withOrderUpdated = reordered.map((block, index) => ({
+      ...block,
+      order: index,
+    }));
+    
+    onBlocksChange(withOrderUpdated);
   };
 
   const updateBlock = (index: number, updated: Block) => {
@@ -66,7 +81,8 @@ export function BlocksEditor({
   const addBlock = (type: string) => {
     const block = blockRegistry.getDefaultConfig(type);
     if (block) {
-      onBlocksChange([...blocks, block]);
+      const newBlock = { ...block, order: blocks.length };
+      onBlocksChange([...blocks, newBlock]);
       setSelectedBlockIndex(blocks.length);
     }
   };
@@ -94,7 +110,7 @@ export function BlocksEditor({
   const isContainerBlock = selectedBlock && ['row', 'column', 'card'].includes(selectedBlock.type);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="page flex flex-col h-screen overflow-hidden">
       {/* Header */}
       {onHeaderContent && (
         <div className="flex-shrink-0 mb-6">
@@ -108,10 +124,10 @@ export function BlocksEditor({
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {blocks.length > 0 ? (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={blocks.map((_, i) => i)} strategy={verticalListSortingStrategy}>
+              <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
                 <div className="flex-1 overflow-y-auto pr-4">
                   {blocks.map((block, i) => (
-                    <div key={i}>
+                    <div key={block.id}>
                       <SortableBlockItem
                         block={block}
                         index={i}
@@ -352,7 +368,7 @@ function SortableBlockItem({
   isExpanded?: boolean;
   onSelect: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: index });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const def = blockRegistry.get(block.type);
   const typeLabel = def?.label ?? 'Block';
   const isContainer = ['row', 'column', 'card'].includes(block.type);

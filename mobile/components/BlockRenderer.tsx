@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, Image, Linking,
-  StyleSheet, FlatList,
+  StyleSheet, FlatList, ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -9,9 +9,11 @@ import {
   ImageBlock, ButtonBlock, RowBlock, ColumnBlock, CardBlock, FieldBlock, EntryBlock,
   ButtonAction,
   Spacing,
+  PublicEntryResponse,
 } from '@research-cms/shared-types';
 import { Block as FieldBlockComponent } from '@/components/Block';
 import { C } from '@/lib/theme';
+import { listEntries, getEntry, type MediaEntry } from '@/lib/api';
 
 // ── Static Block Renderers ─────────────────────────────────────────────────────
 
@@ -89,39 +91,44 @@ function ImageBlockRenderer({ block }: { block: ImageBlock }) {
     }
   }, [block.linkUrl]);
 
-  // Handle resolved media object or direct URL
-  const imageUrl = (block as any).url || '';
-  if (!imageUrl) {
-    return <Text style={s.textMuted}>Image not available</Text>;
+  // Media is pre-resolved by API
+  const media = block.media;
+
+  if (!media?.url) {
+    return <Text style={s.textMuted}>— Image not available</Text>;
   }
 
   const imageStyle = [
     s.image,
     block.width === 'full' && s.fullWidth,
     block.height && { height: block.height },
-    block.borderRadius && { borderRadius: block.borderRadius },
     block.padding && getPaddingStyle(block.padding),
     block.margin && getMarginStyle(block.margin),
   ].filter(Boolean) as (typeof s.image | typeof s.fullWidth | Record<string, number | undefined>)[];
 
   const imageContent = (
     <Image
-      source={{ uri: imageUrl }}
+      source={{ uri: media.url }}
       style={imageStyle}
-      resizeMode={(block.fit === 'fill' ? 'cover' : block.fit) ?? 'cover'}
-      accessibilityLabel={block.alt || 'Image'}
+      resizeMode={block.fit === 'cover' ? 'cover' : block.fit === 'contain' ? 'contain' : 'stretch'}
+      accessibilityLabel={block.alt || media.altText || media.title || ''}
     />
   );
 
-  return block.linkUrl ? (
-    <TouchableOpacity 
-      onPress={handleImagePress}
-      activeOpacity={0.7}
-    >
+  if (block.linkUrl) {
+    return (
+      <TouchableOpacity onPress={handleImagePress}>
+        {imageContent}
+        {media.caption ? <Text style={s.caption}>{media.caption}</Text> : null}
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <View>
       {imageContent}
-    </TouchableOpacity>
-  ) : (
-    imageContent
+      {media.caption ? <Text style={s.caption}>{media.caption}</Text> : null}
+    </View>
   );
 }
 
@@ -154,6 +161,7 @@ function ButtonBlockRenderer({ block }: { block: ButtonBlock }) {
 // ── Content Block Renderers ────────────────────────────────────────────────────
 
 function FieldBlockRenderer({ block }: { block: FieldBlock }) {
+  
   const containerStyle = [
     block.padding && getPaddingStyle(block.padding),
     block.margin && getMarginStyle(block.margin),
@@ -175,7 +183,38 @@ function FieldBlockRenderer({ block }: { block: FieldBlock }) {
 }
 
 function ArchiveBlockRenderer({ block }: { block: ArchiveBlock }) {
-  if (!block.items || block.items.length === 0) {
+  const [items, setItems] = useState<PublicEntryResponse[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const result = await listEntries(block.schemaSlug, 1, 50);
+      setItems(result.items);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to load';
+      setError(msg);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [block.schemaSlug]);
+
+  useEffect(() => { 
+    load(); 
+  }, [load]);
+
+  if (loading) {
+    return (
+      <View style={[s.archiveBlock, { justifyContent: 'center', alignItems: 'center', height: 100 }]}>
+        <ActivityIndicator color={C.accent} />
+      </View>
+    );
+  }
+
+  if (error || !items || items.length === 0) {
     return (
       <View style={[
         s.archiveBlock,
@@ -200,14 +239,16 @@ function ArchiveBlockRenderer({ block }: { block: ArchiveBlock }) {
         {block.title && <Text style={s.archiveTitle}>{block.title}</Text>}
         <FlatList
           scrollEnabled={false}
-          data={block.items}
+          data={items}
           numColumns={block.columns ?? 1}
           renderItem={({ item }) => (
-            <View style={s.gridItem}>
-              {item.blocks.map((b, i) => (
-                <BlockRenderer key={i} block={b} />
-              ))}
-            </View>
+            <TouchableOpacity
+              style={s.gridItem}
+              onPress={() => router.push(`/${item.schemaSlug}/${item._id}`)}
+            >
+              <Text style={s.archiveCardTitle}>{(item.data as any)?.title || (item.data as any)?.name || item.schemaSlug}</Text>
+              <Text style={s.archiveCardSub}>{item._id.slice(0, 8)}</Text>
+            </TouchableOpacity>
           )}
           keyExtractor={(_, i) => String(i)}
         />
@@ -218,22 +259,53 @@ function ArchiveBlockRenderer({ block }: { block: ArchiveBlock }) {
   return (
     <View style={containerStyle}>
       {block.title && <Text style={s.archiveTitle}>{block.title}</Text>}
-      {block.items.map((item, i) => (
-        <View key={i} style={s.listItem}>
-          {item.blocks.map((b, j) => (
-            <BlockRenderer key={j} block={b} />
-          ))}
-        </View>
+      {items.map((item, i) => (
+        <TouchableOpacity
+          key={i}
+          style={s.archiveCard}
+          onPress={() => router.push(`/${item.schemaSlug}/${item._id}`)}
+        >
+          <Text style={s.archiveCardTitle}>{item.schemaSlug}</Text>
+          <Text style={s.archiveCardSub}>ID: {item._id.slice(0, 12)}</Text>
+        </TouchableOpacity>
       ))}
     </View>
   );
 }
 
 function EntryBlockRenderer({ block }: { block: EntryBlock }) {
-  if (!block.entry) {
+  const [entry, setEntry] = useState<PublicEntryResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const result = await getEntry(block.schemaSlug, block.entryId);
+      setEntry(result);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load');
+      setEntry(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [block.schemaSlug, block.entryId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) {
+    return (
+      <View style={[{ justifyContent: 'center', alignItems: 'center', height: 100 }]}>
+        <ActivityIndicator color={C.accent} />
+      </View>
+    );
+  }
+
+  if (error || !entry) {
     return (
       <Text style={[s.textMuted, block.padding && getPaddingStyle(block.padding)]}>
-        — Entry not found
+        — {error || 'Entry not found'}
       </Text>
     );
   }
@@ -245,7 +317,7 @@ function EntryBlockRenderer({ block }: { block: EntryBlock }) {
 
   return (
     <View style={containerStyle}>
-      {block.entry.blocks.map((b, i) => (
+      {entry.blocks.map((b: Block, i: number) => (
         <BlockRenderer key={i} block={b} />
       ))}
     </View>
@@ -344,8 +416,10 @@ function CardBlockRenderer({ block }: { block: CardBlock }) {
 // ── Main Block Renderer ────────────────────────────────────────────────────────
 
 export function BlockRenderer({ block }: { block: Block }) {
-  // Skip invisible blocks
-  if (!block.visible) return null;
+  // Skip invisible blocks (default to visible if not specified)
+  if (block.visible === false) {
+    return null;
+  }
 
   // Apply global visibility (responsive)
   // TODO: Detect device type and check hideOn
@@ -486,6 +560,7 @@ const s = StyleSheet.create({
   // Image
   image: { width: '100%', height: 200, marginVertical: 8 },
   fullWidth: { width: '100%' },
+  caption: { fontSize: 13, color: C.subText, marginTop: 6, fontStyle: 'italic' },
   
   // Button
   button: {

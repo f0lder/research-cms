@@ -18,17 +18,18 @@ export class ApiKeyUsageService {
     const schemaSlug = event.schemaSlug || 'unknown';
     const ipAddress = event.ipAddress;
 
-    // Use $addToSet to add IP only if it doesn't already exist that day
-    // Then $inc the userCount and per-schema count
+    // First, check if this IP is already tracked for this date
+    const existing = await this.model.findOne({ keyId: event.keyId, date }).exec();
+    const isNewUser = !existing || !existing.users?.includes(ipAddress);
+
+    // Add IP only if it doesn't already exist, and increment userCount only for new IPs
     await this.model
       .findOneAndUpdate(
         { keyId: event.keyId, date },
         {
           $addToSet: { users: ipAddress },
-          $inc: { 
-            userCount: 1,
-            [`schemas.${schemaSlug}`]: 1,
-          },
+          ...(isNewUser && { $inc: { userCount: 1 } }),
+          $inc: { [`schemas.${schemaSlug}`]: 1 },
         },
         { upsert: true },
       )

@@ -91,6 +91,36 @@ export class PagesService {
   }
 
   /**
+   * Extract all schema slugs referenced in a block tree via archive/entry blocks.
+   * Used to pre-load layouts for nested content resolution.
+   */
+  async extractReferencedSchemas(blocks: Block[]): Promise<Set<string>> {
+    const schemas = new Set<string>();
+
+    const visitBlock = (block: any) => {
+      if (block.type === 'archive' && block.schemaSlug) {
+        schemas.add(block.schemaSlug);
+      } else if (block.type === 'entry' && block.schemaSlug) {
+        schemas.add(block.schemaSlug);
+      }
+      
+      // Recursively visit child blocks
+      if (block.children && Array.isArray(block.children)) {
+        block.children.forEach(visitBlock);
+      }
+      if (block.blocks && Array.isArray(block.blocks)) {
+        block.blocks.forEach(visitBlock);
+      }
+      if (block.items && Array.isArray(block.items)) {
+        block.items.forEach(visitBlock);
+      }
+    };
+
+    blocks.forEach(visitBlock);
+    return schemas;
+  }
+
+  /**
    * Resolve a single block using the block registry.
    * The service handles actual resolution based on block type.
    * Static blocks are returned as-is; content/layout blocks are resolved.

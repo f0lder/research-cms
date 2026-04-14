@@ -34,7 +34,8 @@ export class PublicController {
   @Get('pages')
   async listPages(@Req() req: PublicRequest) {
     const pages = await this.pagesService.findAllForClient(req.clientId);
-    return pages.map(p => {
+    
+    return Promise.all(pages.map(async p => {
       const blocksData = p.data?.blocks;
       let blocks: Block[] = [];
       try {
@@ -42,6 +43,10 @@ export class PublicController {
       } catch {
         // If blocks aren't valid JSON, use empty array
       }
+
+      // Resolve media in image blocks
+      blocks = await this.publicService.resolvePageBlocksMedia(blocks);
+
       return {
         _id: p._id,
         schemaSlug: p.schemaSlug,
@@ -51,7 +56,7 @@ export class PublicController {
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
       };
-    });
+    }));
   }
 
   @Get('pages/:slug')
@@ -61,7 +66,7 @@ export class PublicController {
   ) {
     const page = await this.pagesService.findBySlug(req.clientId, slug);
     
-    // Parse blocks from page.data.blocks (JSON string)
+    // Parse blocks from page.data.blocks
     const blocksData = page.data?.blocks;
     let blocks: Block[] = [];
     try {
@@ -70,17 +75,14 @@ export class PublicController {
       // If blocks aren't valid JSON, use empty array
     }
 
-    // Resolve all blocks, fetching data and applying layouts
-    const resolvedBlocks = await this.pagesService.resolveBlocks(
-      blocks,
-      req.clientLayouts ?? new Map(),
-    );
+    // Resolve media in image blocks
+    blocks = await this.publicService.resolvePageBlocksMedia(blocks);
 
     return {
       _id: page._id,
       schemaSlug: page.schemaSlug,
       data: page.data,
-      blocks: resolvedBlocks,
+      blocks,
       isHome: req.homePageId ? page._id === req.homePageId : false,
       createdAt: page.createdAt,
       updatedAt: page.updatedAt,
@@ -97,6 +99,17 @@ export class PublicController {
       schemaSlug,
       blocks: saved?.blocks ?? [],
     };
+  }
+
+  // ── Media ────────────────────────────────────────────────────────────────────
+
+  @Get('media/:id')
+  async getMedia(
+    @Param('id') id: string,
+    @Req() req: PublicRequest,
+  ) {
+    // Media entries don't use layouts, so pass empty map
+    return this.publicService.findOne('media', id, req.apiKeyAllowedSchemas, new Map());
   }
 
   // ── Schema content ───────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ import {
   ScrollView, ActivityIndicator, StyleSheet, Text,
 } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { ClientPage } from '@research-cms/shared-types';
+import { PageEntryResponse } from '@research-cms/shared-types';
 import { getPage } from '@/lib/api';
 import { C, shared } from '@/lib/theme';
 import { BlockRenderer } from '@/components/BlockRenderer';
@@ -14,7 +14,7 @@ export default function PageScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const navigation = useNavigation();
 
-  const [page, setPage] = useState<ClientPage | null>(null);
+  const [page, setPage] = useState<PageEntryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -22,7 +22,7 @@ export default function PageScreen() {
     setLoading(true);
     setError('');
     getPage(slug)
-      .then(p => { setPage(p); navigation.setOptions({ title: p.title }); })
+      .then(p => { setPage(p); navigation.setOptions({ title: String(p.data?.title ?? 'Page') }); })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, [slug, navigation]);

@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity, Modal, Pressable, SafeAreaView, StyleSheet } from 'react-native';
-import { ClientPage } from '@research-cms/shared-types';
+import { PageEntryResponse } from '@research-cms/shared-types';
 import { C } from '@/lib/theme';
 
 type Schema = { slug: string; name: string };
@@ -7,36 +7,34 @@ type Schema = { slug: string; name: string };
 interface Props {
   visible: boolean;
   schemas: Schema[];
-  pages: ClientPage[];
+  pages: PageEntryResponse[];
   activeSlug: string | null;
   onSelect: (path: string) => void;
   onClose: () => void;
 }
 
 export function Sidebar({ visible, schemas, pages, activeSlug, onSelect, onClose }: Props) {
-  // If the client has published pages configured, show those in the nav.
-  // Otherwise fall back to the raw schema list.
-  const showPages = pages.length > 0;
-
   return (
     <Modal visible={visible} transparent animationType="fade">
       <Pressable style={s.scrim} onPress={onClose} />
       <View style={s.drawer}>
         <SafeAreaView style={{ flex: 1 }}>
           <View style={s.header}>
-            <Text style={s.title}>{showPages ? 'Pages' : 'Content Types'}</Text>
+            <Text style={s.title}>Navigation</Text>
             <TouchableOpacity onPress={onClose} hitSlop={12}>
               <Text style={s.close}>✕</Text>
             </TouchableOpacity>
           </View>
           <ScrollView>
-            {showPages ? (
-              pages.length === 0 ? (
-                <Text style={s.empty}>No pages published yet.</Text>
-              ) : (
-                pages.map(page => {
-                  const path = `/pages/${page.slug}`;
-                  const active = activeSlug === page.slug;
+            {/* Pages section */}
+            {pages.length > 0 && (
+              <>
+                <View style={s.sectionLabel}>
+                  <Text style={s.sectionLabelText}>Pages</Text>
+                </View>
+                {pages.map(page => {
+                  const path = `/pages/${page.data?.slug}`;
+                  const active = activeSlug === page.data?.slug;
                   return (
                     <TouchableOpacity
                       key={page._id}
@@ -45,19 +43,23 @@ export function Sidebar({ visible, schemas, pages, activeSlug, onSelect, onClose
                       activeOpacity={0.7}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Text style={[s.itemText, active && s.itemTextActive]}>{page.title}</Text>
-                        {page.isHome && <Text style={s.homeTag}>home</Text>}
+                        <Text style={[s.itemText, active && s.itemTextActive]}>{page.data?.title}</Text>
+                        {page.data?.isHome && <Text style={s.homeTag}>home</Text>}
                       </View>
-                      <Text style={s.itemSlug}>/{page.slug}</Text>
+                      <Text style={s.itemSlug}>/{page.data?.slug}</Text>
                     </TouchableOpacity>
                   );
-                })
-              )
-            ) : (
-              schemas.length === 0 ? (
-                <Text style={s.empty}>No content types available.</Text>
-              ) : (
-                schemas.map(schema => {
+                })}
+              </>
+            )}
+
+            {/* Schemas section */}
+            {schemas.length > 0 && (
+              <>
+                <View style={s.sectionLabel}>
+                  <Text style={s.sectionLabelText}>Content Types</Text>
+                </View>
+                {schemas.map(schema => {
                   const path = `/${schema.slug}`;
                   const active = activeSlug === schema.slug;
                   return (
@@ -71,8 +73,12 @@ export function Sidebar({ visible, schemas, pages, activeSlug, onSelect, onClose
                       <Text style={s.itemSlug}>/{schema.slug}</Text>
                     </TouchableOpacity>
                   );
-                })
-              )
+                })}
+              </>
+            )}
+
+            {pages.length === 0 && schemas.length === 0 && (
+              <Text style={s.empty}>No content available.</Text>
             )}
           </ScrollView>
         </SafeAreaView>
@@ -88,6 +94,8 @@ const s = StyleSheet.create({
   title:          { color: '#ffffff', fontSize: 13, fontWeight: '700', fontFamily: 'monospace' },
   close:          { color: '#71717a', fontSize: 16 },
   empty:          { color: '#52525b', fontSize: 13, padding: 16, fontFamily: 'monospace' },
+  sectionLabel:   { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+  sectionLabelText: { color: '#71717a', fontSize: 10, fontWeight: '600', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: 0.5 },
   item:           { paddingHorizontal: 16, paddingVertical: 12, borderLeftWidth: 2, borderLeftColor: 'transparent' },
   itemActive:     { borderLeftColor: '#ffffff', backgroundColor: C.drawerActive },
   itemText:       { color: C.drawerText, fontSize: 13, marginBottom: 2 },

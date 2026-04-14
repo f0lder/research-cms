@@ -1,5 +1,7 @@
 import { API_URL, API_KEY } from '@/lib/config';
-import { PublicEntryResponse, ClientPage } from '@research-cms/shared-types';
+import { PublicEntryResponse, PageEntryResponse } from '@research-cms/shared-types';
+
+export type { PublicEntryResponse, PageEntryResponse };
 
 const baseHeaders = { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' };
 
@@ -31,11 +33,24 @@ export function getEntry(slug: string, id: string): Promise<PublicEntryResponse>
   return get(`/public/${slug}/${id}`);
 }
 
-export function listPages(): Promise<ClientPage[]> {
-  return get('/public/pages');
+export async function listPages(): Promise<PageEntryResponse[]> {
+  return get<PageEntryResponse[]>('/public/pages');
 }
 
-export function getPage(slug: string): Promise<ClientPage> {
-  return get(`/public/pages/${slug}`);
+export async function getPage(slug: string): Promise<PageEntryResponse> {
+  return get<PageEntryResponse>(`/public/pages/${slug}`);
+}
+
+export interface MediaEntry {
+  _id: string;
+  url: string;
+  mimeType?: string;
+  title?: string;
+  caption?: string;
+  altText?: string;
+}
+
+export function getMedia(id: string): Promise<MediaEntry> {
+  return get<MediaEntry>(`/public/media/${id}`);
 }
 

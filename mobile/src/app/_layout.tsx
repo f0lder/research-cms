@@ -2,11 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { Stack, router, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { registerBuiltInBlocks } from '@research-cms/shared-types';
+import { registerBuiltInBlocks, PageEntryResponse } from '@research-cms/shared-types';
 import { listSchemas, listPages } from '@/lib/api';
 import { Sidebar } from '@/components/Sidebar';
 import { C } from '@/lib/theme';
-import { ClientPage } from '@research-cms/shared-types';
 
 // Initialize block registry on app startup
 registerBuiltInBlocks();
@@ -15,7 +14,7 @@ type Schema = { slug: string; name: string };
 
 type AppCtx = {
   schemas: Schema[];
-  pages: ClientPage[];
+  pages: PageEntryResponse[];
   loading: boolean;
   error: string;
   openSidebar: () => void;
@@ -33,7 +32,7 @@ export const useSchemasContext = () => useContext(AppContext);
 
 export default function RootLayout() {
   const [schemas, setSchemas] = useState<Schema[]>([]);
-  const [pages, setPages] = useState<ClientPage[]>([]);
+  const [pages, setPages] = useState<PageEntryResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,7 +45,7 @@ export default function RootLayout() {
   useEffect(() => {
     Promise.all([
       listSchemas().catch(() => [] as Schema[]),
-      listPages().catch(() => [] as ClientPage[]),
+      listPages().catch(() => [] as PageEntryResponse[]),
     ]).then(([s, p]) => {
       setSchemas(s);
       setPages(p);

@@ -36,16 +36,14 @@ export class LayoutsService {
       blocks: schema.fields.map((f, i) => ({
         id: uuidv4(),
         type: 'field' as const,
+        fieldName: f.name,
+        label: f.label,
+        fieldType: f.type,
+        value: null,
         visible: true,
         order: i,
-        config: {
-          fieldName: f.name,
-          label: f.label,
-          fieldType: f.type,
-          showLabel: true,
-          labelPosition: 'above' as const,
-          value: null,
-        },
+        showLabel: true,
+        labelPosition: 'above' as const,
       } as unknown)) as Block[],
     };
   }
@@ -56,6 +54,7 @@ export class LayoutsService {
    * - For field blocks: update label/fieldType from schema if field still exists
    * - Drop field blocks whose fieldName no longer exists
    * - If no saved layout, bootstrap with field blocks for all schema fields
+   * - Migrate old config structure to top-level fieldName
    */
   syncWithSchema(
     schema: Pick<ContentTypeDefinition, 'slug' | 'fields'>,
@@ -69,23 +68,29 @@ export class LayoutsService {
     // - Keep non-field blocks as-is
     // - Update field blocks with current schema info
     // - Drop field blocks whose fieldName no longer exists
+    // - Migrate fieldName from config to top level
     const retained: Block[] = [];
     for (const b of saved) {
       if (b.type === 'field') {
-        // Handle both old structure (fieldName at top level) and new (in config)
-        const fieldName = b.config?.fieldName || b.fieldName;
+        // Handle both old structure (fieldName in config) and new (at top level)
+        const fieldName = b.fieldName || b.config?.fieldName;
         if (!fieldName) continue;
         
         const f = fieldMap.get(fieldName);
         if (f) {
           // Keep field block but update label and fieldType from schema
+          // Migrate to top-level structure
           retained.push({
-            ...b,
-            config: {
-              ...(b.config || {}),
-              label: f.label,
-              fieldType: f.type,
-            },
+            id: b.id,
+            type: 'field' as const,
+            fieldName: fieldName,
+            label: f.label,
+            fieldType: f.type,
+            value: b.value ?? null,
+            visible: b.visible !== false,
+            order: b.order ?? 0,
+            showLabel: b.showLabel ?? true,
+            labelPosition: b.labelPosition ?? 'above',
           } as Block);
         }
         // Drop field blocks for fields that no longer exist

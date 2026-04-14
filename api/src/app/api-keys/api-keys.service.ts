@@ -81,14 +81,28 @@ export class ApiKeysService {
     return doc;
   }
 
-  /** Called by ApiKeyGuard on every public request — validates key and tracks usage. */
-  async validateAndTrack(key: string): Promise<ApiKeyDocument | null> {
+  /** Called by ApiKeyGuard on every public request — validates key, tracks usage, and updates hitcount. */
+  async validateAndTrack(key: string, ipAddress?: string): Promise<ApiKeyDocument | null> {
     const doc = await this.model.findOne({ key, active: true }).exec();
     if (!doc) return null;
-    await this.model.findByIdAndUpdate(doc._id, {
-      $inc: { hits: 1 },
-      $set: { lastUsedAt: new Date().toISOString() },
+
+    // Only increment hits once per day per IP (don't update return value yet)
+    const today = new Date().toISOString().split('T')[0];
+    const docToReturn = await this.model.findByIdAndUpdate(doc._id, {
+      $set: { 
+        lastUsedAt: new Date().toISOString(),
+        // Track last IP to determine if this is a new visitor today
+        _lastIpDate: ipAddress ? `${ipAddress}:${today}` : `unknown:${today}`,
+      },
     }).exec();
-    return doc;
+
+    // Increment hits only if the IP:date combo is different from the stored one (new visitor today)
+    if (doc._lastIpDate !== `${ipAddress || 'unknown'}:${today}`) {
+      await this.model.findByIdAndUpdate(doc._id, {
+        $inc: { hits: 1 },
+      }).exec();
+    }
+
+    return docToReturn;
   }
 }

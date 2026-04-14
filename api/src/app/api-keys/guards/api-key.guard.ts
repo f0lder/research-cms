@@ -15,7 +15,8 @@ export class ApiKeyGuard implements CanActivate {
     const key = request.headers['x-api-key'];
     if (!key) throw new UnauthorizedException('Missing X-API-Key header');
 
-    const doc = await this.apiKeysService.validateAndTrack(key);
+    const ipAddress = request.ip || request.socket?.remoteAddress || 'unknown';
+    const doc = await this.apiKeysService.validateAndTrack(key, ipAddress);
     if (!doc) throw new UnauthorizedException('Invalid or inactive API key');
 
     // Attach client identity, scope, layout overrides, and home page to request
@@ -33,7 +34,6 @@ export class ApiKeyGuard implements CanActivate {
     }
 
     // Fire-and-forget — usage tracking must not delay the response
-    const ipAddress = request.ip || request.socket?.remoteAddress || 'unknown';
     this.eventEmitter.emit(
       CmsEvents.APIKEY_USED,
       new ApiKeyUsedEvent(String(doc._id), schemaSlug ?? 'unknown', request.path, new Date().toISOString(), ipAddress),

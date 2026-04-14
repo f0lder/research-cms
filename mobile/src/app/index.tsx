@@ -13,8 +13,8 @@ export default function IndexScreen() {
     if (loading) return;
     // Prefer pages navigation when the client has published pages
     if (pages.length > 0) {
-      const home = pages.find(p => p.isHome) ?? pages[0];
-      router.replace(`/pages/${home.slug}` as never);
+      const home = pages.find(p => p.data?.isHome) ?? pages[0];
+      router.replace(`/pages/${home.data?.slug}` as never);
     } else if (schemas.length > 0) {
       router.replace(`/${schemas[0].slug}` as never);
     }

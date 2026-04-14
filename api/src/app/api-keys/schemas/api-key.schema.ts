@@ -37,6 +37,9 @@ export class ApiKeyModel implements Omit<Client, '_id' | 'createdAt'> {
 
   @Prop({ type: String, default: null })
   homePage: string | null;
+
+  @Prop({ type: String, default: null })
+  _lastIpDate: string | null; // Track last IP:date combo to avoid duplicate hits
 }
 
 export const ApiKeySchema = SchemaFactory.createForClass(ApiKeyModel);

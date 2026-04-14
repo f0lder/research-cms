@@ -26,13 +26,24 @@ export default function DetailPage() {
     setLoading(true);
     setError('');
     getEntry(slug, id)
-      .then(setEntry)
+      .then(entry => {
+        setEntry(entry);
+      })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, [slug, id]);
 
   if (loading) return <ActivityIndicator style={shared.center} color={C.accent} />;
   if (error || !entry) return <Text style={shared.errorText}>{error || 'Not found'}</Text>;
+
+  // If no blocks, show a message
+  if (!entry.blocks || entry.blocks.length === 0) {
+    return (
+      <ScrollView contentContainerStyle={s.content}>
+        <Text style={s.empty}>No layout configured for this entry</Text>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={s.content}>
@@ -45,4 +56,10 @@ export default function DetailPage() {
 
 const s = StyleSheet.create({
   content: { padding: 20 },
+  empty: { 
+    fontSize: 16, 
+    color: '#999', 
+    textAlign: 'center', 
+    marginTop: 40 
+  },
 });

@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { Block, ContentTypeDefinition, blockRegistry, registerBuiltInBlocks } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
-import { getSchema, getLayout, upsertLayout } from '@/app/actions';
+import { getSchema, getLayout, updateClientLayout } from '@/app/actions';
 import { BlocksEditor } from '@/components/blocks';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -65,11 +65,12 @@ export default function EntryDetailLayoutPage() {
 
   const handleSave = async () => {
     if (!schema) { setError('Schema not found'); return; }
+    if (!clientId) { setError('Client not found'); return; }
     setSaving(true);
     setSaved(false);
     setError('');
 
-    const { error: err } = await upsertLayout(schemaSlug, blocks);
+    const { error: err } = await updateClientLayout(clientId, schemaSlug, blocks);
     setSaving(false);
     if (err) { setError(err); return; }
 

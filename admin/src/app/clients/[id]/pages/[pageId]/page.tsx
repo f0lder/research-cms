@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Block, blockRegistry, registerBuiltInBlocks, PAGE_SCHEMA_SLUG, ContentEntry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { createEntry, updateEntry, getEntry } from '@/app/actions';
+import { setClientHomePage } from '@/app/actions';
 import { BlocksEditor } from '@/components/blocks';
 
 
@@ -22,12 +23,12 @@ export default function PageEditorPage() {
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
-  const [isHome, setIsHome] = useState(false);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [settingHomePage, setSettingHomePage] = useState(false);
 
   // Initialize block registry on client side
   useEffect(() => {
@@ -50,7 +51,6 @@ export default function PageEditorPage() {
       setTitle((entryData.data?.title as string) ?? '');
       setSlug((entryData.data?.slug as string) ?? '');
       setDescription((entryData.data?.description as string) ?? '');
-      setIsHome((entryData.data?.isHome as boolean) ?? false);
       
       // Load blocks from page entry data
       const blocksData = entryData.data?.blocks;
@@ -85,7 +85,6 @@ export default function PageEditorPage() {
       title: title.trim(),
       slug: slug.trim(),
       ...(trimmedDescription && { description: trimmedDescription }),
-      ...(isHome && { isHome: true }),
       blocks, // Directly store blocks array (not JSON)
     };
 
@@ -107,6 +106,19 @@ export default function PageEditorPage() {
       setTimeout(() => setSaved(false), 2000);
     }
     setSaving(false);
+  };
+
+  const handleSetHomePage = async () => {
+    if (!pageEntry?._id) return;
+    setSettingHomePage(true);
+    try {
+      const { error: err } = await setClientHomePage(clientId, pageEntry._id);
+      if (err) { setError(err); }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to set home page');
+    } finally {
+      setSettingHomePage(false);
+    }
   };
 
   if (loading) return <div className="page text-sm text-zinc-400">Loading…</div>;
@@ -169,14 +181,16 @@ export default function PageEditorPage() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isHome"
-                checked={isHome}
-                onChange={(e) => setIsHome(e.target.checked)}
-                className="w-4 h-4"
-              />
-              <label htmlFor="isHome" className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold">Mark as homepage</label>
+              {pageEntry?._id && (
+                <button
+                  onClick={handleSetHomePage}
+                  disabled={settingHomePage}
+                  title="Set this page as the client's home page"
+                  className="text-[11px] border px-2 py-1 font-mono transition-colors border-zinc-200 text-zinc-400 bg-white hover:text-amber-600 hover:border-amber-200"
+                >
+                  {settingHomePage ? '⌂ setting…' : '⌂ set as home'}
+                </button>
+              )}
             </div>
           </div>
 

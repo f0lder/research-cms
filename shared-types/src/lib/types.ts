@@ -1,5 +1,4 @@
 
-import { v4 as uuidv4 } from 'uuid';
 
 /** Built-in field types — well-typed, autocompleted. */
 export type BuiltInFieldType =
@@ -292,6 +291,7 @@ export class BlockRegistry {
    * Uses the definition's defaultConfig() to populate specific fields.
    */
   getDefaultConfig(type: string): Block {
+    const { v4: uuidv4 } = require('uuid');
     const def = this.get(type);
     if (!def) throw new Error(`Unknown block type: "${type}"`);
     return {
@@ -402,6 +402,7 @@ export interface SpacerBlock extends BaseBlock {
 export interface ImageBlock extends BaseBlock {
   type: 'image';
   mediaId: string;          // Reference to media schema entry
+  media?: MediaEntry;       // Resolved at server-side
   alt?: string;
   width?: number | 'full';
   height?: number;
@@ -532,8 +533,21 @@ export interface ResolvedEntry {
 export interface PublicEntryResponse {
   _id: string;
   schemaSlug: string;
+  data?: Record<string, unknown>;
   blocks: Block[];
   createdAt?: string;
+}
+
+/** Shape of a public page entry response — includes data for accessing page fields. */
+export interface PageEntryResponse extends PublicEntryResponse {
+  schemaSlug: 'page';
+  data: {
+    title?: string;
+    slug?: string;
+    description?: string;
+    featured_image?: string;
+    isHome?: boolean;
+  };
 }
 
 // ── Logs ──────────────────────────────────────────────────────────────────────
