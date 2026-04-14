@@ -5,7 +5,6 @@ import {
   ContentTypeDefinition,
   ContentEntry,
   Client,
-  ClientPage,
   MediaEntry,
   LogEntry,
   BlockLayout,
@@ -158,33 +157,8 @@ export async function clearClientUsage(id: string) {
 }
 
 // ── Client Pages ───────────────────────────────────────────────────────────
-
-export async function listClientPages(clientId: string) {
-  return serverApi.get<ClientPage[]>(`/clients/${clientId}/pages`);
-}
-
-export async function getClientPage(clientId: string, pageId: string) {
-  return serverApi.get<ClientPage>(`/clients/${clientId}/pages/${pageId}`);
-}
-
-export async function createClientPage(
-  clientId: string,
-  data: { title: string; slug: string; status?: string; blocks?: Block[] }
-) {
-  return serverApi.post<ClientPage>(`/clients/${clientId}/pages`, data);
-}
-
-export async function updateClientPage(
-  clientId: string,
-  pageId: string,
-  data: Partial<{ title: string; slug: string; status: string; blocks: Block[] }>
-) {
-  return serverApi.put<ClientPage>(`/clients/${clientId}/pages/${pageId}`, data);
-}
-
-export async function deleteClientPage(clientId: string, pageId: string) {
-  return serverApi.delete(`/clients/${clientId}/pages/${pageId}`);
-}
+// Pages are now entries in the "page" schema. See PAGE_SCHEMA_SLUG in shared-types.
+// Use standard content functions: getEntry(), createEntry(), updateEntry(), deleteEntry()
 
 // ── Client Layouts ─────────────────────────────────────────────────────────
 

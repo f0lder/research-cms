@@ -5,13 +5,13 @@ import { PagesService } from '../pages/pages.service';
 import { LayoutsService } from '../layouts/layouts.service';
 import { SchemaService } from '../schema/schema.service';
 import { ApiKeyGuard } from '../api-keys/guards/api-key.guard';
-import { Block } from '@research-cms/shared-types';
+import { Block, LayoutBlock } from '@research-cms/shared-types';
 
 type PublicRequest = Request & {
   clientId: string;
   homePageId: string | null;
   apiKeyAllowedSchemas: string[];
-  clientLayouts: Map<string, Block[]>;
+  clientLayouts: Map<string, LayoutBlock[]>;
 };
 
 @Controller('public')
@@ -33,11 +33,25 @@ export class PublicController {
 
   @Get('pages')
   async listPages(@Req() req: PublicRequest) {
-    const pages = await this.pagesService.findPublishedForClient(req.clientId);
-    return pages.map(p => ({
-      ...p.toObject(),
-      isHome: req.homePageId ? String(p._id) === req.homePageId : false,
-    }));
+    const pages = await this.pagesService.findAllForClient(req.clientId);
+    return pages.map(p => {
+      const blocksData = p.data?.blocks;
+      let blocks: Block[] = [];
+      try {
+        blocks = typeof blocksData === 'string' ? JSON.parse(blocksData) : (Array.isArray(blocksData) ? blocksData : []);
+      } catch {
+        // If blocks aren't valid JSON, use empty array
+      }
+      return {
+        _id: p._id,
+        schemaSlug: p.schemaSlug,
+        data: p.data,
+        blocks,
+        isHome: req.homePageId ? p._id === req.homePageId : false,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+      };
+    });
   }
 
   @Get('pages/:slug')
@@ -46,9 +60,30 @@ export class PublicController {
     @Req() req: PublicRequest,
   ) {
     const page = await this.pagesService.findBySlug(req.clientId, slug);
+    
+    // Parse blocks from page.data.blocks (JSON string)
+    const blocksData = page.data?.blocks;
+    let blocks: Block[] = [];
+    try {
+      blocks = typeof blocksData === 'string' ? JSON.parse(blocksData) : (Array.isArray(blocksData) ? blocksData : []);
+    } catch {
+      // If blocks aren't valid JSON, use empty array
+    }
+
+    // Resolve all blocks, fetching data and applying layouts
+    const resolvedBlocks = await this.pagesService.resolveBlocks(
+      blocks,
+      req.clientLayouts ?? new Map(),
+    );
+
     return {
-      ...page.toObject(),
-      isHome: req.homePageId ? String(page._id) === req.homePageId : false,
+      _id: page._id,
+      schemaSlug: page.schemaSlug,
+      data: page.data,
+      blocks: resolvedBlocks,
+      isHome: req.homePageId ? page._id === req.homePageId : false,
+      createdAt: page.createdAt,
+      updatedAt: page.updatedAt,
     };
   }
 

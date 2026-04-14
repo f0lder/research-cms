@@ -3,34 +3,22 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import Select from 'react-select';
-import { Client, ClientPage, ContentTypeDefinition } from '@research-cms/shared-types';
+import { Client, ContentTypeDefinition, ContentEntry, PAGE_SCHEMA_SLUG } from '@research-cms/shared-types';
 import {
   formatDateTime, extractParam, adminRoutes,
 } from '@/lib/utils';
-import { getClient, getAllSchemas, listClientPages, deleteClientPage, updateClientSchemas, deleteClient, setClientHomePage } from '@/app/actions';
+import { getClient, getAllSchemas, getAllEntries, deleteEntry, updateClientSchemas, deleteClient, setClientHomePage } from '@/app/actions';
 import { SectionsSkeleton } from '@/components/skeletons';
 
 type Option = { value: string; label: string };
 
-/** Builds an indented tree from a flat pages array. */
-function buildTree(pages: ClientPage[]): { page: ClientPage; depth: number }[] {
-  const result: { page: ClientPage; depth: number }[] = [];
-
-  function walk(parentId: string | null | undefined, depth: number) {
-    pages
-      .filter(p => (p.parentId ?? null) === (parentId ?? null))
-      .forEach(p => {
-        result.push({ page: p, depth });
-        walk(p._id, depth + 1);
-      });
-  }
-  walk(null, 0);
-
-  // Append any orphaned pages (parentId references a deleted page)
-  const rendered = new Set(result.map(r => r.page._id).filter(Boolean));
-  pages.filter(p => p._id && !rendered.has(p._id)).forEach(p => result.push({ page: p, depth: 0 }));
-
-  return result;
+/** Filter page entries by clientId and return with depth information.
+ * Pages are entries in the page schema.
+ */
+function buildTree(entries: ContentEntry[], clientId: string): { page: ContentEntry; depth: number }[] {
+  return entries
+    .filter(entry => entry.data?.clientId === clientId)
+    .map(page => ({ page, depth: 0 }));
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -41,7 +29,7 @@ export default function ClientDetailPage() {
 
   const [client, setClient] = useState<Client | null>(null);
   const [schemas, setSchemas] = useState<ContentTypeDefinition[]>([]);
-  const [pages, setPages] = useState<ClientPage[]>([]);
+  const [pages, setPages] = useState<ContentEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pagesError, setPagesError] = useState('');
@@ -59,8 +47,11 @@ export default function ClientDetailPage() {
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const [clientRes, schemasRes, pagesRes] = await Promise.all([getClient(id), getAllSchemas(), listClientPages(id)]);
-      console.log('Client data fetch completed:', { clientRes, schemasRes, pagesRes });
+      const [clientRes, schemasRes, pagesRes] = await Promise.all([
+        getClient(id),
+        getAllSchemas(),
+        getAllEntries(PAGE_SCHEMA_SLUG),
+      ]);
       if (clientRes.error) { setError(clientRes.error); setLoading(false); return; }
       setClient(clientRes.data ?? null);
       setSchemas(schemasRes.data ?? []);
@@ -68,8 +59,8 @@ export default function ClientDetailPage() {
         console.error('Pages fetch error:', pagesRes.error);
         setPagesError(pagesRes.error);
       } else {
-        console.log('Pages loaded:', pagesRes.data?.length ?? 0, 'pages');
-        setPages(pagesRes.data ?? []);
+        console.log('Pages loaded:', pagesRes.data?.items?.length ?? 0, 'pages');
+        setPages(pagesRes.data?.items ?? []);
       }
       setLoading(false);
     })();
@@ -99,7 +90,7 @@ export default function ClientDetailPage() {
   const handleDeletePage = async (pageId: string, title: string) => {
     if (!confirm(`Delete page "${title}"?`)) return;
     setDeletingPageId(pageId);
-    const { error: err } = await deleteClientPage(id, pageId);
+    const { error: err } = await deleteEntry(PAGE_SCHEMA_SLUG, pageId);
     if (err) { setError(err); setDeletingPageId(null); return; }
     setPages(prev => prev.filter(p => p._id !== pageId));
     setDeletingPageId(null);
@@ -147,7 +138,7 @@ export default function ClientDetailPage() {
 
   const schemaOptions: Option[] = schemas.map(s => ({ value: s.slug, label: s.name }));
   const schemaValue = schemaOptions.filter(o => currentSchemas.includes(o.value));
-  const pageTree = buildTree(pages);
+  const pageTree = buildTree(pages, id);
 
   return (
     <div className="page">
@@ -250,16 +241,11 @@ export default function ClientDetailPage() {
                 <div key={page._id} className="flex items-center justify-between py-3" style={{ paddingLeft: depth * 20 }}>
                   <div className="flex items-center gap-2 flex-wrap min-w-0">
                     {depth > 0 && <span className="text-zinc-300 text-xs">└</span>}
-                    <span className="text-sm text-zinc-700 truncate">{page.title}</span>
-                    <span className="text-[10px] text-zinc-400 font-mono">/{page.slug}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 font-mono ${page.status === 'published'
-                        ? 'bg-green-50 text-green-600 border border-green-200'
-                        : 'bg-zinc-100 text-zinc-500'
-                      }`}>{page.status}</span>
-                    {isHome && (
-                      <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 font-mono">home</span>
-                    )}
-                    <span className="text-[10px] text-zinc-300 font-mono">{page.blocks.length}b</span>
+                    <span className="text-sm text-zinc-700 truncate font-mono">{(page.data?.title as string) ?? page._id}</span>
+                    {(() => {
+                      const blocks = Array.isArray(page.data?.blocks) ? page.data.blocks : [];
+                      return <span className="text-[10px] text-zinc-300 font-mono">{blocks.length}b</span>;
+                    })()}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
                     {page._id && (() => {
@@ -281,7 +267,7 @@ export default function ClientDetailPage() {
                             className="text-[11px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-1 bg-white hover:border-zinc-400 transition-colors font-mono no-underline">
                             Edit
                           </Link>
-                          <button onClick={() => handleDeletePage(pageId, page.title)}
+                          <button onClick={() => handleDeletePage(pageId, (page.data?.title as string) ?? 'Untitled')}
                             disabled={deletingPageId === pageId} className="btn-danger text-xs px-2 py-1">
                             {deletingPageId === pageId ? '…' : 'Delete'}
                           </button>

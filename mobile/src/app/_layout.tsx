@@ -2,10 +2,14 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { Stack, router, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { registerBuiltInBlocks } from '@research-cms/shared-types';
 import { listSchemas, listPages } from '@/lib/api';
 import { Sidebar } from '@/components/Sidebar';
 import { C } from '@/lib/theme';
 import { ClientPage } from '@research-cms/shared-types';
+
+// Initialize block registry on app startup
+registerBuiltInBlocks();
 
 type Schema = { slug: string; name: string };
 

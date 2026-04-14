@@ -165,6 +165,16 @@ export class ContentService {
 					}
 					break;
 				}
+				case 'blocks':
+					if (!Array.isArray(value)) {
+						errors.push(`"${field.label || field.name}" must be an array of blocks`);
+					} else if (value.length > 0) {
+						// Basic block validation: each item should have a type property
+						if (!value.every((v: any) => typeof v === 'object' && v !== null && typeof v.type === 'string')) {
+							errors.push(`"${field.label || field.name}" array items must all be valid blocks with a type property`);
+						}
+					}
+					break;
 			}
 		}
 

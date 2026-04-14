@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { BlockLayoutModel, BlockLayoutDocument } from './schemas/block-layout.schema';
-import { Block, BlockLayout, ContentTypeDefinition, FieldBlock } from '@research-cms/shared-types';
+import { BlockLayout, ContentTypeDefinition, LayoutBlock, Block } from '@research-cms/shared-types';
 
 @Injectable()
 export class LayoutsService {
@@ -27,76 +27,75 @@ export class LayoutsService {
   }
 
   /**
-   * Bootstrap a default layout from a schema definition — returns FieldBlock[] for each schema field.
+   * Bootstrap a default layout from a schema definition — returns Block[].
    */
-  bootstrapFromSchema(schema: Pick<ContentTypeDefinition, 'slug' | 'fields'>): BlockLayout {
+  bootstrapFromSchema(schema: Pick<ContentTypeDefinition, 'slug' | 'fields'>): { schemaSlug: string; blocks: Block[] } {
+    const { v4: uuidv4 } = require('uuid');
     return {
       schemaSlug: schema.slug,
       blocks: schema.fields.map((f, i) => ({
+        id: uuidv4(),
         type: 'field' as const,
-        fieldName: f.name,
-        label: f.label,
-        fieldType: f.type,
-        value: null,
         visible: true,
         order: i,
-      } as FieldBlock)),
+        config: {
+          fieldName: f.name,
+          label: f.label,
+          fieldType: f.type,
+          showLabel: true,
+          labelPosition: 'above' as const,
+          value: null,
+        },
+      } as unknown)) as Block[],
     };
   }
 
   /**
    * Merge a saved block list against the current schema fields:
-   * - Preserve static blocks (heading, text, archive)
-   * - Drop field blocks whose fieldName no longer exists in the schema
-   * - Update field block label/type from the live schema
-   * - Append field blocks for new schema fields
-   * Returns bootstrap layout when saved is null.
+   * - Keep all non-field blocks (archive, heading, text, image, etc.)
+   * - For field blocks: update label/fieldType from schema if field still exists
+   * - Drop field blocks whose fieldName no longer exists
+   * - If no saved layout, bootstrap with field blocks for all schema fields
    */
   syncWithSchema(
     schema: Pick<ContentTypeDefinition, 'slug' | 'fields'>,
-    saved: Block[] | null,
+    saved: any[] | null,
   ): Block[] {
     if (!saved) return this.bootstrapFromSchema(schema).blocks;
 
     const fieldMap = new Map(schema.fields.map(f => [f.name, f]));
 
-    // Keep static blocks and valid field blocks
+    // Process saved blocks:
+    // - Keep non-field blocks as-is
+    // - Update field blocks with current schema info
+    // - Drop field blocks whose fieldName no longer exists
     const retained: Block[] = [];
     for (const b of saved) {
       if (b.type === 'field') {
-        const f = fieldMap.get((b as FieldBlock).fieldName);
+        // Handle both old structure (fieldName at top level) and new (in config)
+        const fieldName = b.config?.fieldName || b.fieldName;
+        if (!fieldName) continue;
+        
+        const f = fieldMap.get(fieldName);
         if (f) {
+          // Keep field block but update label and fieldType from schema
           retained.push({
-            ...(b as FieldBlock),
-            label: f.label,
-            fieldType: f.type,
-          } as FieldBlock);
+            ...b,
+            config: {
+              ...(b.config || {}),
+              label: f.label,
+              fieldType: f.type,
+            },
+          } as Block);
         }
+        // Drop field blocks for fields that no longer exist
       } else {
-        // Keep static blocks as-is
+        // Keep all non-field blocks as-is
         retained.push(b);
       }
     }
 
-    // Add new field blocks for schema fields not yet in layout
-    const retainedFieldNames = new Set(
-      retained
-        .filter((b): b is FieldBlock => b.type === 'field')
-        .map(b => b.fieldName)
-    );
-    const appended: FieldBlock[] = schema.fields
-      .filter(f => !retainedFieldNames.has(f.name))
-      .map((f, i) => ({
-        type: 'field' as const,
-        fieldName: f.name,
-        label: f.label,
-        fieldType: f.type,
-        value: null,
-        visible: true,
-        order: retained.length + i,
-      }));
-
-    return [...retained, ...appended];
+    return retained;
   }
 
   /** Delete layout when a schema is deleted. */

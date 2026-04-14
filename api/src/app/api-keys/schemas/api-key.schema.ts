@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { Client, Block } from '@research-cms/shared-types';
+import { Client, LayoutBlock } from '@research-cms/shared-types';
 
 export type ApiKeyDocument = HydratedDocument<ApiKeyModel>;
 
@@ -33,7 +33,7 @@ export class ApiKeyModel implements Omit<Client, '_id' | 'createdAt'> {
     ],
     default: [],
   })
-  layouts: { schemaSlug: string; blocks: Block[] }[];
+  layouts: { schemaSlug: string; blocks: LayoutBlock[] }[];
 
   @Prop({ type: String, default: null })
   homePage: string | null;

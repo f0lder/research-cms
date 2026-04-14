@@ -10,6 +10,7 @@ import {
   MediaEntry,
   Block,
   FieldBlock,
+  LayoutBlock,
   PublicEntryResponse,
   MEDIA_SCHEMA_SLUG,
 } from '@research-cms/shared-types';
@@ -51,13 +52,14 @@ export class PublicService {
    * Only processes field blocks; static blocks are passed through as-is.
    */
   private async resolveMediaBatch(
-    blocks: Block[],
+    blocks: (Block | LayoutBlock)[],
     data: Record<string, unknown>,
     fieldMap: Map<string, { type: FieldType }>,
   ): Promise<Map<string, MediaEntry | null>> {
     const mediaIds = blocks
-      .filter((b): b is FieldBlock => b.type === 'field' && fieldMap.get((b as FieldBlock).fieldName)?.type === 'media')
-      .map(b => data[(b as FieldBlock).fieldName])
+      .filter((b): b is FieldBlock | Omit<FieldBlock, 'value'> => b.type === 'field')
+      .filter(b => fieldMap.get(b.fieldName)?.type === 'media')
+      .map(b => data[b.fieldName])
       .filter((v): v is string => typeof v === 'string');
 
     if (mediaIds.length === 0) return new Map();
@@ -73,12 +75,12 @@ export class PublicService {
 
   /**
    * Resolves blocks for a single entry.
-   * `savedBlocks` is the layout to use (mix of field and static blocks).
+   * `savedBlocks` is the layout to use (template blocks without values).
    * Null falls back to bootstrapping field blocks from the schema.
    */
   private async resolveBlocks(
     schema: { fields: { name: string; label: string; type: FieldType }[] },
-    savedBlocks: Block[] | null,
+    savedBlocks: (Block | LayoutBlock)[] | null,
     data: Record<string, unknown>,
   ): Promise<Block[]> {
     const fieldMap = new Map(schema.fields.map(f => [f.name, f]));

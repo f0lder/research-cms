@@ -1,4 +1,5 @@
-// ── Field Types (open for extensions via plugins) ────────────────────────────
+
+import { v4 as uuidv4 } from 'uuid';
 
 /** Built-in field types — well-typed, autocompleted. */
 export type BuiltInFieldType =
@@ -14,7 +15,8 @@ export type BuiltInFieldType =
   | 'select'
   | 'tags'
   | 'reference'
-  | 'references';
+  | 'references'
+  | 'blocks';
 
 /** Open field type — built-in or any plugin-defined string. */
 export type FieldType = BuiltInFieldType | (string & {});
@@ -108,67 +110,423 @@ export interface MediaEntry {
   createdAt?: string;
 }
 
-// ── Block Layout ──────────────────────────────────────────────────────────────
+// ── Pages ─────────────────────────────────────────────────────────────────────
 
-/** One block in a layout — corresponds to a field on the schema. */
-export interface BlockDefinition {
+/**
+ * Built-in schema slug for pages.
+ * Pages are entries in this schema, linked to clients.
+ * This allows Field blocks on pages to access page-specific fields.
+ */
+export const PAGE_SCHEMA_SLUG = 'page';
+
+/**
+ * Built-in page schema definition.
+ * Auto-registered on system startup.
+ * Defines the structure of pages: title, description, featured image, etc.
+ */
+export const PAGE_SCHEMA_DEFINITION: Omit<ContentTypeDefinition, '_id' | 'createdAt' | 'updatedAt'> = {
+  name: 'Page',
+  slug: PAGE_SCHEMA_SLUG,
+  system: true, // Cannot be deleted or renamed
+  fields: [
+    {
+      name: 'clientId',
+      label: 'Client',
+      type: 'text',
+      required: true,
+    },
+    {
+      name: 'title',
+      label: 'Page Title',
+      type: 'text',
+      required: true,
+    },
+    {
+      name: 'slug',
+      label: 'URL Slug',
+      type: 'text',
+      required: true,
+    },
+    {
+      name: 'description',
+      label: 'Description',
+      type: 'textarea',
+      required: false,
+    },
+    {
+      name: 'featured_image',
+      label: 'Featured Image',
+      type: 'media',
+      required: false,
+    },
+    {
+      name: 'isHome',
+      label: 'Mark as Homepage',
+      type: 'boolean',
+      required: false,
+    },
+    {
+      name: 'blocks',
+      label: 'Page Blocks',
+      type: 'blocks',
+      required: false,
+    },
+  ],
+};
+
+// ── Block Schema & Registry ───────────────────────────────────────────────────
+
+/**
+ * Describes a configuration field in a block's schema.
+ * Used by admin UI to auto-generate the form for a block type.
+ */
+export interface BlockSchemaField {
+  name: string;
+  label: string;
+  type:
+    | 'text'
+    | 'textarea'
+    | 'number'
+    | 'boolean'
+    | 'select'
+    | 'color'
+    | 'spacing'
+    | 'schema-picker'       // picks a CMS schema slug
+    | 'field-picker'        // picks a field from a schema
+    | 'field-picker-multi'  // picks multiple fields from a schema
+    | 'entry-picker'        // picks a specific entry
+    | 'action-picker'       // button action config
+    | 'blocks'              // nested blocks (for layout blocks)
+    | 'columns'             // row columns (for row layout blocks)
+    | 'image-url';
+  options?: string[];        // for select type
+  schemaSlug?: string;       // for entry-picker type: which schema to pick entries from
+  defaultValue?: unknown;
+  required?: boolean;
+  description?: string;
+}
+
+/**
+ * Schema describing a block type's configuration.
+ * Allows admin UI to generate forms generically.
+ */
+export interface BlockSchema {
+  fields: BlockSchemaField[];
+}
+
+/**
+ * Context passed to resolve functions.
+ * Plugins can extend this via module augmentation.
+ */
+export interface BlockResolveContext {
+  depth: number;
+  maxDepth: number;
+  /** Custom data passed by the resolver caller */
+  meta?: Record<string, unknown>;
+}
+
+/**
+ * Definition of a block type — contract every block must satisfy.
+ * Used for registration in the block registry.
+ */
+export interface BlockDefinition<TBlock extends BaseBlock = BaseBlock> {
+  // Identity
+  type: string;                      // 'heading', 'archive', etc.
+  label: string;                     // 'Heading', 'Archive', etc.
+  icon: string;                      // Emoji or icon name
+  category: 'static' | 'content' | 'layout';
+  description?: string;
+
+  // Schema — describes what config fields this block type has
+  schema: BlockSchema;
+
+  // Default config when a new block is created
+  defaultConfig: () => Omit<TBlock, keyof BaseBlock>;
+
+  // Optional async resolution — called server-side
+  // Static blocks skip this; content blocks (archive, entry) use it
+  resolve?: (block: TBlock, context: BlockResolveContext) => Promise<TBlock>;
+}
+
+/**
+ * Registry of all block types in the system.
+ * Shared across admin, API, and Expo.
+ */
+export class BlockRegistry {
+  private definitions = new Map<string, BlockDefinition<BaseBlock>>();
+
+  /**
+   * Register a new block type.
+   * Throws if the type is already registered.
+   */
+  register<T extends BaseBlock>(definition: BlockDefinition<T>): void {
+    if (this.definitions.has(definition.type)) {
+      throw new Error(`Block type "${definition.type}" already registered`);
+    }
+    this.definitions.set(definition.type, definition as BlockDefinition<BaseBlock>);
+  }
+
+  /**
+   * Get definition for a block type, or undefined if not found.
+   */
+  get(type: string): BlockDefinition<BaseBlock> | undefined {
+    return this.definitions.get(type);
+  }
+
+  /**
+   * Get all registered definitions.
+   */
+  getAll(): BlockDefinition<BaseBlock>[] {
+    return Array.from(this.definitions.values());
+  }
+
+  /**
+   * Get definitions in a specific category.
+   */
+  getByCategory(category: string): BlockDefinition<BaseBlock>[] {
+    return this.getAll().filter(d => d.category === category);
+  }
+
+  /**
+   * Create a new block with all required base properties.
+   * Uses the definition's defaultConfig() to populate specific fields.
+   */
+  getDefaultConfig(type: string): Block {
+    const def = this.get(type);
+    if (!def) throw new Error(`Unknown block type: "${type}"`);
+    return {
+      id: uuidv4(),
+      type,
+      visible: true,
+      order: 0,
+      ...def.defaultConfig(),
+    } as Block;
+  }
+}
+
+// Export single shared instance
+export const blockRegistry = new BlockRegistry();
+
+
+// ── Block Spacing & Styling ───────────────────────────────────────────────────
+
+/** Spacing definition (top, right, bottom, left). */
+export interface Spacing {
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+}
+
+/** Border configuration. */
+export interface BorderConfig {
+  width?: number;
+  color?: string;
+  style?: 'solid' | 'dashed' | 'dotted';
+  radius?: number;
+}
+
+/** Archive filtering. */
+export interface ArchiveFilter {
+  field: string;
+  operator: 'eq' | 'ne' | 'contains' | 'gt' | 'lt';
+  value: unknown;
+}
+
+// ── Base Block & Navigation ────────────────────────────────────────────────────
+
+/** Action that can be triggered by ButtonBlock or CardBlock. */
+export type ButtonAction =
+  | { type: 'navigate'; pageSlug: string }
+  | { type: 'url'; url: string }
+  | { type: 'schema'; schemaSlug: string }
+  | { type: 'entry'; schemaSlug: string; entryId: string };
+
+/** Base properties inherited by all block types. */
+export interface BaseBlock {
+  id: string;                        // uuid — stable for drag/drop
+  type: string;                      // discriminant
+  visible: boolean;                  // show/hide toggle
+  order: number;                     // position in parent
+
+  // Spacing
+  padding?: Spacing;
+  margin?: Spacing;
+
+  // Visual
+  backgroundColor?: string;
+  borderRadius?: number;
+  border?: BorderConfig;
+
+  // Responsive
+  hideOn?: ('mobile' | 'tablet' | 'desktop')[];
+
+  // Animation (Expo)
+  animation?: 'none' | 'fadeIn' | 'slideUp' | 'slideIn';
+
+  // Metadata
+  meta?: Record<string, unknown>;
+}
+
+// ── Static Blocks ─────────────────────────────────────────────────────────────
+
+export interface HeadingBlock extends BaseBlock {
+  type: 'heading';
+  text: string;
+  level?: 1 | 2 | 3 | 4;
+  align?: 'left' | 'center' | 'right';
+  color?: string;
+  fontWeight?: 'normal' | 'bold' | 'semibold';
+}
+
+export interface TextBlock extends BaseBlock {
+  type: 'text';
+  content: string;
+  align?: 'left' | 'center' | 'right' | 'justify';
+  color?: string;
+  fontSize?: 'sm' | 'base' | 'lg' | 'xl';
+}
+
+export interface DividerBlock extends BaseBlock {
+  type: 'divider';
+  color?: string;
+  thickness?: number;
+  style?: 'solid' | 'dashed' | 'dotted';
+}
+
+export interface SpacerBlock extends BaseBlock {
+  type: 'spacer';
+  height: number;  // px
+}
+
+export interface ImageBlock extends BaseBlock {
+  type: 'image';
+  mediaId: string;          // Reference to media schema entry
+  alt?: string;
+  width?: number | 'full';
+  height?: number;
+  fit?: 'cover' | 'contain' | 'fill';
+  linkUrl?: string;         // optional tap action
+}
+
+export interface ButtonBlock extends BaseBlock {
+  type: 'button';
+  label: string;
+  action: ButtonAction;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  align?: 'left' | 'center' | 'right' | 'full';
+  icon?: string;
+}
+
+// ── Content Blocks ────────────────────────────────────────────────────────────
+
+export interface FieldBlock extends BaseBlock {
+  type: 'field';
   fieldName: string;
   label: string;
-  type: FieldType;
-  visible: boolean;
-  order: number;
+  fieldType: FieldType;
+  showLabel?: boolean;
+  labelPosition?: 'above' | 'inline' | 'hidden';
+  value: ResolvedFieldValue;  // resolved server-side
 }
+
+export interface ArchiveBlock extends BaseBlock {
+  type: 'archive';
+  schemaSlug: string;
+  title?: string;
+  limit?: number;
+  orderBy?: string;
+  orderDir?: 'asc' | 'desc';
+  filter?: ArchiveFilter[];
+  layout?: 'list' | 'grid' | 'carousel';
+  columns?: 1 | 2 | 3;
+  showPagination?: boolean;
+  emptyMessage?: string;
+  items?: ResolvedEntry[];  // resolved server-side
+}
+
+export interface EntryBlock extends BaseBlock {
+  type: 'entry';
+  schemaSlug: string;
+  entryId: string;
+  showFields?: string[];
+  entry?: ResolvedEntry;  // resolved server-side
+}
+
+// ── Layout Blocks ─────────────────────────────────────────────────────────────
+
+export interface ColumnBlock extends BaseBlock {
+  type: 'column';
+  width?: number | 'auto' | 'full';
+  blocks: Block[];
+}
+
+export interface RowBlock extends BaseBlock {
+  type: 'row';
+  columns: ColumnBlock[];
+  gap?: number;
+  align?: 'start' | 'center' | 'end' | 'stretch';
+  wrap?: boolean;
+}
+
+export interface CardBlock extends BaseBlock {
+  type: 'card';
+  blocks: Block[];
+  elevation?: number;
+  pressAction?: ButtonAction;
+}
+
+// ── Unified Block Type ─────────────────────────────────────────────────────────
+
+/** All block types (exhaustive union). */
+export type Block =
+  // Static
+  | HeadingBlock
+  | TextBlock
+  | DividerBlock
+  | SpacerBlock
+  | ImageBlock
+  | ButtonBlock
+  // Content
+  | ArchiveBlock
+  | EntryBlock
+  | FieldBlock
+  // Layout
+  | RowBlock
+  | ColumnBlock
+  | CardBlock;
+
+export type BlockType = Block['type'];
+
+// ── Templates (no resolved values) ─────────────────────────────────────────────
+
+/**
+ * Layout template blocks — no resolved data.
+ * Used in ClientLayout to define schema rendering templates.
+ */
+export type LayoutBlock =
+  | Omit<FieldBlock, 'value'>
+  | Omit<ArchiveBlock, 'items'>
+  | Omit<EntryBlock, 'entry'>;
 
 /** Saved layout for a content type — one document per schema slug. */
 export interface BlockLayout {
   _id?: string;
   schemaSlug: string;
+  blocks: LayoutBlock[];
+  updatedAt?: string;
+};
+
+// ── Resolved Entry Response ────────────────────────────────────────────────────
+
+export interface ResolvedEntry {
+  _id: string;
+  schemaSlug: string;
+  data: Record<string, FieldValue>;
   blocks: Block[];
+  createdAt?: string;
   updatedAt?: string;
 }
-
-// ── Unified Blocks (for pages and entries) ────────────────────────────────────
-
-/** Block that displays a field from an entry. */
-export interface FieldBlock {
-  type: 'field';
-  fieldName: string;
-  label: string;
-  fieldType: FieldType;
-  value: ResolvedFieldValue;
-  visible: boolean;
-  order: number;
-  /** Plugin extra resolved data for this field. */
-  meta?: Record<string, unknown>;
-}
-
-/** Block that displays a heading. */
-export interface HeadingBlock {
-  type: 'heading';
-  text: string;
-  level?: 1 | 2 | 3;
-}
-
-/** Block that displays static text. */
-export interface TextBlock {
-  type: 'text';
-  content: string;
-}
-
-/**
- * Block that renders a list of entries from a schema inline.
- * The client's block layout for that schema is applied automatically.
- */
-export interface ArchiveBlock {
-  type: 'archive';
-  schemaSlug: string;
-  title?: string;
-  /** Max entries to show. Defaults to 5. */
-  limit?: number;
-}
-
-/** Unified block type used across pages and entries. */
-export type Block = FieldBlock | HeadingBlock | TextBlock | ArchiveBlock;
 
 /** Shape of a public API entry response. */
 export interface PublicEntryResponse {
@@ -197,29 +555,13 @@ export interface ActivityItem {
   createdAt: string;
 }
 
-export type PageStatus = 'draft' | 'published';
-
-export interface ClientPage {
-  _id?: string;
-  clientId: string;
-  title: string;
-  slug: string;
-  status: PageStatus;
-  blocks: Block[];
-  /** MongoDB _id of the parent page, or null/undefined for top-level pages. */
-  parentId?: string | null;
-  /** Injected by the public API — true when this page is the client's designated home page. */
-  isHome?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
 
 // ── Clients (formerly API Keys) ───────────────────────────────────────────────
 
-/** Per-schema block layout override stored on a client. */
+/** Per-schema block layout override stored on a client — template only (no values) */
 export interface ClientLayout {
   schemaSlug: string;
-  blocks: Block[];
+  blocks: LayoutBlock[];  // Template blocks without resolved values
 }
 
 export interface Client {
@@ -237,9 +579,6 @@ export interface Client {
   homePage?: string | null;
   createdAt?: string;
 }
-
-/** @deprecated Use Client instead */
-export type ApiKey = Client;
 
 // ── Webhooks ──────────────────────────────────────────────────────────────────
 
