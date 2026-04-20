@@ -10,7 +10,6 @@ import { ApiKeysModule } from './api-keys/api-keys.module';
 import { PublicModule } from './public/public.module';
 import { LogsModule } from './logs/logs.module';
 import { MediaModule } from './media/media.module';
-import { PagesModule } from './pages/pages.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
@@ -30,7 +29,6 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     ContentModule,
     LayoutsModule,
     ApiKeysModule,
-    PagesModule,
     WebhooksModule,
     PublicModule,
   ],

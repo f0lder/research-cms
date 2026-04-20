@@ -5,7 +5,6 @@ import { PublicController } from './public.controller';
 import { SchemaModule } from '../schema/schema.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { ApiKeysModule } from '../api-keys/api-keys.module';
-import { PagesModule } from '../pages/pages.module';
 import { ContentEntryModel, ContentEntrySchema } from '../content/schemas/content-entry.schema';
 
 @Module({
@@ -14,7 +13,6 @@ import { ContentEntryModel, ContentEntrySchema } from '../content/schemas/conten
     SchemaModule,
     LayoutsModule,
     ApiKeysModule,
-    PagesModule,
   ],
   controllers: [PublicController],
   providers: [PublicService],

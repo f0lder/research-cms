@@ -71,3 +71,5 @@ uploads
 
 #Secret files
 api/.env
+
+.fallow
