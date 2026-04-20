@@ -6,6 +6,7 @@ import { ContentEntryModel, ContentEntrySchema } from './schemas/content-entry.s
 import { ContentVersionModel, ContentVersionSchema } from './schemas/content-version.schema';
 import { SchemaModule } from '../schema/schema.module';
 import { ScheduledPublishingService } from './scheduled-publishing.service';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
 	imports: [
@@ -14,6 +15,7 @@ import { ScheduledPublishingService } from './scheduled-publishing.service';
 			{ name: ContentVersionModel.name, schema: ContentVersionSchema },
 		]),
 		SchemaModule,
+		AuthModule,
 	],
 	controllers: [ContentController],
 	providers: [ContentService, ScheduledPublishingService],

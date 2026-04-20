@@ -25,7 +25,7 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
   const fetchSchemas = async () => {
     if (fetchingRef.current) return; // Bail if already fetching
     fetchingRef.current = true;
-    
+
     try {
       setLoading(true);
       setError(null);
@@ -33,13 +33,13 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
         getAllSchemas(),
         getSystemSchemas(),
       ]);
-      
+
       if (userRes.error) {
         setError(userRes.error);
       } else {
         setSchemas(userRes.data ?? []);
       }
-      
+
       if (systemRes.error) {
         setError(systemRes.error);
       } else {

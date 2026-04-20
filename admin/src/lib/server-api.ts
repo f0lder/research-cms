@@ -17,18 +17,19 @@ async function apiRequest<T>(
 ): Promise<{ data?: T; error?: string }> {
   try {
     const { method = 'GET', body, headers = {} } = options;
-    
-    // Read token from cookies (server-side)
+
+    // Read session cookie (server-side)
     const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value || null;
-    
+    const sessionId = cookieStore.get('session')?.value;
+
     const config: RequestInit = {
       method,
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(sessionId && { Cookie: `session=${sessionId}` }),
         ...headers,
       },
+      credentials: 'include',
     };
     if (body) config.body = JSON.stringify(body);
 

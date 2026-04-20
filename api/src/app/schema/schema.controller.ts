@@ -1,13 +1,13 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, HttpCode, UseGuards } from '@nestjs/common';
 import { SchemaService } from './schema.service';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/schemas/user.schema';
 
 @Controller('schemas')
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionGuard)
 export class SchemaController {
 	constructor(private readonly schemaService: SchemaService) { }
 

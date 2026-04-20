@@ -5,13 +5,15 @@ import { SchemaController } from './schema.controller';
 import { PageSeedService } from './page-seed.service';
 import { ContentType, ContentTypeSchema } from './schemas/content-type.schema';
 import { ContentEntryModel, ContentEntrySchema } from '../content/schemas/content-entry.schema';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
 	imports: [
 		MongooseModule.forFeature([
 			{ name: ContentType.name, schema: ContentTypeSchema },
 			{ name: ContentEntryModel.name, schema: ContentEntrySchema },
-		])
+		]),
+		AuthModule,
 	],
 	controllers: [SchemaController],
 	providers: [SchemaService, PageSeedService],

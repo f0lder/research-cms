@@ -1,12 +1,12 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, HttpCode, UseGuards } from '@nestjs/common';
 import { WebhooksService, WebhookData } from './webhooks.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/schemas/user.schema';
 
 @Controller('webhooks')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(SessionGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class WebhooksController {
   constructor(private readonly webhooksService: WebhooksService) {}

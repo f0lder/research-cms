@@ -23,37 +23,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Check auth on mount
   useEffect(() => {
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
+    try {
+      const { data } = await api.get<User>('/auth/me');
+      if (data) {
+        setUser(data);
+      }
+    } catch (e) {
+      console.error('Auth check failed:', e);
+      setUser(null);
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    // Ensure token is also in cookie for server-side requests
-    await fetch('/api/auth/set-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    }).catch(console.error);
-
-    const { data, error } = await api.get<User>('/auth/me');
-    if (data) {
-      setUser(data);
-    } else if (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('token');
-      await fetch('/api/auth/logout', { method: 'POST' }).catch(console.error);
-    }
-    setIsLoading(false);
   };
 
   const login = async (email: string, password: string) => {
-    const { data, error } = await api.post<{ access_token: string; user: User }>('/auth/login', {
+    const { data, error } = await api.post<{ user: User }>('/auth/login', {
       email,
       password,
     });
@@ -61,26 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw new Error(error);
     if (!data) throw new Error('No response data');
 
-    const token = data.access_token;
-    localStorage.setItem('token', token);
-
-    // Set token as HTTP-only cookie FIRST - this is critical for middleware
-    const cookieResponse = await fetch('/api/auth/set-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    });
-
-    if (!cookieResponse.ok) {
-      throw new Error('Failed to set authentication cookie');
-    }
-
-    // Only update context AFTER cookie is confirmed set
+    // Session cookie is automatically set by API
     setUser(data.user);
   };
 
   const register = async (email: string, password: string, name: string) => {
-    const { data, error } = await api.post<{ access_token: string; user: User }>('/auth/register', {
+    const { data, error } = await api.post<{ user: User }>('/auth/register', {
       email,
       password,
       name,
@@ -89,29 +65,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw new Error(error);
     if (!data) throw new Error('No response data');
 
-    const token = data.access_token;
-    localStorage.setItem('token', token);
-
-    // Set token as HTTP-only cookie FIRST - this is critical for middleware
-    const cookieResponse = await fetch('/api/auth/set-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    });
-
-    if (!cookieResponse.ok) {
-      throw new Error('Failed to set authentication cookie');
-    }
-
-    // Only update context AFTER cookie is confirmed set
+    // Session cookie is automatically set by API
     setUser(data.user);
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout', {});
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
     setUser(null);
-    // Clear HTTP-only cookie
-    fetch('/api/auth/logout', { method: 'POST' }).catch(console.error);
   };
 
   return (
@@ -128,3 +92,4 @@ export function useAuth() {
   }
   return context;
 }
+

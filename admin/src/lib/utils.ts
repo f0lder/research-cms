@@ -15,19 +15,12 @@ async function apiRequest<T>(
 ): Promise<{ data?: T; error?: string }> {
   try {
     const { method = 'GET', body, headers = {} } = options;
-    
-    // Get token from localStorage on client-side
-    let token: string | null = null;
-    if (typeof window !== 'undefined') {
-      token = localStorage.getItem('token');
-    }
-    
+
     const config: RequestInit = {
       method,
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
         ...headers,
       },
     };
@@ -37,7 +30,6 @@ async function apiRequest<T>(
 
     if (response.status === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
         window.location.href = '/login';
       }
       return { error: 'Unauthorized' };

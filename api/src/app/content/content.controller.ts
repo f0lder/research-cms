@@ -2,13 +2,13 @@ import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query, HttpCode
 import { Response } from 'express';
 import { FieldValue } from '@research-cms/shared-types';
 import { ContentService } from './content.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/schemas/user.schema';
 
 @Controller('content')
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionGuard)
 export class ContentController {
 	constructor(private readonly contentService: ContentService) {}
 

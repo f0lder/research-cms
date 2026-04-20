@@ -8,7 +8,7 @@ import { memoryStorage } from 'multer';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { StorageService } from './storage.interface';
 import { ContentService } from '../content/content.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
 import { MEDIA_SCHEMA_SLUG, MediaEntry } from '@research-cms/shared-types';
 import { CmsEvents, MediaUploadedEvent, MediaDeletedEvent } from '../events';
 
@@ -16,7 +16,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'im
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
 @Controller('media')
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionGuard)
 export class MediaController {
   constructor(
     private readonly storage: StorageService,

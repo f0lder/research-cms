@@ -1,7 +1,6 @@
 import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument, UserRole } from './schemas/user.schema';
 import { LogsService } from '../logs/logs.service';
@@ -10,7 +9,6 @@ import { LogsService } from '../logs/logs.service';
 export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private jwtService: JwtService,
     private logsService: LogsService,
   ) {}
 
@@ -31,7 +29,14 @@ export class AuthService {
     });
 
     this.logsService.log(`New user registered: ${name} (${email})`, ['auth', 'register'], { email, name });
-    return this.generateToken(user);
+    return {
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    };
   }
 
   async login(email: string, password: string) {
@@ -48,7 +53,14 @@ export class AuthService {
     }
 
     this.logsService.log(`User logged in: ${user.name} (${user.email})`, ['auth', 'login'], { email: user.email, role: user.role });
-    return this.generateToken(user);
+    return {
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    };
   }
 
   async validateUser(userId: string) {
@@ -63,6 +75,17 @@ export class AuthService {
     return this.userModel.find({}, { password: 0 }).lean();
   }
 
+  async getUserById(id: string) {
+    const user = await this.userModel.findById(id, { password: 0 }).lean();
+    if (!user) throw new NotFoundException('User not found');
+    return {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
+  }
+
   async updateUserRole(id: string, role: UserRole) {
     const user = await this.userModel.findByIdAndUpdate(
       id,
@@ -71,23 +94,5 @@ export class AuthService {
     );
     if (!user) throw new NotFoundException('User not found');
     return user;
-  }
-
-  private generateToken(user: UserDocument) {
-    const payload = {
-      sub: user._id,
-      email: user.email,
-      role: user.role,
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-    };
   }
 }

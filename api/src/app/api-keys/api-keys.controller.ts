@@ -2,14 +2,14 @@ import { Controller, Get, Post, Delete, Patch, Put, Body, Param, Query, HttpCode
 import { ApiKeysService } from './api-keys.service';
 import { ApiKeyUsageService } from './apikey-usage.service';
 import { SchemaService } from '../schema/schema.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/schemas/user.schema';
 import { Block } from '@research-cms/shared-types';
 
 @Controller('clients')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(SessionGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class ApiKeysController {
   constructor(

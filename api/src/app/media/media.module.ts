@@ -5,6 +5,7 @@ import { MediaSeedService } from './media-seed.service';
 import { StorageService } from './storage.interface';
 import { LocalStorageService } from './local-storage.service';
 import { ContentModule } from '../content/content.module';
+import { AuthModule } from '../auth/auth.module';
 import { ContentType, ContentTypeSchema } from '../schema/schemas/content-type.schema';
 
 /**
@@ -16,6 +17,7 @@ import { ContentType, ContentTypeSchema } from '../schema/schemas/content-type.s
   imports: [
     MongooseModule.forFeature([{ name: ContentType.name, schema: ContentTypeSchema }]),
     ContentModule,
+    AuthModule,
   ],
   controllers: [MediaController],
   providers: [

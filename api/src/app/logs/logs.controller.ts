@@ -1,12 +1,12 @@
 import { Controller, Get, Delete, Query, HttpCode, UseGuards } from '@nestjs/common';
 import { LogsService } from './logs.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/schemas/user.schema';
 
 @Controller('logs')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(SessionGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class LogsController {
   constructor(private readonly logsService: LogsService) {}

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import cookieParser from 'cookie-parser';
 import { registerBuiltInBlocks } from '@research-cms/shared-types';
 import { AppModule } from './app/app.module';
 
@@ -11,6 +12,9 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
+
+  // Parse cookies
+  app.use(cookieParser());
 
   app.enableCors({
     origin: ['http://localhost:4200', 'http://localhost:19006', 'http://localhost:8081'],
