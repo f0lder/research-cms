@@ -250,6 +250,7 @@ export default function ClientDetailPage() {
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
                     {page._id && (() => {
                       const pageId = page._id;
+                      const pageSlug = (page.data?.slug as string) ?? page._id;
                       return (
                         <>
                           <button
@@ -263,7 +264,7 @@ export default function ClientDetailPage() {
                           >
                             {isHome ? '⌂ home' : '⌂'}
                           </button>
-                          <Link href={adminRoutes.clientPageEdit(id, pageId)}
+                          <Link href={adminRoutes.clientPageEdit(id, pageSlug)}
                             className="text-[11px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-1 bg-white hover:border-zinc-400 transition-colors font-mono no-underline">
                             Edit
                           </Link>
@@ -304,8 +305,8 @@ export default function ClientDetailPage() {
                       : <span className="ml-2 text-[10px] text-zinc-400 font-mono">not customised</span>
                     }
                   </div>
-                  {client._id && schema._id && (
-                    <Link href={adminRoutes.clientLayout(client._id, schema._id)}
+                  {client._id && (
+                    <Link href={adminRoutes.clientLayout(client._id, schema.slug)}
                       className="text-[11px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-1 bg-white hover:border-zinc-400 transition-colors font-mono no-underline text-center md:text-left whitespace-nowrap">
                       Edit layout
                     </Link>

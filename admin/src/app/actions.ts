@@ -11,6 +11,7 @@ import {
   FieldValue,
   Block,
   Webhook,
+  PAGE_SCHEMA_SLUG,
 } from '@research-cms/shared-types';
 
 // ── Schemas ────────────────────────────────────────────────────────────────
@@ -163,14 +164,33 @@ export async function clearClientUsage(id: string) {
 // Pages are now entries in the "page" schema. See PAGE_SCHEMA_SLUG in shared-types.
 // Use standard content functions: getEntry(), createEntry(), updateEntry(), deleteEntry()
 
-// ── Client Layouts ─────────────────────────────────────────────────────────
+export async function getPageBySlug(clientId: string, pageSlug: string) {
+  const allPages = await getAllEntries(PAGE_SCHEMA_SLUG);
+  if (allPages.error) return { error: allPages.error };
 
-export async function getClientLayout(clientId: string, schemaId: string) {
-  return serverApi.get<{ schemaId: string; blocks: Block[] }>(`/clients/${clientId}/layouts/${schemaId}`);
+  const page = allPages.data?.items?.find(
+    p => p.data?.clientId === clientId && p.data?.slug === pageSlug
+  );
+
+  return page ? { data: page } : { error: 'Page not found' };
 }
 
-export async function updateClientLayout(clientId: string, schemaId: string, blocks: Block[]) {
-  return serverApi.put(`/clients/${clientId}/layouts/${schemaId}`, { blocks });
+// ── Client Layouts ─────────────────────────────────────────────────────────
+
+export async function getClientLayout(clientId: string, schemaSlug: string) {
+  const schema = await getSchema(schemaSlug);
+  if (schema.error || !schema.data) {
+    return { error: schema.error || 'Schema not found'};
+  }
+  return serverApi.get<{ schemaId: string; schemaSlug: string; blocks: Block[] }>(`/clients/${clientId}/layouts/${schema.data._id}`);
+}
+
+export async function updateClientLayout(clientId: string, schemaSlug: string, blocks: Block[]) {
+  const schema = await getSchema(schemaSlug);
+  if (schema.error || !schema.data) {
+    return { error: schema.error || 'Schema not found'};
+  }
+  return serverApi.put(`/clients/${clientId}/layouts/${schema.data._id}`, { blocks });
 }
 
 // ── Media ──────────────────────────────────────────────────────────────────

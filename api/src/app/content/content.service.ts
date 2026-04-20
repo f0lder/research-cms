@@ -216,6 +216,21 @@ export class ContentService {
 
 	async create(schemaSlug: string, data: Record<string, FieldValue>): Promise<ContentEntryDocument> {
 		await this.validateData(schemaSlug, data, false);
+
+		// Check slug uniqueness for page schema
+		if (schemaSlug === 'page' && data.slug && data.clientId) {
+			const existing = await this.model.findOne({
+				schemaSlug: 'page',
+				'data.clientId': data.clientId,
+				'data.slug': data.slug,
+				deletedAt: { $exists: false },
+			}).exec();
+			if (existing) {
+				throw new BadRequestException(
+					`A page with slug "${data.slug}" already exists for this client.`
+				);
+			}
+		}
 		
 		// Extract system fields (top-level) from input data
 		const systemFields = ['status', 'publishAt', 'unpublishAt', 'deletedAt', 'version'];
@@ -256,6 +271,22 @@ export class ContentService {
 	): Promise<ContentEntryDocument> {
 		const entry = await this.findOne(schemaSlug, id);
 		await this.validateData(schemaSlug, data, true);
+
+		// Check slug uniqueness for page schema (if slug is being updated)
+		if (schemaSlug === 'page' && data.slug && data.clientId) {
+			const existing = await this.model.findOne({
+				schemaSlug: 'page',
+				_id: { $ne: entry._id },
+				'data.clientId': data.clientId,
+				'data.slug': data.slug,
+				deletedAt: { $exists: false },
+			}).exec();
+			if (existing) {
+				throw new BadRequestException(
+					`A page with slug "${data.slug}" already exists for this client.`
+				);
+			}
+		}
 		
 		// Save current state as a version before overwriting
 		const currentVersion = entry.version ?? 1;

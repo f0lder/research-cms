@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Delete, Patch, Put, Body, Param, Query, HttpCode, UseGuards } from '@nestjs/common';
 import { ApiKeysService } from './api-keys.service';
 import { ApiKeyUsageService } from './apikey-usage.service';
+import { SchemaService } from '../schema/schema.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -14,6 +15,7 @@ export class ApiKeysController {
   constructor(
     private readonly apiKeysService: ApiKeysService,
     private readonly apiKeyUsageService: ApiKeyUsageService,
+    private readonly schemaService: SchemaService,
   ) {}
 
   @Get()
@@ -62,21 +64,23 @@ export class ApiKeysController {
     return this.apiKeyUsageService.clearUsage(id);
   }
 
-  @Get(':id/layouts/:schemaId')
-  getLayout(
+  @Get(':id/layouts/:schemaSlug')
+  async getLayout(
     @Param('id') id: string,
-    @Param('schemaId') schemaId: string,
+    @Param('schemaSlug') schemaSlug: string,
   ) {
-    return this.apiKeysService.getLayout(id, schemaId);
+    const schema = await this.schemaService.findOne(schemaSlug);
+    return this.apiKeysService.getLayout(id, String(schema._id));
   }
 
-  @Put(':id/layouts/:schemaId')
-  upsertLayout(
+  @Put(':id/layouts/:schemaSlug')
+  async upsertLayout(
     @Param('id') id: string,
-    @Param('schemaId') schemaId: string,
+    @Param('schemaSlug') schemaSlug: string,
     @Body() body: { blocks: Block[] },
   ) {
-    return this.apiKeysService.upsertLayout(id, schemaId, body.blocks);
+    const schema = await this.schemaService.findOne(schemaSlug);
+    return this.apiKeysService.upsertLayout(id, String(schema._id), body.blocks);
   }
 
   @Delete(':id')

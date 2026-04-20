@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Block, blockRegistry, registerBuiltInBlocks, PAGE_SCHEMA_SLUG, ContentEntry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
-import { createEntry, updateEntry, getEntry } from '@/app/actions';
+import { createEntry, updateEntry, getEntry, getPageBySlug } from '@/app/actions';
 import { setClientHomePage } from '@/app/actions';
 import { BlocksEditor } from '@/components/blocks';
 
@@ -16,12 +16,13 @@ const IS_NEW = '_new';
 export default function PageEditorPage() {
   const params = useParams();
   const clientId = extractParam(params, 'id');
-  const pageId = extractParam(params, 'pageId');
-  const isNew = pageId === IS_NEW;
+  const pageSlug = extractParam(params, 'pageSlug');
+  const isNew = pageSlug === IS_NEW;
 
   const [pageEntry, setPageEntry] = useState<ContentEntry | null>(null);
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
+  const [slugIsManual, setSlugIsManual] = useState(false);
   const [description, setDescription] = useState('');
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,18 +41,19 @@ export default function PageEditorPage() {
       setLoading(false);
       return;
     }
-    
-    // Load the page entry from the page schema (contains all page data including blocks)
-    const { data: entryData, error: entryErr } = await getEntry(PAGE_SCHEMA_SLUG, pageId);
+
+    // Load the page entry by slug
+    const { data: entryData, error: entryErr } = await getPageBySlug(clientId, pageSlug);
     if (entryErr) { setError(entryErr); setLoading(false); return; }
-    
+
     if (entryData) {
       // Populate form fields from entry data
       setPageEntry(entryData as ContentEntry);
       setTitle((entryData.data?.title as string) ?? '');
       setSlug((entryData.data?.slug as string) ?? '');
+      setSlugIsManual(true);
       setDescription((entryData.data?.description as string) ?? '');
-      
+
       // Load blocks from page entry data
       const blocksData = entryData.data?.blocks;
       if (blocksData) {
@@ -60,21 +62,32 @@ export default function PageEditorPage() {
         setBlocks(blocksList.filter((b): b is Block => b.type !== 'field'));
       }
     }
-    
+
     setLoading(false);
-  }, [clientId, pageId, isNew]);
+  }, [clientId, pageSlug, isNew]);
 
   useEffect(() => { load(); }, [load]);
 
-  // Auto-generate slug from title on new pages
+  // Auto-generate slug from title on new pages (unless user manually edited it)
   useEffect(() => {
-    if (isNew && title && !slug) {
+    if (isNew && title && !slugIsManual) {
       setSlug(title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
     }
-  }, [title, slug, isNew]);
+  }, [title, isNew, slugIsManual]);
 
   const handleSave = async () => {
     if (!title.trim() || !slug.trim()) { setError('Title and slug are required.'); return; }
+
+    // Check for duplicate slugs on new pages
+    if (isNew) {
+      const { data: existingPage } = await getPageBySlug(clientId, slug.trim());
+      if (existingPage) {
+        setError('A page with this slug already exists for this client.');
+        setSaving(false);
+        return;
+      }
+    }
+
     setSaving(true);
     setSaved(false);
     setError('');
@@ -96,8 +109,9 @@ export default function PageEditorPage() {
       setPageEntry(entry);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-      // Redirect to edit URL
-      window.history.replaceState(null, '', `${clientId}/pages/${entry._id}`);
+      // Redirect to edit URL using the slug
+      const newSlug = (entry.data?.slug as string) ?? slug.trim();
+      window.history.replaceState(null, '', `/clients/${clientId}/pages/${newSlug}`);
     } else if (pageEntry?._id) {
       // Update page entry
       const { error: entryErr } = await updateEntry(PAGE_SCHEMA_SLUG, pageEntry._id, entryData);
@@ -166,7 +180,10 @@ export default function PageEditorPage() {
                   className="field-input w-full font-mono"
                   placeholder="page-slug"
                   value={slug}
-                  onChange={e => setSlug(e.target.value)}
+                  onChange={e => {
+                    setSlug(e.target.value);
+                    setSlugIsManual(true);
+                  }}
                 />
               </div>
             </div>

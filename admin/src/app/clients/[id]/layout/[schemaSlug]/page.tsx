@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { Block, ContentTypeDefinition, blockRegistry, registerBuiltInBlocks } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
-import { getSchemaById, getClientLayout, updateClientLayout } from '@/app/actions';
+import { getSchema, getClientLayout, updateClientLayout } from '@/app/actions';
 import { BlocksEditor } from '@/components/blocks';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -13,7 +13,7 @@ import { BlocksEditor } from '@/components/blocks';
 export default function EntryDetailLayoutPage() {
   const params = useParams();
   const clientId = extractParam(params, 'id');
-  const schemaId = extractParam(params, 'schemaId');
+  const schemaSlug = extractParam(params, 'schemaSlug');
 
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [schema, setSchema] = useState<ContentTypeDefinition | null>(null);
@@ -29,8 +29,8 @@ export default function EntryDetailLayoutPage() {
 
   const load = useCallback(async () => {
     const [schemaRes, layoutRes] = await Promise.all([
-      getSchemaById(schemaId),
-      getClientLayout(clientId, schemaId).catch(() => ({ data: null, error: null })),
+      getSchema(schemaSlug),
+      getClientLayout(clientId, schemaSlug).catch(() => ({ data: null, error: null })),
     ]);
 
     if (schemaRes.error) {
@@ -59,7 +59,7 @@ export default function EntryDetailLayoutPage() {
 
     setBlocks(loadedBlocks);
     setLoading(false);
-  }, [clientId, schemaId]);
+  }, [clientId, schemaSlug]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -70,7 +70,7 @@ export default function EntryDetailLayoutPage() {
     setSaved(false);
     setError('');
 
-    const { error: err } = await updateClientLayout(clientId, schemaId, blocks);
+    const { error: err } = await updateClientLayout(clientId, schemaSlug, blocks);
     setSaving(false);
     if (err) { setError(err); return; }
 
@@ -85,7 +85,7 @@ export default function EntryDetailLayoutPage() {
     <BlocksEditor
       blocks={blocks}
       onBlocksChange={setBlocks}
-      schemaSlug={schema?.slug || schemaId}
+      schemaSlug={schema?.slug || schemaSlug}
       onHeaderContent={
         <div>
           {/* Breadcrumb */}

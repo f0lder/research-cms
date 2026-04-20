@@ -73,12 +73,13 @@ export class ApiKeysService implements OnModuleInit {
 
   /**
    * Read a client's layout for a schema, synced against the schema's current fields.
+   * Returns both the schemaId and schemaSlug for clarity.
    * Bootstraps a default field-block layout when the client has nothing saved.
    */
   async getLayout(
     clientId: string,
     schemaId: string,
-  ): Promise<{ schemaId: string; blocks: Block[] }> {
+  ): Promise<{ schemaId: string; schemaSlug: string; blocks: Block[] }> {
     const [client, schema] = await Promise.all([
       this.findOne(clientId),
       this.schemaService.findById(schemaId),
@@ -87,7 +88,7 @@ export class ApiKeysService implements OnModuleInit {
     const saved = client.layouts.find(l => String(l.schemaId) === schemaId);
     const blocks = syncWithSchema(schema, (saved?.blocks ?? null) as unknown[] | null);
 
-    return { schemaId, blocks };
+    return { schemaId, schemaSlug: schema.slug, blocks };
   }
 
   /** Upsert a client's layout for a schema. */
