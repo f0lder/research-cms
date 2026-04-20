@@ -28,7 +28,12 @@ export class SchemaController {
 		return this.schemaService.findSystem();
 	}
 
-	// NOTE: keep 'system' above ':slug' — NestJS matches routes in declaration order
+	// NOTE: keep specific paths above ':slug' — NestJS matches routes in declaration order
+	@Get('id/:id')
+	findById(@Param('id') id: string) {
+		return this.schemaService.findById(id);
+	}
+
 	@Get(':slug')
 	findOne(@Param('slug') slug: string) {
 		return this.schemaService.findOne(slug);

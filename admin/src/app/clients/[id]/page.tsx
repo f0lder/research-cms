@@ -293,7 +293,7 @@ export default function ClientDetailPage() {
         ) : (
           <div className="divide-y divide-zinc-100">
             {visibleSchemas.map(schema => {
-              const hasCustom = client.layouts.some(l => l.schemaSlug === schema.slug);
+              const hasCustom = client.layouts.some(l => String(l.schemaId) === schema._id);
               return (
                 <div key={schema.slug} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 py-3">
                   <div className="min-w-0">
@@ -304,8 +304,8 @@ export default function ClientDetailPage() {
                       : <span className="ml-2 text-[10px] text-zinc-400 font-mono">not customised</span>
                     }
                   </div>
-                  {client._id && (
-                    <Link href={adminRoutes.clientLayout(client._id, schema.slug)}
+                  {client._id && schema._id && (
+                    <Link href={adminRoutes.clientLayout(client._id, schema._id)}
                       className="text-[11px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-1 bg-white hover:border-zinc-400 transition-colors font-mono no-underline text-center md:text-left whitespace-nowrap">
                       Edit layout
                     </Link>

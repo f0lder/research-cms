@@ -7,7 +7,6 @@ import {
   Client,
   MediaEntry,
   LogEntry,
-  BlockLayout,
   FieldDefinition,
   FieldValue,
   Block,
@@ -18,6 +17,10 @@ import {
 
 export async function getSchema(slug: string) {
   return serverApi.get<ContentTypeDefinition>(`/schemas/${slug}`);
+}
+
+export async function getSchemaById(id: string) {
+  return serverApi.get<ContentTypeDefinition>(`/schemas/id/${id}`);
 }
 
 export async function getAllSchemas() {
@@ -162,16 +165,12 @@ export async function clearClientUsage(id: string) {
 
 // ── Client Layouts ─────────────────────────────────────────────────────────
 
-export async function getLayout(slug: string) {
-  return serverApi.get<BlockLayout>(`/layouts/${slug}`);
+export async function getClientLayout(clientId: string, schemaId: string) {
+  return serverApi.get<{ schemaId: string; blocks: Block[] }>(`/clients/${clientId}/layouts/${schemaId}`);
 }
 
-export async function upsertLayout(slug: string, blocks: Block[]) {
-  return serverApi.put(`/layouts/${slug}`, { blocks });
-}
-
-export async function updateClientLayout(clientId: string, schemaSlug: string, blocks: Block[]) {
-  return serverApi.put<Client>(`/clients/${clientId}/layouts/${schemaSlug}`, { blocks });
+export async function updateClientLayout(clientId: string, schemaId: string, blocks: Block[]) {
+  return serverApi.put(`/clients/${clientId}/layouts/${schemaId}`, { blocks });
 }
 
 // ── Media ──────────────────────────────────────────────────────────────────

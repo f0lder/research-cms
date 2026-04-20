@@ -62,13 +62,21 @@ export class ApiKeysController {
     return this.apiKeyUsageService.clearUsage(id);
   }
 
-  @Put(':id/layouts/:schemaSlug')
+  @Get(':id/layouts/:schemaId')
+  getLayout(
+    @Param('id') id: string,
+    @Param('schemaId') schemaId: string,
+  ) {
+    return this.apiKeysService.getLayout(id, schemaId);
+  }
+
+  @Put(':id/layouts/:schemaId')
   upsertLayout(
     @Param('id') id: string,
-    @Param('schemaSlug') schemaSlug: string,
+    @Param('schemaId') schemaId: string,
     @Body() body: { blocks: Block[] },
   ) {
-    return this.apiKeysService.upsertLayout(id, schemaSlug, body.blocks);
+    return this.apiKeysService.upsertLayout(id, schemaId, body.blocks);
   }
 
   @Delete(':id')

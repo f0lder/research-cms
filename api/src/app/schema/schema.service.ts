@@ -66,6 +66,14 @@ export class SchemaService {
 		return schema;
 	}
 
+	async findById(id: string): Promise<ContentTypeDocument> {
+		const schema = await this.model.findById(id).exec();
+		if (!schema) {
+			throw new BadRequestException(`Schema with id "${id}" not found`);
+		}
+		return schema;
+	}
+
 	async update(slug: string, data: Omit<Partial<ContentTypeDefinition>, '_id'>): Promise<ContentTypeDocument> {
 		const schema = await this.findOne(slug);
 		if (schema.system) throw new BadRequestException(`"${schema.name}" is a system schema and cannot be modified`);

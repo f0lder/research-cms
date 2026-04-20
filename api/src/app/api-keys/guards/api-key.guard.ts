@@ -19,7 +19,8 @@ export class ApiKeyGuard implements CanActivate {
     const doc = await this.apiKeysService.validateAndTrack(key, ipAddress);
     if (!doc) throw new UnauthorizedException('Invalid or inactive API key');
 
-    // Attach allowed-schema scope to the request for downstream authorization checks
+    // Attach client identity and allowed-schema scope for downstream handlers
+    request.clientId = String(doc._id);
     request.apiKeyAllowedSchemas = doc.allowedSchemas;
 
     // If allowedSchemas is non-empty, enforce schema-level access

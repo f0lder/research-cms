@@ -1,17 +1,32 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { randomBytes } from 'crypto';
 import { ApiKeyModel, ApiKeyDocument } from './schemas/api-key.schema';
 import { Block } from '@research-cms/shared-types';
 import { LogsService } from '../logs/logs.service';
+import { SchemaService } from '../schema/schema.service';
+import { syncWithSchema } from './layout-utils';
 
 @Injectable()
-export class ApiKeysService {
+export class ApiKeysService implements OnModuleInit {
   constructor(
     @InjectModel(ApiKeyModel.name) private model: Model<ApiKeyDocument>,
     private readonly logsService: LogsService,
+    private readonly schemaService: SchemaService,
   ) {}
+
+  /**
+   * One-time cleanup: any layout subdocs from before the schemaSlug→schemaId migration
+   * are invalid under the new shape. Wipe layouts[] on affected docs so admins can re-save.
+   * Idempotent: after the first run no docs match the filter.
+   */
+  async onModuleInit(): Promise<void> {
+    await this.model.updateMany(
+      { 'layouts.schemaSlug': { $exists: true } },
+      { $set: { layouts: [] } },
+    ).exec();
+  }
 
   async findAll(): Promise<ApiKeyDocument[]> {
     return this.model.find().sort({ createdAt: -1 }).exec();
@@ -57,22 +72,38 @@ export class ApiKeysService {
   }
 
   /**
-   * Upserts the block layout for a specific schema on this client.
-   * Uses a two-step pull-then-push to simulate an atomic upsert on the subdocument array.
+   * Read a client's layout for a schema, synced against the schema's current fields.
+   * Bootstraps a default field-block layout when the client has nothing saved.
    */
-  async upsertLayout(id: string, schemaSlug: string, blocks: Block[]): Promise<ApiKeyDocument> {
-    // Try to update the existing layout entry for this schema
+  async getLayout(
+    clientId: string,
+    schemaId: string,
+  ): Promise<{ schemaId: string; blocks: Block[] }> {
+    const [client, schema] = await Promise.all([
+      this.findOne(clientId),
+      this.schemaService.findById(schemaId),
+    ]);
+
+    const saved = client.layouts.find(l => String(l.schemaId) === schemaId);
+    const blocks = syncWithSchema(schema, (saved?.blocks ?? null) as unknown[] | null);
+
+    return { schemaId, blocks };
+  }
+
+  /** Upsert a client's layout for a schema. */
+  async upsertLayout(clientId: string, schemaId: string, blocks: Block[]): Promise<ApiKeyDocument> {
+    const objectId = new Types.ObjectId(schemaId);
+
     let doc = await this.model.findOneAndUpdate(
-      { _id: id, 'layouts.schemaSlug': schemaSlug },
+      { _id: clientId, 'layouts.schemaId': objectId },
       { $set: { 'layouts.$.blocks': blocks } },
       { returnDocument: 'after' },
     ).exec();
 
     if (!doc) {
-      // No layout for this schema yet — push a new entry
       doc = await this.model.findByIdAndUpdate(
-        id,
-        { $push: { layouts: { schemaSlug, blocks } } },
+        clientId,
+        { $push: { layouts: { schemaId: objectId, blocks } } },
         { returnDocument: 'after' },
       ).exec();
     }
@@ -86,17 +117,14 @@ export class ApiKeysService {
     const doc = await this.model.findOne({ key, active: true }).exec();
     if (!doc) return null;
 
-    // Only increment hits once per day per IP (don't update return value yet)
     const today = new Date().toISOString().split('T')[0];
     const docToReturn = await this.model.findByIdAndUpdate(doc._id, {
-      $set: { 
+      $set: {
         lastUsedAt: new Date().toISOString(),
-        // Track last IP to determine if this is a new visitor today
         _lastIpDate: ipAddress ? `${ipAddress}:${today}` : `unknown:${today}`,
       },
     }).exec();
 
-    // Increment hits only if the IP:date combo is different from the stored one (new visitor today)
     if (doc._lastIpDate !== `${ipAddress || 'unknown'}:${today}`) {
       await this.model.findByIdAndUpdate(doc._id, {
         $inc: { hits: 1 },

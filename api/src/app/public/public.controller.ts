@@ -1,10 +1,11 @@
 import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { PublicService } from './public.service';
-import { LayoutsService } from '../layouts/layouts.service';
+import { ApiKeysService } from '../api-keys/api-keys.service';
 import { ApiKeyGuard } from '../api-keys/guards/api-key.guard';
 
 type PublicRequest = Request & {
+  clientId: string;
   apiKeyAllowedSchemas: string[];
 };
 
@@ -13,7 +14,7 @@ type PublicRequest = Request & {
 export class PublicController {
   constructor(
     private readonly publicService: PublicService,
-    private readonly layoutsService: LayoutsService,
+    private readonly apiKeysService: ApiKeysService,
   ) {}
 
   @Get()
@@ -23,19 +24,18 @@ export class PublicController {
 
   // ── Entry Layouts ────────────────────────────────────────────────────────────
 
-  @Get('layouts/:schemaSlug')
-  async getEntryLayout(@Param('schemaSlug') schemaSlug: string) {
-    const saved = await this.layoutsService.findOne(schemaSlug);
-    return {
-      schemaSlug,
-      blocks: saved?.blocks ?? [],
-    };
+  @Get('layouts/:schemaId')
+  getEntryLayout(
+    @Param('schemaId') schemaId: string,
+    @Req() req: PublicRequest,
+  ) {
+    return this.apiKeysService.getLayout(req.clientId, schemaId);
   }
 
   // ── Media ────────────────────────────────────────────────────────────────────
 
   @Get('media/:id')
-  async getMedia(
+  getMedia(
     @Param('id') id: string,
     @Req() req: PublicRequest,
   ) {
@@ -58,7 +58,7 @@ export class PublicController {
   }
 
   @Get(':schemaSlug/search')
-  async search(
+  search(
     @Param('schemaSlug') schemaSlug: string,
     @Query('q') query?: string,
     @Query('page') page?: string,

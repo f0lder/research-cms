@@ -5,7 +5,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { SchemaModule } from './schema/schema.module';
 import { ContentModule } from './content/content.module';
 import { AuthModule } from './auth/auth.module';
-import { LayoutsModule } from './layouts/layouts.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
 import { PublicModule } from './public/public.module';
 import { LogsModule } from './logs/logs.module';
@@ -27,7 +26,6 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     AuthModule,
     SchemaModule,
     ContentModule,
-    LayoutsModule,
     ApiKeysModule,
     WebhooksModule,
     PublicModule,

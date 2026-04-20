@@ -510,14 +510,6 @@ export type LayoutBlock =
   | Omit<ArchiveBlock, 'items'>
   | Omit<EntryBlock, 'entry'>;
 
-/** Saved layout for a content type — one document per schema slug. */
-export interface BlockLayout {
-  _id?: string;
-  schemaSlug: string;
-  blocks: LayoutBlock[];
-  updatedAt?: string;
-};
-
 // ── Resolved Entry Response ────────────────────────────────────────────────────
 
 export interface ResolvedEntry {
@@ -572,10 +564,10 @@ export interface ActivityItem {
 
 // ── Clients (formerly API Keys) ───────────────────────────────────────────────
 
-/** Per-schema block layout override stored on a client — template only (no values) */
+/** Per-schema block layout stored on a client — keyed by ContentType _id. */
 export interface ClientLayout {
-  schemaSlug: string;
-  blocks: LayoutBlock[];  // Template blocks without resolved values
+  schemaId: string;
+  blocks: LayoutBlock[];
 }
 
 export interface Client {

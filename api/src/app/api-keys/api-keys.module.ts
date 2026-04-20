@@ -6,6 +6,7 @@ import { ApiKeysService } from './api-keys.service';
 import { ApiKeyUsageService } from './apikey-usage.service';
 import { ApiKeysController } from './api-keys.controller';
 import { ApiKeyGuard } from './guards/api-key.guard';
+import { SchemaModule } from '../schema/schema.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ApiKeyGuard } from './guards/api-key.guard';
       { name: ApiKeyModel.name, schema: ApiKeySchema },
       { name: ApiKeyUsageModel.name, schema: ApiKeyUsageSchema },
     ]),
+    SchemaModule,
   ],
   controllers: [ApiKeysController],
   providers: [ApiKeysService, ApiKeyUsageService, ApiKeyGuard],
