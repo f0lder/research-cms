@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { PublicService } from './public.service';
 import { ApiKeysService } from '../api-keys/api-keys.service';
+import { SchemaService } from '../schema/schema.service';
 import { ApiKeyGuard } from '../api-keys/guards/api-key.guard';
 
 type PublicRequest = Request & {
@@ -15,6 +16,7 @@ export class PublicController {
   constructor(
     private readonly publicService: PublicService,
     private readonly apiKeysService: ApiKeysService,
+    private readonly schemaService: SchemaService,
   ) {}
 
   @Get()
@@ -24,22 +26,40 @@ export class PublicController {
 
   // ── Entry Layouts ────────────────────────────────────────────────────────────
 
-  @Get('layouts/:schemaId')
-  getEntryLayout(
-    @Param('schemaId') schemaId: string,
+  @Get('layouts/:schemaSlug')
+  async getEntryLayout(
+    @Param('schemaSlug') schemaSlug: string,
     @Req() req: PublicRequest,
   ) {
-    return this.apiKeysService.getLayout(req.clientId, schemaId);
+    // Convert slug to ObjectId
+    const schema = await this.schemaService.findOne(schemaSlug);
+    if (!schema) {
+      return { blocks: [], schemaId: '', schemaSlug };
+    }
+    return this.apiKeysService.getLayout(req.clientId, String(schema._id));
   }
 
   // ── Media ────────────────────────────────────────────────────────────────────
 
+  @Get('media')
+  async listMedia(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    // List all published media files
+    return this.publicService.findAll(
+      'media',
+      Number(page) || 1,
+      Number(limit) || 50,
+    );
+  }
+
   @Get('media/:id')
   getMedia(
     @Param('id') id: string,
-    @Req() req: PublicRequest,
   ) {
-    return this.publicService.findOne('media', id, req.apiKeyAllowedSchemas);
+    // Media is always publicly accessible (no allowedSchemas check)
+    return this.publicService.findOne('media', id);
   }
 
   // ── Schema content ───────────────────────────────────────────────────────────

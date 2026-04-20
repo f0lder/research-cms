@@ -13,7 +13,7 @@ import {
 } from '@research-cms/shared-types';
 import { Block as FieldBlockComponent } from '@/components/Block';
 import { C } from '@/lib/theme';
-import { listEntries, getEntry, type MediaEntry } from '@/lib/api';
+import { listEntries, getEntry, getMedia, type MediaEntry } from '@/lib/api';
 
 // ── Static Block Renderers ─────────────────────────────────────────────────────
 
@@ -85,16 +85,53 @@ function SpacerBlockRenderer({ block }: { block: SpacerBlock }) {
 }
 
 function ImageBlockRenderer({ block }: { block: ImageBlock }) {
+  const [media, setMedia] = useState<any>(null);
+  const [loading, setLoading] = useState(block.mediaId ? true : false);
+
   const handleImagePress = useCallback(() => {
     if (block.linkUrl) {
       Linking.openURL(block.linkUrl);
     }
   }, [block.linkUrl]);
 
-  // Media is pre-resolved by API
-  const media = block.media;
+  // Fetch media if mediaId is present
+  useEffect(() => {
+    if (!block.mediaId) return;
+    (async () => {
+      try {
+        const entry = await getMedia(block.mediaId);
+        // Extract media fields from entry data (API returns PublicEntryResponse)
+        const mediaData = {
+          _id: entry._id,
+          url: (entry.data as any)?.url,
+          mimeType: (entry.data as any)?.mimeType,
+          title: (entry.data as any)?.title,
+          caption: (entry.data as any)?.caption,
+          altText: (entry.data as any)?.altText,
+        };
+        console.log('[Media] Loaded:', mediaData);
+        setMedia(mediaData);
+      } catch (e) {
+        console.error('Failed to load media:', e);
+        setMedia(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [block.mediaId]);
 
-  if (!media?.url) {
+  // Use pre-resolved media if available, otherwise use fetched media
+  const resolvedMedia = block.media || media;
+
+  if (loading) {
+    return (
+      <View style={[s.image, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator color={C.accent} size="small" />
+      </View>
+    );
+  }
+
+  if (!resolvedMedia?.url) {
     return <Text style={s.textMuted}>— Image not available</Text>;
   }
 
@@ -108,10 +145,10 @@ function ImageBlockRenderer({ block }: { block: ImageBlock }) {
 
   const imageContent = (
     <Image
-      source={{ uri: media.url }}
+      source={{ uri: resolvedMedia.url }}
       style={imageStyle}
       resizeMode={block.fit === 'cover' ? 'cover' : block.fit === 'contain' ? 'contain' : 'stretch'}
-      accessibilityLabel={block.alt || media.altText || media.title || ''}
+      accessibilityLabel={block.alt || resolvedMedia.altText || resolvedMedia.title || ''}
     />
   );
 
@@ -119,7 +156,7 @@ function ImageBlockRenderer({ block }: { block: ImageBlock }) {
     return (
       <TouchableOpacity onPress={handleImagePress}>
         {imageContent}
-        {media.caption ? <Text style={s.caption}>{media.caption}</Text> : null}
+        {resolvedMedia.caption ? <Text style={s.caption}>{resolvedMedia.caption}</Text> : null}
       </TouchableOpacity>
     );
   }
@@ -127,7 +164,7 @@ function ImageBlockRenderer({ block }: { block: ImageBlock }) {
   return (
     <View>
       {imageContent}
-      {media.caption ? <Text style={s.caption}>{media.caption}</Text> : null}
+      {resolvedMedia.caption ? <Text style={s.caption}>{resolvedMedia.caption}</Text> : null}
     </View>
   );
 }
@@ -160,12 +197,144 @@ function ButtonBlockRenderer({ block }: { block: ButtonBlock }) {
 
 // ── Content Block Renderers ────────────────────────────────────────────────────
 
-function FieldBlockRenderer({ block }: { block: FieldBlock }) {
-  
+function FieldBlockRenderer({ block, entryData }: { block: FieldBlock; entryData?: Record<string, any> }) {
+  const [resolvedValue, setResolvedValue] = useState<any>(null);
+  const [loading, setLoading] = useState(
+    (block.fieldType === 'media' || block.fieldType === 'reference' || block.fieldType === 'references') && entryData
+      ? true
+      : false
+  );
+
   const containerStyle = [
     block.padding && getPaddingStyle(block.padding),
     block.margin && getMarginStyle(block.margin),
   ];
+
+  // Get the field value from entry data
+  const fieldValue = entryData ? entryData[block.fieldName] : undefined;
+
+  // Resolve media and reference fields
+  useEffect(() => {
+    if (!fieldValue) {
+      setResolvedValue(fieldValue);
+      setLoading(false);
+      return;
+    }
+
+    // For media fields, resolve the ID to full media object
+    if (block.fieldType === 'media') {
+      // If it's already a media object, don't need to fetch
+      if (typeof fieldValue === 'object' && fieldValue.url) {
+        setResolvedValue(fieldValue);
+        setLoading(false);
+        return;
+      }
+
+      // If it's a string ID, fetch the media
+      if (typeof fieldValue === 'string') {
+        (async () => {
+          try {
+            const entry = await getMedia(fieldValue);
+            const mediaData = {
+              _id: entry._id,
+              url: (entry.data as any)?.url,
+              mimeType: (entry.data as any)?.mimeType,
+              title: (entry.data as any)?.title,
+              caption: (entry.data as any)?.caption,
+              altText: (entry.data as any)?.altText,
+            };
+            setResolvedValue(mediaData);
+          } catch (e) {
+            console.error('[FieldBlock] Failed to resolve media:', e);
+            setResolvedValue(null);
+          } finally {
+            setLoading(false);
+          }
+        })();
+      }
+      return;
+    }
+
+    // For reference field (single), resolve the ID to entry object
+    if (block.fieldType === 'reference' && typeof fieldValue === 'string') {
+      (async () => {
+        try {
+          // Try to infer schema from fieldName (e.g., 'category' field -> 'category' schema)
+          const schemaSlug = (block as any).targetSlug || block.fieldName;
+          const entry = await getEntry(schemaSlug, fieldValue);
+          // Transform to have title/name at top level for Block component
+          const resolved = {
+            _id: entry._id,
+            title: (entry.data as any)?.title || (entry.data as any)?.name,
+            name: (entry.data as any)?.name,
+          };
+          setResolvedValue(resolved);
+        } catch (e) {
+          console.error('[FieldBlock] Failed to resolve reference:', e);
+          setResolvedValue({ _id: fieldValue }); // Fallback to ID object
+        } finally {
+          setLoading(false);
+        }
+      })();
+      return;
+    }
+
+    // For references field (multiple), resolve each ID to entry object
+    if (block.fieldType === 'references' && Array.isArray(fieldValue)) {
+      (async () => {
+        try {
+          const schemaSlug = (block as any).targetSlug || block.fieldName;
+          const resolved = await Promise.all(
+            fieldValue.map(async (id) => {
+              try {
+                const entry = await getEntry(schemaSlug, id);
+                return {
+                  _id: entry._id,
+                  title: (entry.data as any)?.title || (entry.data as any)?.name,
+                  name: (entry.data as any)?.name,
+                };
+              } catch {
+                return { _id: id }; // Fallback to ID object
+              }
+            })
+          );
+          setResolvedValue(resolved);
+        } catch (e) {
+          console.error('[FieldBlock] Failed to resolve references:', e);
+          setResolvedValue(fieldValue.map((id) => ({ _id: id })));
+        } finally {
+          setLoading(false);
+        }
+      })();
+      return;
+    }
+
+    // For other field types, use value as-is
+    setResolvedValue(fieldValue);
+    setLoading(false);
+  }, [block.fieldType, block.fieldName, fieldValue]);
+
+  console.log('[FieldBlock]', block.fieldName, {
+    hasEntryData: !!entryData,
+    fieldValue,
+    resolvedValue,
+    fieldType: block.fieldType,
+    loading,
+  });
+
+  if (loading) {
+    return (
+      <View style={containerStyle}>
+        <ActivityIndicator color={C.accent} size="small" />
+      </View>
+    );
+  }
+
+  // Create a resolved FieldBlock with the value for rendering
+  const resolvedBlock: FieldBlock = {
+    ...block,
+    value: resolvedValue ?? null,
+  };
 
   return (
     <View style={containerStyle}>
@@ -177,7 +346,7 @@ function FieldBlockRenderer({ block }: { block: FieldBlock }) {
           {block.label}
         </Text>
       )}
-      <FieldBlockComponent block={block} />
+      <FieldBlockComponent block={resolvedBlock} />
     </View>
   );
 }
@@ -315,10 +484,13 @@ function EntryBlockRenderer({ block }: { block: EntryBlock }) {
     block.margin && getMarginStyle(block.margin),
   ];
 
+  // For pages, blocks are in data.blocks; for other entries, they're at top level (if any)
+  const blocks = (entry.data as any)?.blocks || entry.blocks || [];
+
   return (
     <View style={containerStyle}>
-      {entry.blocks.map((b: Block, i: number) => (
-        <BlockRenderer key={i} block={b} />
+      {blocks.map((b: Block, i: number) => (
+        <BlockRenderer key={i} block={b} entryData={entry.data as Record<string, any>} />
       ))}
     </View>
   );
@@ -326,7 +498,7 @@ function EntryBlockRenderer({ block }: { block: EntryBlock }) {
 
 // ── Layout Block Renderers ────────────────────────────────────────────────────
 
-function RowBlockRenderer({ block }: { block: RowBlock }) {
+function RowBlockRenderer({ block, entryData }: { block: RowBlock; entryData?: Record<string, any> }) {
   const containerStyle = [
     s.row,
     {
@@ -352,7 +524,7 @@ function RowBlockRenderer({ block }: { block: RowBlock }) {
           ]}
         >
           {col.blocks.map((b, j) => (
-            <BlockRenderer key={j} block={b} />
+            <BlockRenderer key={j} block={b} entryData={entryData} />
           ))}
         </View>
       ))}
@@ -360,7 +532,7 @@ function RowBlockRenderer({ block }: { block: RowBlock }) {
   );
 }
 
-function ColumnBlockRenderer({ block }: { block: ColumnBlock }) {
+function ColumnBlockRenderer({ block, entryData }: { block: ColumnBlock; entryData?: Record<string, any> }) {
   const containerStyle = [
     {
       flex: block.width === 'auto' ? undefined : 1,
@@ -374,13 +546,13 @@ function ColumnBlockRenderer({ block }: { block: ColumnBlock }) {
   return (
     <View style={containerStyle}>
       {block.blocks.map((b, i) => (
-        <BlockRenderer key={i} block={b} />
+        <BlockRenderer key={i} block={b} entryData={entryData} />
       ))}
     </View>
   );
 }
 
-function CardBlockRenderer({ block }: { block: CardBlock }) {
+function CardBlockRenderer({ block, entryData }: { block: CardBlock; entryData?: Record<string, any> }) {
   const cardStyle = [
     s.card,
     {
@@ -394,7 +566,7 @@ function CardBlockRenderer({ block }: { block: CardBlock }) {
   const cardContent = (
     <View style={cardStyle}>
       {block.blocks.map((b, i) => (
-        <BlockRenderer key={i} block={b} />
+        <BlockRenderer key={i} block={b} entryData={entryData} />
       ))}
     </View>
   );
@@ -415,7 +587,7 @@ function CardBlockRenderer({ block }: { block: CardBlock }) {
 
 // ── Main Block Renderer ────────────────────────────────────────────────────────
 
-export function BlockRenderer({ block }: { block: Block }) {
+export function BlockRenderer({ block, entryData }: { block: Block; entryData?: Record<string, any> }) {
   // Skip invisible blocks (default to visible if not specified)
   if (block.visible === false) {
     return null;
@@ -430,45 +602,42 @@ export function BlockRenderer({ block }: { block: Block }) {
   switch (block.type) {
     case 'heading':
       return <HeadingBlockRenderer block={block} />;
-    
+
     case 'text':
       return <TextBlockRenderer block={block} />;
-    
+
     case 'divider':
       return <DividerBlockRenderer block={block} />;
-    
+
     case 'spacer':
       return <SpacerBlockRenderer block={block} />;
-    
+
     case 'image':
       return <ImageBlockRenderer block={block} />;
-    
+
     case 'button':
       return <ButtonBlockRenderer block={block} />;
-    
+
     case 'field':
-      return <FieldBlockRenderer block={block} />;
-    
+      return <FieldBlockRenderer block={block} entryData={entryData} />;
+
     case 'archive':
       return <ArchiveBlockRenderer block={block} />;
-    
+
     case 'entry':
       return <EntryBlockRenderer block={block} />;
-    
+
     case 'row':
-      return <RowBlockRenderer block={block} />;
-    
+      return <RowBlockRenderer block={block} entryData={entryData} />;
+
     case 'column':
-      return <ColumnBlockRenderer block={block} />;
-    
+      return <ColumnBlockRenderer block={block} entryData={entryData} />;
+
     case 'card':
-      return <CardBlockRenderer block={block} />;
-    
-    default: {
-      const _exhaustive: never = block;
-      console.error(`Unhandled block type: ${_exhaustive}`);
+      return <CardBlockRenderer block={block} entryData={entryData} />;
+
+    default:
       return null;
-    }
   }
 }
 

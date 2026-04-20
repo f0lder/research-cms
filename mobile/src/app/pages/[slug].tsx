@@ -3,53 +3,71 @@ import {
   ScrollView, ActivityIndicator, StyleSheet, Text,
 } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { PageEntryResponse } from '@research-cms/shared-types';
+import { PublicEntryResponse } from '@research-cms/shared-types';
 import { getPage } from '@/lib/api';
 import { C, shared } from '@/lib/theme';
 import { BlockRenderer } from '@/components/BlockRenderer';
-
-// ── Screen ─────────────────────────────────────────────────────────────────────
 
 export default function PageScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const navigation = useNavigation();
 
-  const [page, setPage] = useState<PageEntryResponse | null>(null);
+  const [page, setPage] = useState<PublicEntryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const load = useCallback(() => {
-    setLoading(true);
-    setError('');
-    getPage(slug)
-      .then(p => { setPage(p); navigation.setOptions({ title: String(p.data?.title ?? 'Page') }); })
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    if (!slug) {
+      setError('No page slug provided');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+      const p = await getPage(slug);
+      setPage(p);
+      const title = (p.data as any)?.title || 'Page';
+      navigation.setOptions({ title: String(title) });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to load page';
+      setError(msg);
+      console.error('Error loading page:', e);
+    } finally {
+      setLoading(false);
+    }
   }, [slug, navigation]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  if (loading) return <ActivityIndicator style={shared.center} color={C.accent} />;
-  if (error || !page) return <Text style={shared.errorText}>{error || 'Page not found'}</Text>;
+  if (loading) {
+    return <ActivityIndicator style={shared.center} color={C.accent} />;
+  }
+
+  if (error || !page) {
+    return <Text style={shared.errorText}>{error || 'Page not found'}</Text>;
+  }
+
+  // Pages store blocks in data.blocks
+  const blocks = (page.data as any)?.blocks || [];
 
   return (
     <ScrollView contentContainerStyle={s.container}>
-      {page.blocks.map((block, i) => (
-        <BlockRenderer key={i} block={block} />
-      ))}
+      {Array.isArray(blocks) && blocks.length > 0 ? (
+        blocks.map((block: any, i: number) => (
+          <BlockRenderer key={i} block={block} entryData={page.data as Record<string, any>} />
+        ))
+      ) : (
+        <Text style={s.empty}>No content</Text>
+      )}
     </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  container:        { padding: 20 },
-  heading:          { fontSize: 22, fontWeight: '700', color: C.text, marginBottom: 12, marginTop: 8 },
-  h1:               { fontSize: 28 },
-  h3:               { fontSize: 17 },
-  text:             { fontSize: 15, color: C.text, lineHeight: 24, marginBottom: 16 },
-  archiveBlock:     { marginBottom: 24 },
-  archiveTitle:     { fontSize: 13, fontWeight: '700', color: C.metaText, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, fontFamily: 'monospace' },
-  archiveCard:      { backgroundColor: C.cardBg, borderWidth: 1, borderColor: C.border, borderRadius: 6, padding: 14, marginBottom: 8 },
-  archiveCardTitle: { fontSize: 14, fontWeight: '600', color: C.text, marginBottom: 2 },
-  archiveCardSub:   { fontSize: 12, color: C.subText },
+  container: { padding: 20 },
+  empty: { fontSize: 16, color: C.subText, textAlign: 'center', marginVertical: 24 },
 });

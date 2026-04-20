@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Block, blockRegistry, registerBuiltInBlocks, PAGE_SCHEMA_SLUG, ContentEntry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
-import { createEntry, updateEntry, getEntry, getPageBySlug } from '@/app/actions';
+import { createEntry, updateEntry, getEntry, getPageBySlug, bulkUpdateStatus } from '@/app/actions';
 import { setClientHomePage } from '@/app/actions';
 import { BlocksEditor } from '@/components/blocks';
 
@@ -24,6 +24,7 @@ export default function PageEditorPage() {
   const [slug, setSlug] = useState('');
   const [slugIsManual, setSlugIsManual] = useState(false);
   const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<'draft' | 'published'>('draft');
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -53,6 +54,7 @@ export default function PageEditorPage() {
       setSlug((entryData.data?.slug as string) ?? '');
       setSlugIsManual(true);
       setDescription((entryData.data?.description as string) ?? '');
+      setStatus((entryData.status as 'draft' | 'published') ?? 'draft');
 
       // Load blocks from page entry data
       const blocksData = entryData.data?.blocks;
@@ -106,6 +108,13 @@ export default function PageEditorPage() {
       const { data: entry, error: entryErr } = await createEntry(PAGE_SCHEMA_SLUG, entryData);
       if (entryErr) { setSaving(false); setError(entryErr); return; }
       if (!entry?._id) { setSaving(false); setError('Failed to create page entry'); return; }
+
+      // Set status if published
+      if (status === 'published') {
+        const { error: statusErr } = await bulkUpdateStatus(PAGE_SCHEMA_SLUG, [entry._id], 'published');
+        if (statusErr) { setSaving(false); setError(statusErr); return; }
+      }
+
       setPageEntry(entry);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -113,9 +122,14 @@ export default function PageEditorPage() {
       const newSlug = (entry.data?.slug as string) ?? slug.trim();
       window.history.replaceState(null, '', `/clients/${clientId}/pages/${newSlug}`);
     } else if (pageEntry?._id) {
-      // Update page entry
+      // Update page entry with status
       const { error: entryErr } = await updateEntry(PAGE_SCHEMA_SLUG, pageEntry._id, entryData);
       if (entryErr) { setSaving(false); setError(entryErr); return; }
+
+      // Update status
+      const { error: statusErr } = await bulkUpdateStatus(PAGE_SCHEMA_SLUG, [pageEntry._id], status);
+      if (statusErr) { setSaving(false); setError(statusErr); return; }
+
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     }
@@ -196,6 +210,19 @@ export default function PageEditorPage() {
                 value={description}
                 onChange={e => setDescription(e.target.value)}
               />
+            </div>
+            <div className="flex gap-4 mb-3">
+              <div>
+                <label className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold block mb-1">Status</label>
+                <select
+                  className="field-input"
+                  value={status}
+                  onChange={e => setStatus(e.target.value as 'draft' | 'published')}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {pageEntry?._id && (

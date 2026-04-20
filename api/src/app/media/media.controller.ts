@@ -48,6 +48,7 @@ export class MediaController {
       url: result.url,
       mimeType: result.mimeType,
       fileSize: result.size,
+      status: 'published', // Publish media immediately so it's accessible via public API
     });
 
     this.eventEmitter.emit(

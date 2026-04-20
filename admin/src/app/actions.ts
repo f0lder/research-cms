@@ -182,7 +182,7 @@ export async function getClientLayout(clientId: string, schemaSlug: string) {
   if (schema.error || !schema.data) {
     return { error: schema.error || 'Schema not found'};
   }
-  return serverApi.get<{ schemaId: string; schemaSlug: string; blocks: Block[] }>(`/clients/${clientId}/layouts/${schema.data._id}`);
+  return serverApi.get<{ schemaId: string; schemaSlug: string; blocks: Block[] }>(`/clients/${clientId}/layouts/${schemaSlug}`);
 }
 
 export async function updateClientLayout(clientId: string, schemaSlug: string, blocks: Block[]) {
@@ -190,7 +190,7 @@ export async function updateClientLayout(clientId: string, schemaSlug: string, b
   if (schema.error || !schema.data) {
     return { error: schema.error || 'Schema not found'};
   }
-  return serverApi.put(`/clients/${clientId}/layouts/${schema.data._id}`, { blocks });
+  return serverApi.put(`/clients/${clientId}/layouts/${schemaSlug}`, { blocks });
 }
 
 // ── Media ──────────────────────────────────────────────────────────────────
