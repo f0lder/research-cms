@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSchemas } from '@/contexts/SchemaContext';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
+import { Button } from '@/components/ui/Button';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -32,6 +33,7 @@ export default function Sidebar() {
     pathname === '/schemas' ||
     pathname.startsWith('/schemas/create') ||
     pathname.startsWith('/schemas/edit');
+  const dashboardActive = pathname === '/';
   const usersActive = pathname.startsWith('/users');
   const clientsActive = pathname.startsWith('/clients');
   const mediaActive = pathname.startsWith('/media');
@@ -39,20 +41,26 @@ export default function Sidebar() {
   const webhooksActive = pathname.startsWith('/webhooks');
 
   const navItem = (active: boolean) =>
-    `flex items-center px-5 py-2.5 text-sm cursor-pointer border-l-2 transition-colors duration-100 ${
+    `flex items-center px-4 py-3 text-sm font-label uppercase tracking-widest cursor-pointer border-b-2 border-on-surface transition-all ${
       active
-        ? 'border-white text-white bg-zinc-800'
-        : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+        ? 'bg-primary text-white shadow-hard'
+        : 'border-on-surface text-on-surface hover:bg-surface-container'
     }`;
 
   return (
-    <aside className="w-52 min-h-screen bg-zinc-900 text-white font-mono flex flex-col shrink-0">
+    <aside className="w-64 min-h-screen bg-surface text-on-surface flex flex-col shrink-0 border-r-2 border-on-surface">
       {/* Logo */}
-      <div className="px-5 py-6 border-b border-zinc-800">
-        <span className="font-bold text-sm tracking-wide">CMS Admin</span>
+      <div className="px-6 py-6 border-b-2 border-on-surface">
+        <h2 className="text-label font-bold uppercase tracking-tighter">AdminConsole</h2>
+        <p className="text-code text-on-surface-variant text-xs mt-1">Headless Management</p>
       </div>
 
-      <nav className="flex-1 py-2">
+      <nav className="flex-1 overflow-y-auto">
+        {/* Dashboard */}
+        <Link href="/" className="block no-underline">
+          <div className={navItem(dashboardActive)}>Dashboard</div>
+        </Link>
+
         {/* Schemas */}
         <Link href="/schemas" className="block no-underline">
           <div className={navItem(schemasActive)}>Schemas</div>
@@ -62,20 +70,20 @@ export default function Sidebar() {
         <div>
           <button
             onClick={() => setContentOpen(o => !o)}
-            className={`w-full flex items-center justify-between px-5 py-2.5 text-sm cursor-pointer border-l-2 transition-colors duration-100 bg-transparent ${
+            className={`w-full flex items-center justify-between px-4 py-3 text-sm font-label uppercase tracking-widest cursor-pointer border-b-2 transition-all ${
               isOnContentRoute
-                ? 'border-white text-white'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                ? 'bg-primary text-white shadow-hard'
+                : 'border-on-surface text-on-surface hover:bg-surface-container'
             }`}
           >
             <span>Content</span>
-            <span className="text-[10px] text-zinc-600">{contentOpen ? '▲' : '▼'}</span>
+            <span className="text-xs">{contentOpen ? '▲' : '▼'}</span>
           </button>
 
           {contentOpen && (
-            <div className="bg-zinc-950">
+            <div className="bg-surface-container-low border-b-2 border-on-surface">
               {schemas.length === 0 ? (
-                <div className="px-5 py-2 pl-8 text-xs text-zinc-600">No post types yet</div>
+                <div className="px-6 py-2 text-caption text-on-surface-variant">No post types yet</div>
               ) : (
                 schemas.map(schema => {
                   const href = `/schemas/${schema.slug}`;
@@ -83,10 +91,10 @@ export default function Sidebar() {
                   return (
                     <Link key={schema.slug} href={href} className="block no-underline">
                       <div
-                        className={`px-5 py-2 pl-8 text-xs border-l-2 transition-colors duration-100 truncate ${
+                        className={`px-6 py-2 text-code text-xs border-l-2 border-on-surface transition-all truncate ${
                           active
-                            ? 'border-zinc-500 text-zinc-200 bg-zinc-800'
-                            : 'border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                            ? 'bg-surface-container text-on-surface font-semibold'
+                            : 'text-on-surface-variant hover:text-on-surface hover:bg-white'
                         }`}
                       >
                         {schema.name}
@@ -127,15 +135,17 @@ export default function Sidebar() {
 
       {/* User footer */}
       {user && (
-        <div className="px-5 py-4 border-t border-zinc-800">
-          <div className="text-xs text-white mb-0.5">{user.name}</div>
-          <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-3">{user.role}</div>
-          <button
+        <div className="px-6 py-6 border-t-2 border-on-surface">
+          <div className="text-label font-bold uppercase mb-1">{user.name}</div>
+          <div className="text-code text-on-surface-variant text-xs uppercase tracking-widest mb-4">{user.role}</div>
+          <Button
+            variant="secondary"
+            size="md"
             onClick={handleLogout}
-            className="w-full py-1.5 text-xs text-zinc-500 border border-zinc-700 bg-transparent cursor-pointer hover:border-zinc-500 hover:text-zinc-300 transition-colors font-mono"
+            className="w-full"
           >
             Log out
-          </button>
+          </Button>
         </div>
       )}
     </aside>

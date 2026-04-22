@@ -602,3 +602,20 @@ export interface Webhook {
   lastError?: string | null;
   createdAt?: string;
 }
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+
+export enum UserRole {
+  ADMIN = 'admin',
+  EDITOR = 'editor',
+  VIEWER = 'viewer',
+}
+
+export interface User {
+  _id?: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  isActive: boolean;
+  createdAt?: string;
+}

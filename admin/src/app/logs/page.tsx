@@ -5,45 +5,44 @@ import { LogEntry } from '@research-cms/shared-types';
 import { formatDateTime } from '@/lib/utils';
 import { getLogs, getLogTags, clearLogs } from '@/app/actions';
 import { ActivityFeed } from '@/components/ActivityFeed';
+import { Button, TextField, Heading, Text, Badge } from '@/components/ui';
 
 // ── Tag styling ───────────────────────────────────────────────────────────────
-const TAG_STYLES: Record<string, string> = {
-  error:    'bg-red-100 text-red-700',
-  auth:     'bg-blue-100 text-blue-700',
-  login:    'bg-blue-50 text-blue-600',
-  register: 'bg-purple-100 text-purple-700',
-  content:  'bg-green-100 text-green-700',
-  create:   'bg-green-50 text-green-600',
-  update:   'bg-yellow-100 text-yellow-700',
-  delete:   'bg-red-50 text-red-600',
-  schema:   'bg-orange-100 text-orange-700',
-  'api-key':'bg-zinc-200 text-zinc-700',
-  'public-api': 'bg-indigo-100 text-indigo-700',
+const TAG_COLOR_MAP: Record<string, 'default' | 'error' | 'warning' | 'success'> = {
+  error:    'error',
+  auth:     'default',
+  login:    'default',
+  register: 'default',
+  content:  'success',
+  create:   'success',
+  update:   'warning',
+  delete:   'error',
+  schema:   'default',
+  'api-key': 'default',
+  'public-api': 'default',
 };
 
 function TagBadge({ tag }: { tag: string }) {
-  const cls = TAG_STYLES[tag] ?? 'bg-zinc-100 text-zinc-600';
-  return (
-    <span className={`text-[10px] font-mono px-1.5 py-0.5 ${cls}`}>
-      {tag}
-    </span>
-  );
+  const variant = TAG_COLOR_MAP[tag] ?? 'default';
+  return <Badge variant={variant}>{tag}</Badge>;
 }
 
 // ── Meta viewer ───────────────────────────────────────────────────────────────
 function MetaCell({ meta }: { meta?: Record<string, unknown> | null }) {
   const [open, setOpen] = useState(false);
-  if (!meta || Object.keys(meta).length === 0) return <span className="text-zinc-300">—</span>;
+  if (!meta || Object.keys(meta).length === 0) return <Text variant="caption" color="secondary">—</Text>;
   return (
     <div>
-      <button
+      <Button
         onClick={() => setOpen(o => !o)}
-        className="text-[10px] text-zinc-400 hover:text-zinc-600 font-mono border border-zinc-200 px-1.5 py-0.5"
+        variant="ghost"
+        size="sm"
+        className="text-code"
       >
         {open ? 'hide' : 'meta'}
-      </button>
+      </Button>
       {open && (
-        <pre className="mt-1 text-[10px] font-mono text-zinc-600 bg-zinc-50 border border-zinc-100 p-2 whitespace-pre-wrap max-w-xs">
+        <pre className="mt-1 text-code text-on-surface-variant bg-surface-container border-2 border-on-surface p-2 whitespace-pre-wrap max-w-xs">
           {JSON.stringify(meta, null, 2)}
         </pre>
       )}
@@ -106,28 +105,27 @@ export default function LogsPage() {
     <div className="page">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="page-heading">Logs</h1>
-          <p className="page-sub">{total.toLocaleString()} entries total</p>
+          <Heading level={1} className="mb-1">Logs</Heading>
+          <Text variant="caption" color="secondary">{total.toLocaleString()} entries total</Text>
         </div>
-        <button onClick={handleClear} className="btn-danger text-xs px-3 py-1.5">
+        <Button onClick={handleClear} variant="secondary" size="sm">
           Clear all
-        </button>
+        </Button>
       </div>
 
       {/* Activity Feed */}
-      <div className="mb-8 border border-zinc-200 rounded-md p-6 bg-white">
-        <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+      <div className="mb-8 border-2 border-on-surface p-6 bg-surface">
+        <Heading level={2} className="mb-4">Recent Activity</Heading>
         <ActivityFeed />
       </div>
 
       {/* Filters */}
       <div className="flex gap-3 mb-5 items-center flex-wrap">
-        <input
-          type="text"
+        <TextField
           placeholder="Search messages…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="field-input w-64"
+          className="w-64"
         />
         <div className="w-72">
           <Select<Option, true>
@@ -147,31 +145,32 @@ export default function LogsPage() {
           />
         </div>
         {(selectedTags.length > 0 || search) && (
-          <button
+          <Button
             onClick={() => { setSelectedTags([]); setSearch(''); }}
-            className="btn-ghost text-xs px-3 py-1.5"
+            variant="ghost"
+            size="sm"
           >
             Clear filters
-          </button>
+          </Button>
         )}
-        <button onClick={load} className="btn-secondary text-xs px-3 py-1.5 ml-auto">
+        <Button onClick={load} variant="secondary" size="sm" className="ml-auto">
           ↺ Refresh
-        </button>
+        </Button>
       </div>
 
       {error && <div className="alert-error">{error}</div>}
 
       {/* Table */}
       {loading ? (
-        <div className="text-sm text-zinc-400 py-8">Loading…</div>
+        <div className="text-sm text-on-surface-variant py-8">Loading…</div>
       ) : entries.length === 0 ? (
-        <div className="border-2 border-dashed border-zinc-200 p-12 text-center">
-          <p className="text-zinc-400 text-sm">No log entries found.</p>
+        <div className="border-2 border-dashed border-on-surface p-12 text-center">
+          <Text variant="caption" color="secondary">No log entries found.</Text>
         </div>
       ) : (
         <>
-          <div className="border border-zinc-200">
-            <div className="grid grid-cols-[160px_1fr_200px_100px] gap-0 bg-zinc-50 border-b border-zinc-200 px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+          <div className="border-2 border-on-surface">
+            <div className="grid grid-cols-[160px_1fr_200px_100px] gap-0 bg-surface-container border-b-2 border-on-surface px-4 py-2.5 text-code font-bold text-on-surface-variant uppercase">
               <span>Time</span>
               <span>Message</span>
               <span>Tags</span>
@@ -181,12 +180,12 @@ export default function LogsPage() {
             {entries.map(entry => (
               <div
                 key={entry._id}
-                className="grid grid-cols-[160px_1fr_200px_100px] gap-0 px-4 py-3 border-b border-zinc-100 last:border-0 hover:bg-zinc-50 items-start"
+                className="grid grid-cols-[160px_1fr_200px_100px] gap-0 px-4 py-3 border-b border-on-surface last:border-0 hover:bg-surface-container items-start"
               >
-                <span className="text-[11px] text-zinc-400 whitespace-nowrap pt-0.5">
+                <Text variant="code" color="secondary" className="whitespace-nowrap pt-0.5">
                   {entry.createdAt ? formatDateTime(entry.createdAt) : '—'}
-                </span>
-                <span className="text-sm text-zinc-800 pr-4">{entry.message}</span>
+                </Text>
+                <Text variant="body-md" className="pr-4">{entry.message}</Text>
                 <div className="flex flex-wrap gap-1 pr-4">
                   {entry.tags.map(tag => <TagBadge key={tag} tag={tag} />)}
                 </div>
@@ -197,22 +196,24 @@ export default function LogsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center gap-2 mt-4 text-xs text-zinc-500">
-              <button
+            <div className="flex items-center gap-2 mt-4">
+              <Button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="btn-ghost px-3 py-1.5 disabled:opacity-40"
+                variant="ghost"
+                size="sm"
               >
                 ← Prev
-              </button>
-              <span>Page {page + 1} of {totalPages}</span>
-              <button
+              </Button>
+              <Text variant="caption" color="secondary">Page {page + 1} of {totalPages}</Text>
+              <Button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
-                className="btn-ghost px-3 py-1.5 disabled:opacity-40"
+                variant="ghost"
+                size="sm"
               >
                 Next →
-              </button>
+              </Button>
             </div>
           )}
         </>

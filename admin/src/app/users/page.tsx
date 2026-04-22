@@ -1,18 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { User } from '@research-cms/shared-types';
 import { formatDate } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUsers, updateUserRole } from '@/app/actions';
 import { ListSkeleton } from '@/components/skeletons';
-
-interface UserEntry {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-  createdAt?: string;
-}
 
 const ROLES = ['admin', 'editor', 'viewer'];
 
@@ -24,7 +16,7 @@ const roleBg: Record<string, string> = {
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState<UserEntry[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState<string | null>(null);
@@ -32,7 +24,7 @@ export default function UsersPage() {
   useEffect(() => {
     (async () => {
       const { data, error: err } = await getUsers();
-      if (data) setUsers(data);
+      if (data) setUsers(data as User[]);
       if (err) setError(err);
       setLoading(false);
     })();
@@ -41,7 +33,7 @@ export default function UsersPage() {
   const handleRoleChange = async (userId: string, role: string) => {
     setUpdating(userId);
     const { data, error: err } = await updateUserRole(userId, role);
-    if (data) setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: data.role } : u));
+    if (data) setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: data.role as User['role'] } : u));
     if (err) alert(err);
     setUpdating(null);
   };
@@ -83,7 +75,7 @@ export default function UsersPage() {
                 <select
                   value={u.role}
                   disabled={updating === u._id}
-                  onChange={e => handleRoleChange(u._id, e.target.value)}
+                  onChange={e => handleRoleChange(u._id || '', e.target.value)}
                   className="field-input w-auto py-1.5 cursor-pointer"
                 >
                   {ROLES.map(r => <option key={r} value={r}>{r}</option>)}

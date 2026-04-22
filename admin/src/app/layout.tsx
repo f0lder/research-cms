@@ -2,6 +2,15 @@ import './global.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SchemaProvider } from '@/contexts/SchemaContext';
 import { initializeAdmin } from '@/lib/admin-init';
+import { Inter } from 'next/font/google';
+
+// Font imports
+const inter = Inter({
+  variable: '--font-body',
+  weight: ['400', '500', '600', '700', '900'],
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 // Initialize admin on startup
 initializeAdmin();
@@ -17,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>
         <AuthProvider>
           <SchemaProvider>{children}</SchemaProvider>

@@ -126,8 +126,8 @@ export default function ClientDetailPage() {
     return (
       <div className="page">
         <div className="mb-6 space-y-2 w-1/2">
-          <div className="h-8 bg-zinc-200 rounded animate-pulse" />
-          <div className="h-4 bg-zinc-100 rounded animate-pulse" />
+          <div className="h-8 bg-surface-container rounded animate-pulse" />
+          <div className="h-4 bg-surface-container-low rounded animate-pulse" />
         </div>
         <SectionsSkeleton />
       </div>
@@ -155,18 +155,18 @@ export default function ClientDetailPage() {
         <div className="min-w-0">
           <h1 className="page-heading">{client.name}</h1>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
-            <span className="text-xs text-zinc-400">
-              <span className="text-zinc-600 font-semibold">{client.hits.toLocaleString()}</span> hits
+            <span className="text-code text-on-surface-variant">
+              <span className="text-on-surface font-bold">{client.hits.toLocaleString()}</span> hits
             </span>
-            {client.lastUsedAt && <span className="text-xs text-zinc-400 hidden sm:inline">· last used {formatDateTime(client.lastUsedAt)}</span>}
-            {!client.active && <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 font-mono">inactive</span>}
+            {client.lastUsedAt && <span className="text-code text-on-surface-variant hidden sm:inline">· last used {formatDateTime(client.lastUsedAt)}</span>}
+            {!client.active && <span className="text-code bg-red-100 text-red-600 px-2 py-1 font-bold uppercase">inactive</span>}
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-          <Link href={adminRoutes.clientUsage(id)} className="btn-primary text-xs px-3 py-1.5 no-underline text-center">
+          <Link href={adminRoutes.clientUsage(id)} className="btn-primary text-code px-3 py-2 no-underline text-center uppercase">
             Usage
           </Link>
-          <button onClick={handleDeleteClient} disabled={deletingClient} className="btn-danger text-xs px-3 py-1.5 whitespace-nowrap">
+          <button onClick={handleDeleteClient} disabled={deletingClient} className="btn-danger text-code px-3 py-2 whitespace-nowrap uppercase">
             {deletingClient ? 'Deleting…' : 'Delete client'}
           </button>
         </div>
@@ -174,23 +174,23 @@ export default function ClientDetailPage() {
 
       {/* ── API Key ─────────────────────────────────── */}
       <section className="section">
-        <p className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold mb-3">API Key</p>
+        <p className="text-code text-on-surface-variant uppercase tracking-widest font-bold mb-3">API Key</p>
         <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
-          <code className="text-[11px] font-mono text-zinc-500 cursor-pointer hover:text-zinc-700 flex-1 truncate px-2 py-1.5 bg-zinc-50 rounded"
+          <code className="text-code text-on-surface-variant cursor-pointer hover:text-on-surface flex-1 truncate px-3 py-2 bg-surface-container-low font-bold uppercase"
             onClick={() => setRevealKey(r => !r)} title={revealKey ? 'Click to hide' : 'Click to reveal'}>
             {revealKey ? client.key : maskKey(client.key)}
           </code>
-          <button onClick={copyKey} className="shrink-0 text-[10px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-0.5 bg-white hover:border-zinc-400 transition-colors font-mono whitespace-nowrap">
+          <button onClick={copyKey} className="shrink-0 text-code text-on-surface-variant hover:text-on-surface border-2 border-on-surface px-2 py-1 bg-white hover:bg-surface-container transition-all font-bold uppercase whitespace-nowrap">
             {copiedKey ? '✓ copied' : 'copy'}
           </button>
         </div>
-        <p className="mt-2 text-[11px] text-zinc-400">Pass as <code className="font-mono">X-API-Key</code> header on all public API requests.</p>
+        <p className="mt-2 text-code text-on-surface-variant">Pass as <code className="font-bold">X-API-Key</code> header on all public API requests.</p>
       </section>
 
       {/* ── Schema access ───────────────────────────── */}
       <section className="section">
-        <p className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold mb-3">Schema Access</p>
-        <p className="text-xs text-zinc-400 mb-3">Leave empty to allow all content types. Select specific types to restrict.</p>
+        <p className="text-code text-on-surface-variant uppercase tracking-widest font-bold mb-3">Schema Access</p>
+        <p className="text-body-md text-on-surface-variant mb-3">Leave empty to allow all content types. Select specific types to restrict.</p>
         <div className="flex flex-col md:flex-row md:items-start gap-3">
           <div className="flex-1 min-w-0">
             <Select<Option, true>
@@ -199,18 +199,18 @@ export default function ClientDetailPage() {
               placeholder="All schemas (unrestricted)" noOptionsMessage={() => 'No schemas found'}
               classNamePrefix="rs"
               styles={{
-                control: base => ({ ...base, minHeight: 32, fontSize: 12, fontFamily: 'monospace', borderColor: '#e4e4e7', borderRadius: 2, boxShadow: 'none', '&:hover': { borderColor: '#a1a1aa' } }),
-                menu: base => ({ ...base, fontSize: 12, fontFamily: 'monospace', borderRadius: 2, zIndex: 30 }),
-                option: (base, s) => ({ ...base, backgroundColor: s.isFocused ? '#f4f4f5' : 'white', color: '#18181b' }),
-                multiValue: base => ({ ...base, backgroundColor: '#f4f4f5', borderRadius: 2 }),
-                multiValueLabel: base => ({ ...base, fontSize: 11, color: '#3f3f46' }),
-                multiValueRemove: base => ({ ...base, '&:hover': { backgroundColor: '#e4e4e7', color: '#18181b' } }),
-                placeholder: base => ({ ...base, color: '#a1a1aa' }),
+                control: base => ({ ...base, minHeight: 40, fontSize: 13, fontFamily: 'Inter', fontWeight: 600, borderColor: '#000000', borderWidth: 2, borderRadius: 0, boxShadow: 'none', '&:hover': { borderColor: '#000000' } }),
+                menu: base => ({ ...base, fontSize: 13, fontFamily: 'Inter', fontWeight: 600, borderRadius: 0, zIndex: 30 }),
+                option: (base, s) => ({ ...base, backgroundColor: s.isFocused ? '#F5F5F5' : '#FFFFFF', color: '#000000' }),
+                multiValue: base => ({ ...base, backgroundColor: '#F5F5F5', borderRadius: 0 }),
+                multiValueLabel: base => ({ ...base, fontSize: 12, color: '#000000', fontWeight: 600 }),
+                multiValueRemove: base => ({ ...base, '&:hover': { backgroundColor: '#E5E5E5', color: '#000000' } }),
+                placeholder: base => ({ ...base, color: '#5a4136' }),
               }}
             />
           </div>
           {schemasDirty && (
-            <button onClick={handleSaveSchemas} disabled={savingSchemas} className="btn-primary text-xs px-3 py-1.5 shrink-0">
+            <button onClick={handleSaveSchemas} disabled={savingSchemas} className="btn-primary text-code px-3 py-2 shrink-0 uppercase">
               {savingSchemas ? 'Saving…' : savedSchemas ? 'Saved ✓' : 'Save'}
             </button>
           )}
@@ -221,30 +221,30 @@ export default function ClientDetailPage() {
       <section className="section">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
           <div>
-            <p className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold">Pages</p>
-            <p className="text-xs text-zinc-400 mt-0.5">Custom pages with a block editor, served via the public API.</p>
+            <p className="text-code text-on-surface-variant uppercase tracking-widest font-bold">Pages</p>
+            <p className="text-body-md text-on-surface-variant mt-1">Custom pages with a block editor, served via the public API.</p>
           </div>
-          <Link href={adminRoutes.clientPageNew(id)} className="btn-primary text-xs px-3 py-1.5 no-underline text-center md:text-left whitespace-nowrap">
+          <Link href={adminRoutes.clientPageNew(id)} className="btn-primary text-code px-3 py-2 no-underline text-center md:text-left whitespace-nowrap uppercase">
             + New page
           </Link>
         </div>
 
-        {pagesError && <div className="alert-error mb-3 text-xs">{pagesError}</div>}
+        {pagesError && <div className="alert-error mb-3 text-code">{pagesError}</div>}
 
         {pages.length === 0 && !pagesError ? (
-          <p className="text-xs text-zinc-400 pt-1">No pages yet.</p>
+          <p className="text-body-md text-on-surface-variant pt-1">No pages yet.</p>
         ) : (
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y-2 divide-on-surface">
             {pageTree.map(({ page, depth }) => {
               const isHome = client.homePage === page._id;
               return (
                 <div key={page._id} className="flex items-center justify-between py-3" style={{ paddingLeft: depth * 20 }}>
                   <div className="flex items-center gap-2 flex-wrap min-w-0">
-                    {depth > 0 && <span className="text-zinc-300 text-xs">└</span>}
-                    <span className="text-sm text-zinc-700 truncate font-mono">{(page.data?.title as string) ?? page._id}</span>
+                    {depth > 0 && <span className="text-on-surface-variant text-code">└</span>}
+                    <span className="text-body-md text-on-surface truncate font-bold uppercase">{(page.data?.title as string) ?? page._id}</span>
                     {(() => {
                       const blocks = Array.isArray(page.data?.blocks) ? page.data.blocks : [];
-                      return <span className="text-[10px] text-zinc-300 font-mono">{blocks.length}b</span>;
+                      return <span className="text-code text-on-surface-variant font-bold">{blocks.length}b</span>;
                     })()}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
@@ -285,29 +285,29 @@ export default function ClientDetailPage() {
 
       {/* ── Block layouts ───────────────────────────── */}
       <section className="section">
-        <p className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold mb-1">Block Layouts</p>
-        <p className="text-xs text-zinc-400 mb-4">
+        <p className="text-code text-on-surface-variant uppercase tracking-widest font-bold mb-1">Block Layouts</p>
+        <p className="text-body-md text-on-surface-variant mb-4">
           Customise which fields are visible and in what order for this client.
         </p>
         {visibleSchemas.length === 0 ? (
-          <p className="text-xs text-zinc-400">No schemas available.</p>
+          <p className="text-body-md text-on-surface-variant">No schemas available.</p>
         ) : (
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y-2 divide-on-surface">
             {visibleSchemas.map(schema => {
               const hasCustom = client.layouts.some(l => String(l.schemaId) === schema._id);
               return (
                 <div key={schema.slug} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 py-3">
                   <div className="min-w-0">
-                    <span className="text-sm text-zinc-700">{schema.name}</span>
-                    <span className="ml-2 text-[10px] text-zinc-400 font-mono">{schema.slug}</span>
+                    <span className="text-body-md text-on-surface font-bold uppercase">{schema.name}</span>
+                    <span className="ml-2 text-code text-on-surface-variant font-bold uppercase">{schema.slug}</span>
                     {hasCustom
-                      ? <span className="ml-2 text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 font-mono whitespace-nowrap">customised</span>
-                      : <span className="ml-2 text-[10px] text-zinc-400 font-mono">not customised</span>
+                      ? <span className="ml-2 text-code bg-surface-container text-on-surface border-2 border-on-surface px-2 py-1 font-bold uppercase whitespace-nowrap">customised</span>
+                      : <span className="ml-2 text-code text-on-surface-variant font-bold uppercase">not customised</span>
                     }
                   </div>
                   {client._id && (
                     <Link href={adminRoutes.clientLayout(client._id, schema.slug)}
-                      className="text-[11px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-1 bg-white hover:border-zinc-400 transition-colors font-mono no-underline text-center md:text-left whitespace-nowrap">
+                      className="text-code text-on-surface-variant hover:text-on-surface border-2 border-on-surface px-2 py-1 bg-white hover:bg-surface-container transition-all font-bold uppercase no-underline text-center md:text-left whitespace-nowrap">
                       Edit layout
                     </Link>
                   )}

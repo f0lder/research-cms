@@ -6,7 +6,7 @@
     "lib": [
       "ES2020"
     ],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "declaration": true,
     "outDir": "../../dist/out-tsc",
     "rootDir": "src"

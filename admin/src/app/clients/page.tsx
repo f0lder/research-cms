@@ -63,10 +63,10 @@ export default function ClientsPage() {
     <div className="page">
       <div className="mb-8 flex items-center justify-between">
         <div className="space-y-2">
-          <div className="h-8 bg-zinc-200 rounded w-48 animate-pulse" />
-          <div className="h-4 bg-zinc-100 rounded w-32 animate-pulse" />
+          <div className="h-8 bg-surface-container rounded w-48 animate-pulse" />
+          <div className="h-4 bg-surface-container-low rounded w-32 animate-pulse" />
         </div>
-        <div className="h-10 bg-zinc-200 rounded w-32 animate-pulse" />
+        <div className="h-10 bg-surface-container rounded w-32 animate-pulse" />
       </div>
       <ListSkeleton items={5} />
     </div>
@@ -89,7 +89,7 @@ export default function ClientsPage() {
           placeholder="Client name (e.g. iOS App, Website)"
           value={newName}
           onChange={e => setNewName(e.target.value)}
-          className="field-input flex-1"
+          className="field-input flex-1 uppercase text-xs"
         />
         <button type="submit" disabled={creating || !newName.trim()} className="btn-primary whitespace-nowrap">
           {creating ? 'Creating…' : 'Create client'}
@@ -98,35 +98,35 @@ export default function ClientsPage() {
 
       {/* Clients list */}
       {clients.length === 0 ? (
-        <div className="border-2 border-dashed border-zinc-200 p-12 text-center">
-          <p className="text-zinc-400 text-sm">No clients yet. Create one above.</p>
+        <div className="border-2 border-dashed border-on-surface p-12 text-center">
+          <p className="text-on-surface-variant text-sm">No clients yet. Create one above.</p>
         </div>
       ) : (
-        <div className="border border-zinc-200 divide-y divide-zinc-100">
+        <div className="border-2 border-on-surface divide-y-2 divide-on-surface">
           {clients.map(client => {
             const isRevealed = revealedId === client._id;
             const isCopied = copiedId === client._id;
 
             return (
-              <div key={client._id} className="px-3 md:px-4 py-4 hover:bg-zinc-50">
+              <div key={client._id} className="px-3 md:px-4 py-4 hover:bg-surface-container">
                 <div className="space-y-3 md:space-y-0 md:flex md:items-center md:gap-4 md:flex-wrap">
                   {/* Name → links to detail */}
                   <div className="min-w-36">
                     <Link
                       href={adminRoutes.clientDetail(client._id!)}
-                      className="text-sm font-medium text-zinc-800 hover:text-zinc-500 no-underline"
+                      className="text-body-md font-bold text-on-surface hover:text-primary no-underline uppercase"
                     >
                       {client.name}
                     </Link>
                     {!client.active && (
-                      <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 font-mono">inactive</span>
+                      <span className="ml-2 text-code bg-red-100 text-red-600 px-2 py-1 font-bold uppercase">inactive</span>
                     )}
                   </div>
 
                   {/* Key value */}
                   <div className="flex items-center gap-2 flex-1 min-w-0 md:flex-1">
                     <code
-                      className="text-[11px] font-mono text-zinc-500 truncate cursor-pointer hover:text-zinc-700 flex-1"
+                      className="text-code text-on-surface-variant truncate cursor-pointer hover:text-on-surface flex-1"
                       onClick={() => setRevealedId(isRevealed ? null : (client._id ?? null))}
                       title={isRevealed ? 'Click to hide' : 'Click to reveal'}
                     >
@@ -134,15 +134,15 @@ export default function ClientsPage() {
                     </code>
                     <button
                       onClick={() => copyKey(client)}
-                      className="shrink-0 text-[10px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-0.5 bg-white hover:border-zinc-400 transition-colors font-mono"
+                      className="shrink-0 text-code text-on-surface-variant hover:text-on-surface border-2 border-on-surface px-2 py-1 bg-white hover:bg-surface-container transition-all font-bold uppercase"
                     >
                       {isCopied ? '✓' : 'copy'}
                     </button>
                   </div>
 
                   {/* Hits + last used */}
-                  <div className="text-xs text-zinc-400 font-mono shrink-0">
-                    <span className="text-zinc-600 font-semibold">{client.hits.toLocaleString()}</span> hits
+                  <div className="text-code text-on-surface-variant shrink-0">
+                    <span className="text-on-surface font-bold">{client.hits.toLocaleString()}</span> hits
                     {client.lastUsedAt && <span className="ml-2 hidden md:inline">· {formatDateTime(client.lastUsedAt)}</span>}
                   </div>
 
@@ -150,19 +150,19 @@ export default function ClientsPage() {
                   {client.allowedSchemas.length > 0 && (
                     <div className="flex gap-1 flex-wrap">
                       {client.allowedSchemas.slice(0, 3).map(slug => (
-                        <span key={slug} className="text-[10px] bg-zinc-100 text-zinc-600 px-2 py-0.5 font-mono">
+                        <span key={slug} className="text-code bg-surface-container text-on-surface-variant px-2 py-1 font-bold uppercase">
                           {slug}
                         </span>
                       ))}
                       {client.allowedSchemas.length > 3 && (
-                        <span className="text-[10px] text-zinc-400">+{client.allowedSchemas.length - 3}</span>
+                        <span className="text-code text-on-surface-variant">+{client.allowedSchemas.length - 3}</span>
                       )}
                     </div>
                   )}
 
                   {/* Custom layouts badge */}
                   {client.layouts.length > 0 && (
-                    <span className="text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 font-mono whitespace-nowrap">
+                    <span className="text-code bg-surface-container text-on-surface border-2 border-on-surface px-2 py-1 font-bold uppercase whitespace-nowrap">
                       {client.layouts.length} layout{client.layouts.length !== 1 ? 's' : ''}
                     </span>
                   )}
@@ -171,14 +171,14 @@ export default function ClientsPage() {
                   <div className="flex items-center gap-2 md:ml-auto shrink-0">
                     <Link
                       href={adminRoutes.clientDetail(client._id!)}
-                      className="flex-1 md:flex-initial text-center md:text-left text-[11px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-1 bg-white hover:border-zinc-400 transition-colors font-mono no-underline"
+                      className="flex-1 md:flex-initial text-center md:text-left text-code text-on-surface-variant hover:text-on-surface border-2 border-on-surface px-2 py-1 bg-white hover:bg-surface-container transition-all font-bold uppercase no-underline"
                     >
                       Configure
                     </Link>
                     <button
                       onClick={() => client._id && handleDelete(client._id, client.name)}
                       disabled={deletingId === client._id}
-                      className="btn-danger text-xs px-3 py-1 flex-initial"
+                      className="btn-danger text-code px-3 py-1 flex-initial"
                     >
                       {deletingId === client._id ? '…' : 'Delete'}
                     </button>
@@ -192,8 +192,8 @@ export default function ClientsPage() {
 
       {/* Usage example */}
       <div className="box-info">
-        <p className="font-semibold text-zinc-600 mb-2">Usage example</p>
-        <pre className="font-mono text-[11px] whitespace-pre-wrap">{`curl http://localhost:3000/public/<schema-slug> \\
+        <p className="font-bold text-on-surface-variant mb-2 uppercase text-code">Usage example</p>
+        <pre className="font-code text-code whitespace-pre-wrap uppercase">{`curl http://localhost:3000/public/<schema-slug> \
   -H "X-API-Key: <client-key>"`}</pre>
       </div>
     </div>
