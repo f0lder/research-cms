@@ -29,7 +29,9 @@ async function apiRequest<T>(
     const response = await fetch(`${API_URL}${endpoint}`, config);
 
     if (response.status === 401) {
-      if (typeof window !== 'undefined') {
+      // Don't redirect from /login or /register (already on public routes)
+      const isPublicPage = typeof window !== 'undefined' && ['/login', '/register'].includes(window.location.pathname);
+      if (!isPublicPage && typeof window !== 'undefined') {
         window.location.href = '/login';
       }
       return { error: 'Unauthorized' };

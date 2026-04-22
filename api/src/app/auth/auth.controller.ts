@@ -20,7 +20,8 @@ export class AuthController {
   ) {
     const result = await this.authService.register(body.email, body.password, body.name);
     if ('error' in result) {
-      return res.status(400).json(result);
+      res.status(400).json(result);
+      return;
     }
 
     // Create session
@@ -32,7 +33,7 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    return res.json({ user: result.user });
+    res.json({ user: result.user });
   }
 
   @Post('login')
@@ -42,7 +43,8 @@ export class AuthController {
   ) {
     const result = await this.authService.login(body.email, body.password);
     if ('error' in result) {
-      return res.status(401).json(result);
+      res.status(401).json(result);
+      return;
     }
 
     // Create session
@@ -54,7 +56,7 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    return res.json({ user: result.user });
+    res.json({ user: result.user });
   }
 
   @UseGuards(SessionGuard)
@@ -85,7 +87,7 @@ export class AuthController {
       this.sessionService.invalidateSession(sessionId).catch(console.error);
     }
     res.clearCookie('session');
-    return res.json({ success: true });
+    res.json({ success: true });
   }
 }
 

@@ -5,38 +5,36 @@ const PUBLIC_ROUTES = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get('token')?.value;
-
-  // ── Unauthenticated: redirect to login ────────────────────────────────────
-  if (!token) {
-    if (PROTECTED_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'))) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+  
+  // Skip middleware for data requests and static assets
+  if (pathname.startsWith('/_next') || pathname.includes('/__') || pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
 
-  // ── Authenticated: redirect away from login/register ──────────────────────
-  if (PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'))) {
-    return NextResponse.redirect(new URL('/schemas', request.url));
+  const session = request.cookies.get('session')?.value;
+
+  // ── No session: protect routes, allow public routes ────────────────────────
+  if (!session) {
+    // Allow /login and /register without session
+    if (PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/login/') || pathname.startsWith('/register/')) {
+      return NextResponse.next();
+    }
+    
+    // Redirect everything else to login (/ and all protected routes)
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Redirect bare / to /schemas when authenticated
-  if (pathname === '/') {
-    return NextResponse.redirect(new URL('/schemas', request.url));
+  // ── Session exists: allow protected routes, redirect public routes to / ────
+  if (pathname === '/login' || pathname === '/register' || pathname.startsWith('/login/') || pathname.startsWith('/register/')) {
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
+  // Authenticated user on any other route (/, /schemas, etc.) → allow it
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - api/ (API routes)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|api/).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

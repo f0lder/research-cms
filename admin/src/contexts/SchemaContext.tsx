@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 import { getAllSchemas, getSystemSchemas } from '@/app/actions';
+import { useAuth } from './AuthContext';
 
 interface SchemaContextType {
   schemas: ContentTypeDefinition[];
@@ -18,6 +19,7 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
   const [systemSchemas, setSystemSchemas] = useState<ContentTypeDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, isLoading: authLoading } = useAuth();
   
   // Track in-flight fetch to prevent duplicate requests in StrictMode
   const fetchingRef = useRef(false);
@@ -54,8 +56,15 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Only fetch schemas if user is authenticated
+    if (authLoading) return; // Wait for auth check
+    if (!user) {
+      setLoading(false);
+      return; // Don't fetch if not authenticated
+    }
+    
     fetchSchemas();
-  }, []);
+  }, [user, authLoading]);
 
   return (
     <SchemaContext.Provider value={{ schemas, systemSchemas, loading, error, refetch: fetchSchemas }}>

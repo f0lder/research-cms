@@ -1,6 +1,4 @@
 'use client';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
@@ -11,17 +9,16 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
-  const router = useRouter();
 
-  useEffect(() => {
-    if (isLoading) return;
-    if (!user) { router.push('/login'); return; }
-    if (allowedRoles && !allowedRoles.includes(user.role)) router.push('/schemas');
-  }, [user, isLoading, router, allowedRoles]);
+  // Middleware handles redirects, just show loading or render
+  if (isLoading) {
+    return <div className="p-10 font-mono text-sm text-zinc-400">Loading…</div>;
+  }
 
-  if (isLoading) return <div className="p-10 font-mono text-sm text-zinc-400">Loading…</div>;
-  if (!user) return null;
-  if (allowedRoles && !allowedRoles.includes(user.role)) return null;
+  // Middleware guarantees user exists here, but check roles if specified
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    return <div className="p-10 font-mono text-sm text-zinc-400">Access denied.</div>;
+  }
 
   return <>{children}</>;
 }
