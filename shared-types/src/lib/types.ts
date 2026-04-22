@@ -1,4 +1,4 @@
-
+import { v4 as uuidv4 } from 'uuid';
 
 /** Built-in field types — well-typed, autocompleted. */
 export type BuiltInFieldType =
@@ -291,7 +291,6 @@ export class BlockRegistry {
    * Uses the definition's defaultConfig() to populate specific fields.
    */
   getDefaultConfig(type: string): Block {
-    const { v4: uuidv4 } = require('uuid');
     const def = this.get(type);
     if (!def) throw new Error(`Unknown block type: "${type}"`);
     return {
