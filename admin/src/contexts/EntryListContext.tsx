@@ -107,8 +107,11 @@ export function EntryListProvider({ children }: { children: ReactNode }) {
 	const handleDuplicate = useCallback(
 		async (slug: string, id: string) => {
 			const res = await duplicateEntry(slug, id);
-			if (res.error) alert(res.error);
-			else alert('Entry duplicated!');
+			if (res.error) {
+				alert(res.error);
+				return;
+			}
+			if (res.data) setEntries(prev => [res.data as ContentEntry, ...prev]);
 		},
 		[]
 	);

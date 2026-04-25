@@ -1,6 +1,7 @@
 import './global.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SchemaProvider } from '@/contexts/SchemaContext';
+import { SettingsProvider } from '@/contexts/SettingsContext';
 import { initializeAdmin } from '@/lib/admin-init';
 import { Inter } from 'next/font/google';
 
@@ -29,7 +30,9 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body>
         <AuthProvider>
-          <SchemaProvider>{children}</SchemaProvider>
+          <SettingsProvider>
+            <SchemaProvider>{children}</SchemaProvider>
+          </SettingsProvider>
         </AuthProvider>
       </body>
     </html>

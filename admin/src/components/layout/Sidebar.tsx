@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSchemas } from '@/contexts/SchemaContext';
+import { useSetting, useSettings } from '@/contexts/SettingsContext';
+import { Skeleton } from '@/components/skeletons';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 import { Button } from '@/components/ui/Button';
 
@@ -12,6 +14,8 @@ export default function Sidebar() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { schemas } = useSchemas();
+  const siteName = useSetting<string>('site.name', 'AdminConsole');
+  const { loading: settingsLoading } = useSettings();
 
   const [contentOpen, setContentOpen] = useState(false);
 
@@ -52,7 +56,9 @@ export default function Sidebar() {
     <aside className="w-64 min-h-screen bg-surface text-on-surface flex flex-col shrink-0 border-r-2 border-on-surface">
       {/* Logo */}
       <div className="px-6 py-6 border-b-2 border-on-surface">
-        <h2 className="text-label font-bold uppercase tracking-tighter">AdminConsole</h2>
+        {settingsLoading
+          ? <Skeleton className="h-5 w-32" />
+          : <h2 className="text-label font-bold uppercase tracking-tighter">{siteName}</h2>}
         <p className="text-code text-on-surface-variant text-xs mt-1">Headless Management</p>
       </div>
 

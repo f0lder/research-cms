@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * Generic skeleton atom. Size and shape are controlled by Tailwind classes
+ * passed in `className` (e.g. `"h-4 w-24"`). Use this for any pulsing placeholder.
+ */
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <div className={`bg-zinc-200 rounded animate-pulse ${className}`} />;
+}
+
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <div className="space-y-2">
