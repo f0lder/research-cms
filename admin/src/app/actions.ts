@@ -12,6 +12,9 @@ import {
   Block,
   Webhook,
   PAGE_SCHEMA_SLUG,
+  SettingDefinition,
+  SettingScope,
+  SettingSchemaView,
 } from '@research-cms/shared-types';
 
 // ── Schemas ────────────────────────────────────────────────────────────────
@@ -281,4 +284,65 @@ export async function getUsers() {
 
 export async function updateUserRole(userId: string, role: string) {
   return serverApi.patch<{ role: string }>(`/auth/users/${userId}`, { role });
+}
+
+// ── Settings ────────────────────────────────────────────────────────────────
+
+export interface SettingItem {
+  definition: SettingDefinition;
+  value: unknown;
+}
+
+interface SettingTargetParams {
+  scope: SettingScope;
+  scopeId?: string;
+  schemaView?: SettingSchemaView;
+}
+
+function settingsQuery(target: SettingTargetParams): string {
+  const params = new URLSearchParams({ scope: target.scope });
+  if (target.scopeId) params.set('scopeId', target.scopeId);
+  if (target.schemaView) params.set('schemaView', target.schemaView);
+  return params.toString();
+}
+
+export async function getSettings(target: SettingTargetParams) {
+  return serverApi.get<SettingItem[]>(`/settings?${settingsQuery(target)}`);
+}
+
+export async function updateSetting(
+  target: SettingTargetParams,
+  key: string,
+  value: unknown,
+) {
+  return serverApi.put(`/settings`, { ...target, key, value });
+}
+
+export async function clearSetting(target: SettingTargetParams, key: string) {
+  return serverApi.delete(`/settings`, { ...target, key });
+}
+
+/**
+ * Read a single setting's value (with default fallback).
+ * Returns `undefined` if the key is unknown for that scope.
+ */
+export async function getSettingValue<T = unknown>(
+  target: SettingTargetParams,
+  key: string,
+): Promise<{ data?: T; error?: string }> {
+  const { data, error } = await getSettings(target);
+  if (error) return { error };
+  const item = data?.find(it => it.definition.key === key);
+  if (!item) return { data: undefined };
+  return { data: item.value as T };
+}
+
+/**
+ * Flat public-settings map (`{ key: value }`) for the given target.
+ * No auth required on the underlying endpoint.
+ */
+export async function getPublicSettings(target: SettingTargetParams) {
+  return serverApi.get<Record<string, unknown>>(
+    `/settings/public?${settingsQuery(target)}`,
+  );
 }

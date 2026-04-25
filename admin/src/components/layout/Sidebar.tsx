@@ -39,6 +39,7 @@ export default function Sidebar() {
   const mediaActive = pathname.startsWith('/media');
   const logsActive = pathname.startsWith('/logs');
   const webhooksActive = pathname.startsWith('/webhooks');
+  const settingsActive = pathname.startsWith('/settings');
 
   const navItem = (active: boolean) =>
     `flex items-center px-4 py-3 text-sm font-label uppercase tracking-widest cursor-pointer border-b-2 border-on-surface transition-all ${
@@ -130,6 +131,11 @@ export default function Sidebar() {
         {/* Webhooks */}
         <Link href="/webhooks" className="block no-underline">
           <div className={navItem(webhooksActive)}>Webhooks</div>
+        </Link>
+
+        {/* Settings */}
+        <Link href="/settings" className="block no-underline">
+          <div className={navItem(settingsActive)}>Settings</div>
         </Link>
       </nav>
 

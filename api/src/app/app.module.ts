@@ -10,6 +10,7 @@ import { PublicModule } from './public/public.module';
 import { LogsModule } from './logs/logs.module';
 import { MediaModule } from './media/media.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { SettingsModule } from './settings/settings.module';
 import { SystemInitService } from './system-init.service';
 import { ContentType, ContentTypeSchema } from './schema/schemas/content-type.schema';
 
@@ -32,6 +33,7 @@ import { ContentType, ContentTypeSchema } from './schema/schemas/content-type.sc
     ApiKeysModule,
     WebhooksModule,
     PublicModule,
+    SettingsModule,
   ],
   providers: [SystemInitService],
 })

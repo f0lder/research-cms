@@ -68,3 +68,96 @@ export function registerBuiltInBlocks(): void {
     blockRegistry.register(def);
   }
 }
+
+// ── Settings registry ────────────────────────────────────────────────────────
+//
+// Tier 1 (system) settings: declared in code, stable keys, typed.
+// API validates writes against this registry; admin renders forms from it.
+// Add a new setting = add one entry below.
+
+export type SettingScope = 'global' | 'client' | 'schema' | 'page';
+export type SettingSchemaView = 'single' | 'archive' | 'both';
+export type SettingType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'boolean'
+  | 'color'
+  | 'select'
+  | 'media';
+
+export interface SettingDefinition {
+  key: string;                       // unique within (scope, schemaView)
+  label: string;
+  description?: string;
+  category: string;                  // groups settings in the admin UI
+  type: SettingType;
+  options?: string[];                // for type === 'select'
+  defaultValue?: unknown;
+  scope: SettingScope;
+  schemaView?: SettingSchemaView;    // only when scope === 'schema'
+  isPublic: boolean;                 // exposed via /settings/public
+}
+
+export const SETTINGS_REGISTRY: SettingDefinition[] = [
+  {
+    key: 'site.name',
+    label: 'Site Name',
+    category: 'General',
+    type: 'text',
+    defaultValue: 'My Site',
+    scope: 'global',
+    isPublic: true,
+  },
+  {
+    key: 'client.brandName',
+    label: 'Brand Name',
+    category: 'Branding',
+    type: 'text',
+    scope: 'client',
+    isPublic: true,
+  },
+  {
+    key: 'archive.itemsPerPage',
+    label: 'Items per Page',
+    category: 'Archive',
+    type: 'number',
+    defaultValue: 10,
+    scope: 'schema',
+    schemaView: 'archive',
+    isPublic: true,
+  },
+  {
+    key: 'page.heroOverlay',
+    label: 'Hero Overlay Color',
+    category: 'Appearance',
+    type: 'color',
+    defaultValue: '#00000080',
+    scope: 'page',
+    isPublic: true,
+  },
+];
+
+/**
+ * Lookup a setting definition by (scope, key, schemaView).
+ * Returns undefined if no such setting is registered.
+ */
+export function findSettingDefinition(
+  scope: SettingScope,
+  key: string,
+  schemaView?: SettingSchemaView,
+): SettingDefinition | undefined {
+  return SETTINGS_REGISTRY.find(d =>
+    d.scope === scope &&
+    d.key === key &&
+    (scope !== 'schema' || matchesSchemaView(d.schemaView, schemaView)),
+  );
+}
+
+function matchesSchemaView(
+  defView: SettingSchemaView | undefined,
+  reqView: SettingSchemaView | undefined,
+): boolean {
+  if (!defView || defView === 'both') return true;
+  return defView === reqView;
+}
