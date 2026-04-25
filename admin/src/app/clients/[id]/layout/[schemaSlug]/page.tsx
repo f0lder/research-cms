@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { Block, ContentTypeDefinition, blockRegistry, registerBuiltInBlocks } from '@research-cms/shared-types';
+import { Block, ContentTypeDefinition, blockRegistry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { getSchema, getClientLayout, updateClientLayout } from '@/app/actions';
 import { BlocksEditor } from '@/components/blocks';
@@ -21,11 +21,6 @@ export default function EntryDetailLayoutPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-
-  // Initialize block registry
-  useEffect(() => {
-    registerBuiltInBlocks();
-  }, []);
 
   const load = useCallback(async () => {
     const [schemaRes, layoutRes] = await Promise.all([

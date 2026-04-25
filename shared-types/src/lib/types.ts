@@ -95,8 +95,6 @@ export interface ContentEntry {
 
 // ── Media ─────────────────────────────────────────────────────────────────────
 
-export const MEDIA_SCHEMA_SLUG = 'media';
-
 /** Shape of a resolved media entry (used in admin picker + public API). */
 export interface MediaEntry {
   _id: string;
@@ -108,70 +106,6 @@ export interface MediaEntry {
   fileSize?: number;
   createdAt?: string;
 }
-
-// ── Pages ─────────────────────────────────────────────────────────────────────
-
-/**
- * Built-in schema slug for pages.
- * Pages are entries in this schema, linked to clients.
- * This allows Field blocks on pages to access page-specific fields.
- */
-export const PAGE_SCHEMA_SLUG = 'page';
-
-/**
- * Built-in page schema definition.
- * Auto-registered on system startup.
- * Defines the structure of pages: title, description, featured image, etc.
- */
-export const PAGE_SCHEMA_DEFINITION: Omit<ContentTypeDefinition, '_id' | 'createdAt' | 'updatedAt'> = {
-  name: 'Page',
-  slug: PAGE_SCHEMA_SLUG,
-  system: true, // Cannot be deleted or renamed
-  fields: [
-    {
-      name: 'clientId',
-      label: 'Client',
-      type: 'text',
-      required: true,
-    },
-    {
-      name: 'title',
-      label: 'Page Title',
-      type: 'text',
-      required: true,
-    },
-    {
-      name: 'slug',
-      label: 'URL Slug',
-      type: 'text',
-      required: true,
-    },
-    {
-      name: 'description',
-      label: 'Description',
-      type: 'textarea',
-      required: false,
-    },
-    {
-      name: 'featured_image',
-      label: 'Featured Image',
-      type: 'media',
-      required: false,
-    },
-    {
-      name: 'isHome',
-      label: 'Mark as Homepage',
-      type: 'boolean',
-      required: false,
-    },
-    {
-      name: 'blocks',
-      label: 'Page Blocks',
-      type: 'blocks',
-      required: false,
-    },
-  ],
-};
 
 // ── Block Schema & Registry ───────────────────────────────────────────────────
 

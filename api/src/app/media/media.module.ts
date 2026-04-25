@@ -1,12 +1,9 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { MediaController } from './media.controller';
-import { MediaSeedService } from './media-seed.service';
 import { StorageService } from './storage.interface';
 import { LocalStorageService } from './local-storage.service';
 import { ContentModule } from '../content/content.module';
 import { AuthModule } from '../auth/auth.module';
-import { ContentType, ContentTypeSchema } from '../schema/schemas/content-type.schema';
 
 /**
  * To swap to R2/S3:
@@ -15,13 +12,11 @@ import { ContentType, ContentTypeSchema } from '../schema/schemas/content-type.s
  */
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: ContentType.name, schema: ContentTypeSchema }]),
     ContentModule,
     AuthModule,
   ],
   controllers: [MediaController],
   providers: [
-    MediaSeedService,
     { provide: StorageService, useClass: LocalStorageService },
   ],
   exports: [StorageService],

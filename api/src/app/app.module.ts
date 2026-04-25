@@ -10,10 +10,13 @@ import { PublicModule } from './public/public.module';
 import { LogsModule } from './logs/logs.module';
 import { MediaModule } from './media/media.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { SystemInitService } from './system-init.service';
+import { ContentType, ContentTypeSchema } from './schema/schemas/content-type.schema';
 
 @Module({
   imports: [
     MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost:27017/nestjs-api'),
+    MongooseModule.forFeature([{ name: ContentType.name, schema: ContentTypeSchema }]),
     EventEmitterModule.forRoot({
       wildcard: true,
       delimiter: '.',
@@ -30,5 +33,6 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     WebhooksModule,
     PublicModule,
   ],
+  providers: [SystemInitService],
 })
 export class AppModule {}

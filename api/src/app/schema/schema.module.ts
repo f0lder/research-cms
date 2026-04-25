@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SchemaService } from './schema.service';
 import { SchemaController } from './schema.controller';
-import { PageSeedService } from './page-seed.service';
 import { ContentType, ContentTypeSchema } from './schemas/content-type.schema';
 import { ContentEntryModel, ContentEntrySchema } from '../content/schemas/content-entry.schema';
 import { AuthModule } from '../auth/auth.module';
@@ -16,7 +15,7 @@ import { AuthModule } from '../auth/auth.module';
 		AuthModule,
 	],
 	controllers: [SchemaController],
-	providers: [SchemaService, PageSeedService],
+	providers: [SchemaService],
 	exports: [SchemaService],
 })
 export class SchemaModule { }

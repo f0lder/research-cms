@@ -17,7 +17,7 @@ export function EntryTableHead({
 }: EntryTableHeadProps) {
   return (
     <thead>
-      <tr className="border-b border-zinc-100 bg-zinc-50">
+      <tr className="border-b-2 border-on-surface bg-surface-container">
         <th className="px-4 py-2.5 text-left">
           <input
             type="checkbox"
@@ -29,22 +29,22 @@ export function EntryTableHead({
         {visibleFields.map(field => (
           <th
             key={field.name}
-            className="text-left px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider whitespace-nowrap"
+            className="text-left px-4 py-2.5 text-code font-bold text-on-surface-variant uppercase whitespace-nowrap"
           >
             {field.label}
           </th>
         ))}
         {showStatus && (
-          <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider whitespace-nowrap">
+          <th className="text-left px-4 py-2.5 text-code font-bold text-on-surface-variant uppercase whitespace-nowrap">
             Status
           </th>
         )}
         {showDate && (
-          <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider whitespace-nowrap">
+          <th className="text-left px-4 py-2.5 text-code font-bold text-on-surface-variant uppercase whitespace-nowrap">
             Date
           </th>
         )}
-        <th className="px-4 py-2.5 text-right text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+        <th className="px-4 py-2.5 text-right text-code font-bold text-on-surface-variant uppercase">
           Actions
         </th>
       </tr>

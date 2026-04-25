@@ -4,7 +4,7 @@
  * Use this in: api/src/main.ts, admin on startup, mobile on startup.
  */
 import {
-  blockRegistry,
+  BaseBlock,
   BlockDefinition,
   BlockResolveContext,
   HeadingBlock,
@@ -553,31 +553,26 @@ const cardDefinition: BlockDefinition<CardBlock> = {
   // Resolved server-side — handled by pages.service.resolveCardBlock()
 }
 
-// ── Register all built-in blocks ───────────────────────────────────────────
+// ── Built-in block definitions registry data ───────────────────────────────
 
 /**
- * Call this function once at application startup.
- * Registers all built-in block definitions in the shared registry.
+ * All built-in block definitions in registration order.
+ * Consumed by `registerBuiltInBlocks()` in `init.ts`.
  */
-export function registerBuiltInBlocks(): void {
-  // Idempotent: only register if not already registered
-  if (blockRegistry.get('heading')) return;
-
+export const BUILT_IN_BLOCK_DEFINITIONS: BlockDefinition<BaseBlock>[] = [
   // Static
-  blockRegistry.register(headingDefinition);
-  blockRegistry.register(textDefinition);
-  blockRegistry.register(dividerDefinition);
-  blockRegistry.register(spacerDefinition);
-  blockRegistry.register(imageDefinition);
-  blockRegistry.register(buttonDefinition);
-
+  headingDefinition,
+  textDefinition,
+  dividerDefinition,
+  spacerDefinition,
+  imageDefinition,
+  buttonDefinition,
   // Content
-  blockRegistry.register(archiveDefinition);
-  blockRegistry.register(entryDefinition);
-  blockRegistry.register(fieldDefinition);
-
+  archiveDefinition,
+  entryDefinition,
+  fieldDefinition,
   // Layout
-  blockRegistry.register(rowDefinition);
-  blockRegistry.register(columnDefinition);
-  blockRegistry.register(cardDefinition);
-}
+  rowDefinition,
+  columnDefinition,
+  cardDefinition,
+] as BlockDefinition<BaseBlock>[];

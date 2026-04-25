@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Block, blockRegistry, registerBuiltInBlocks, PAGE_SCHEMA_SLUG, ContentEntry } from '@research-cms/shared-types';
+import { Block, blockRegistry, PAGE_SCHEMA_SLUG, ContentEntry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { createEntry, updateEntry, getEntry, getPageBySlug, bulkUpdateStatus } from '@/app/actions';
 import { setClientHomePage } from '@/app/actions';
@@ -31,11 +31,6 @@ export default function PageEditorPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [settingHomePage, setSettingHomePage] = useState(false);
-
-  // Initialize block registry on client side
-  useEffect(() => {
-    registerBuiltInBlocks();
-  }, []);
 
   const load = useCallback(async () => {
     if (isNew) {

@@ -10,7 +10,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ variant = 'outlined', interactive = false, selected = false, className = '', children, ...props }, ref) => {
-    const baseStyles = 'bg-surface border-2 border-black';
+    const baseStyles = 'bg-surface border-2 border-black p-4';
 
     const variantStyles = {
       elevated: 'shadow-hard',

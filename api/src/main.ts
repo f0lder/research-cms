@@ -3,13 +3,9 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import cookieParser from 'cookie-parser';
-import { registerBuiltInBlocks } from '@research-cms/shared-types';
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {
-  // Register all built-in block types
-  registerBuiltInBlocks();
-
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
 

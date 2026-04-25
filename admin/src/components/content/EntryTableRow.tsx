@@ -4,6 +4,7 @@ import { CellValue } from './CellValue';
 import { StatusBadge } from './StatusBadge';
 import { adminRoutes, formatDate } from '@/lib/utils';
 import { useEntryList } from '@/contexts/EntryListContext';
+import { Button, Text } from '@/components/ui';
 
 interface EntryTableRowProps {
 	entry: ContentEntry;

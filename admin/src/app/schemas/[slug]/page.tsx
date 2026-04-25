@@ -152,7 +152,7 @@ function SchemaDetailPageContent() {
 			{currEntries.length === 0 ? (
 				<EntryListEmptyState tab={tab} slug={slug} />
 			) : (
-				<div className="bg-white border border-zinc-200">
+				<div className="bg-surface border-2 border-on-surface">
 					<EntryTableToolbar
 						entriesCount={currEntries.length}
 						selectedCount={selected.size}

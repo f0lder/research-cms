@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ContentTypeDefinition, Client, User, ActivityItem } from '@research-cms/shared-types';
 import { api } from '@/lib/utils';
 import { ActivityFeed } from '@/components/ActivityFeed';
+import { Button, Heading, Text, Card } from '@/components/ui';
 import SchemasList from '@/components/dashboard/SchemasList';
 import UsersList from '@/components/dashboard/UsersList';
 import ClientsList from '@/components/dashboard/ClientsList';
@@ -77,7 +78,7 @@ export default function SystemOverview() {
   }, []);
 
   if (loading) {
-    return <div className="page text-sm text-zinc-400">Loading dashboard…</div>;
+    return <div className="page"><Text variant="caption" color="secondary">Loading dashboard…</Text></div>;
   }
 
   if (error) {
@@ -87,30 +88,28 @@ export default function SystemOverview() {
   return (
     <div className="page">
       <div className="mb-8">
-        <h1 className="page-heading">System Overview</h1>
-        <p className="page-sub">Quick view of your CMS state</p>
+        <Heading level={1} className="mb-1">System Overview</Heading>
+        <Text variant="caption" color="secondary">Quick view of your CMS state</Text>
       </div>
 
       {/* Grid of summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="panel">
-          <div className="text-xs text-zinc-400 mb-2">Content Types</div>
-          <div className="text-2xl font-bold text-zinc-900">{schemas.length}</div>
-        </div>
-        <div className="panel">
-          <div className="text-xs text-zinc-400 mb-2">Total Entries</div>
-          <div className="text-2xl font-bold text-zinc-900">
-            {schemas.reduce((sum, s) => sum + (s.entryCount || 0), 0)}
-          </div>
-        </div>
-        <div className="panel">
-          <div className="text-xs text-zinc-400 mb-2">Users</div>
-          <div className="text-2xl font-bold text-zinc-900">{users.length}</div>
-        </div>
-        <div className="panel">
-          <div className="text-xs text-zinc-400 mb-2">API Keys</div>
-          <div className="text-2xl font-bold text-zinc-900">{clients.length}</div>
-        </div>
+        <Card variant="filled">
+          <Text variant="label" color="secondary" className="mb-2">Content Types</Text>
+          <Heading level={3}>{schemas.length}</Heading>
+        </Card>
+        <Card variant="filled">
+          <Text variant="label" color="secondary" className="mb-2">Total Entries</Text>
+          <Heading level={3}>{schemas.reduce((sum, s) => sum + (s.entryCount || 0), 0)}</Heading>
+        </Card>
+        <Card variant="filled">
+          <Text variant="label" color="secondary" className="mb-2">Users</Text>
+          <Heading level={3}>{users.length}</Heading>
+        </Card>
+        <Card variant="filled">
+          <Text variant="label" color="secondary" className="mb-2">API Keys</Text>
+          <Heading level={3}>{clients.length}</Heading>
+        </Card>
       </div>
 
       {/* Main content area */}
@@ -120,9 +119,11 @@ export default function SystemOverview() {
           {/* Post Types */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-zinc-900">Content Types</h2>
+              <Heading level={2}>Content Types</Heading>
               <Link href="/schemas">
-                <button className="text-xs text-zinc-500 hover:text-zinc-900">View all →</button>
+                <Button as="span" variant="ghost" size="sm" className="text-primary">
+                  View all →
+                </Button>
               </Link>
             </div>
             <SchemasList schemas={schemas.slice(0, 5)} />
@@ -130,10 +131,10 @@ export default function SystemOverview() {
 
           {/* Activity Feed */}
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 mb-4">Recent Activity</h2>
-            <div className="panel">
+            <Heading level={2} className="mb-4">Recent Activity</Heading>
+            <Card variant="outlined">
               <ActivityFeed />
-            </div>
+            </Card>
           </div>
         </div>
 
@@ -142,9 +143,11 @@ export default function SystemOverview() {
           {/* Users */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-zinc-900">Users</h2>
+              <Heading level={2}>Users</Heading>
               <Link href="/users">
-                <button className="text-xs text-zinc-500 hover:text-zinc-900">View all →</button>
+                <Button as="span" variant="ghost" size="sm" className="text-primary">
+                  View all →
+                </Button>
               </Link>
             </div>
             <UsersList users={users.slice(0, 5)} />
@@ -153,9 +156,11 @@ export default function SystemOverview() {
           {/* API Keys */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-zinc-900">API Keys</h2>
+              <Heading level={2}>API Keys</Heading>
               <Link href="/clients">
-                <button className="text-xs text-zinc-500 hover:text-zinc-900">View all →</button>
+                <Button as="span" variant="ghost" size="sm" className="text-primary">
+                  View all →
+                </Button>
               </Link>
             </div>
             <ClientsList clients={clients.slice(0, 5)} />
