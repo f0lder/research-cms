@@ -117,7 +117,6 @@ export function EntryListProvider({ children }: { children: ReactNode }) {
 	);
 
 	const handleDelete = useCallback((slug: string, id: string) => {
-		if (!confirm('Move this entry to trash?')) return Promise.resolve();
 		return deleteEntry(slug, id).then(({ error: err }) => {
 			if (err) alert(err);
 			else {
@@ -131,7 +130,18 @@ export function EntryListProvider({ children }: { children: ReactNode }) {
 	const handleRestore = useCallback(async (slug: string, id: string) => {
 		const res = await restoreEntry(slug, id);
 		if (res.error) alert(res.error);
-		else alert('Entry restored!');
+		// After restoring, we need to fetch the updated entry to get its current data
+		else {
+			const restoredEntry = await getAllEntries(slug, { id });
+			if (restoredEntry.data?.items?.[0]) {
+				setEntries(prev => [restoredEntry.data.items[0], ...prev]);
+				setTrashEntries(prev => prev.filter(e => e._id !== id));
+			} else {
+				// If we can't fetch the restored entry, just remove it from trash and alert the user
+				setTrashEntries(prev => prev.filter(e => e._id !== id));
+				alert('Entry restored but failed to fetch updated data');
+			}
+		}
 	}, []);
 
 	const handlePermanentDelete = useCallback((slug: string, id: string) => {

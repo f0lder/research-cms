@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 import { rebuildIndex } from '@/app/actions';
 import { API_URL } from '@/config';
+import { Button, Heading, Text } from '@/components/ui';
 
 interface PageHeaderProps {
   schema: ContentTypeDefinition;
@@ -86,8 +87,10 @@ export function EntryListPageHeader({ schema, slug, isAdmin }: PageHeaderProps) 
       {/* Page header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="page-heading">{schema.name}</h1>
-          <p className="page-sub">/{schema.slug} · {schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}</p>
+          <Heading level={1} className="page-heading">
+            {schema.name}
+          </Heading>
+          <Text>/{schema.slug} · {schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}</Text>
         </div>
         <div className="flex items-center gap-2">
           {rebuildMessage && (
@@ -101,29 +104,35 @@ export function EntryListPageHeader({ schema, slug, isAdmin }: PageHeaderProps) 
           <div className="flex gap-2">
             {isAdmin && (
               <>
-                <button
+                <Button
                   onClick={handleRebuildIndex}
                   disabled={rebuildLoading}
-                  className="btn-secondary text-xs"
+                  variant="secondary"
+                  size='sm'
                   title="Rebuild search indices for existing entries"
                 >
                   {rebuildLoading ? 'Rebuilding…' : 'Rebuild Index'}
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={handleExportCsv}
                   disabled={exportLoading}
-                  className="btn-secondary text-xs"
+                  variant="secondary"
+                  size='sm'
                   title="Download CSV export"
                 >
                   {exportLoading ? 'Exporting…' : 'Export CSV'}
-                </button>
+                </Button>
                 <Link href={`/schemas/edit/${slug}`}>
-                  <button className="btn-secondary">Edit schema</button>
+                  <Button variant="secondary" size='sm'>
+                    Edit schema
+                  </Button>
                 </Link>
               </>
             )}
             <Link href={`/schemas/${slug}/content/create`}>
-              <button className="btn-primary">+ New entry</button>
+              <Button variant="primary" size='sm'>
+                + New entry
+              </Button>
             </Link>
           </div>
         </div>

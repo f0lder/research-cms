@@ -157,34 +157,72 @@
 }
 
 @layer components {
-  /* ── Buttons ─────────────────────────────────────── */
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-bold cursor-pointer transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest border-2;
+  }
+
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-3 text-xs font-bold
-           cursor-pointer transition-all duration-100
-           bg-primary text-white hover:opacity-90 active:translate-x-1 active:translate-y-1
-           disabled:opacity-50 disabled:cursor-not-allowed
-           border-2 border-on-surface uppercase tracking-widest shadow-hard;
+    @apply bg-primary text-white border-on-surface hover:opacity-90 active:translate-x-1 active:translate-y-1 shadow-hard active:shadow-none;
   }
+
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 py-3 text-xs font-bold
-           cursor-pointer transition-all duration-100
-           bg-white text-on-surface border-2 border-on-surface hover:bg-surface-container
-           active:translate-x-1 active:translate-y-1
-           disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest shadow-hard;
+    @apply bg-white text-on-surface border-on-surface hover:bg-surface-container active:translate-x-1 active:translate-y-1 shadow-hard active:shadow-none;
   }
+
   .btn-danger {
-    @apply inline-flex items-center justify-center px-4 py-3 text-xs font-bold
-           cursor-pointer transition-all duration-100
-           bg-error text-white hover:opacity-90 active:translate-x-1 active:translate-y-1
-           disabled:opacity-50 disabled:cursor-not-allowed
-           border-2 border-error uppercase tracking-widest shadow-hard;
+    @apply bg-error text-white border-error hover:opacity-90 active:translate-x-1 active:translate-y-1 shadow-hard active:shadow-none;
   }
+
   .btn-ghost {
-    @apply inline-flex items-center justify-center px-4 py-3 text-xs font-bold
-           cursor-pointer transition-all duration-100
-           bg-transparent text-on-surface border-2 border-on-surface hover:bg-surface-container
-           disabled:opacity-50 disabled:cursor-not-allowed
-           uppercase tracking-widest;
+    @apply bg-transparent text-on-surface border-on-surface hover:bg-surface-container;
+  }
+   .badge,
+  .badge-published,
+  .badge-draft,
+  .badge-archived,
+  .badge-scheduled,
+  .badge-client,
+  .badge-auth,
+  .badge-restore,
+  .badge-error,
+  .badge-default {
+    @apply inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-white ml-2 border-2 border-on-surface uppercase tracking-widest shadow-hard;
+  }
+
+  .badge {
+    @apply bg-gray-500;
+  }
+
+  .badge-published {
+    @apply bg-green-500;
+  }
+
+  .badge-draft {
+    @apply bg-yellow-500;
+  }
+
+  .badge-archived {
+    @apply bg-red-500;
+  }
+
+  .badge-scheduled {
+    @apply bg-blue-500;
+  }
+  .badge-client {
+    @apply bg-purple-500;
+  }
+
+  .badge-auth {
+    @apply bg-indigo-500;
+  }
+
+  .badge-restore {
+    @apply bg-green-500;
+  }
+
+  .badge-error {
+    @apply bg-red-500;
   }
 
   /* ── Form fields ─────────────────────────────────── */

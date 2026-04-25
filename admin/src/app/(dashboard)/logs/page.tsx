@@ -6,26 +6,8 @@ import { formatDateTime } from '@/lib/utils';
 import { getLogs, getLogTags, clearLogs } from '@/app/actions';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { Button, TextField, Heading, Text, Badge } from '@/components/ui';
+import { ListSkeleton } from '@/components/skeletons';
 
-// ── Tag styling ───────────────────────────────────────────────────────────────
-const TAG_COLOR_MAP: Record<string, 'default' | 'error' | 'warning' | 'success'> = {
-  error:    'error',
-  auth:     'default',
-  login:    'default',
-  register: 'default',
-  content:  'success',
-  create:   'success',
-  update:   'warning',
-  delete:   'error',
-  schema:   'default',
-  'api-key': 'default',
-  'public-api': 'default',
-};
-
-function TagBadge({ tag }: { tag: string }) {
-  const variant = TAG_COLOR_MAP[tag] ?? 'default';
-  return <Badge variant={variant}>{tag}</Badge>;
-}
 
 // ── Meta viewer ───────────────────────────────────────────────────────────────
 function MetaCell({ meta }: { meta?: Record<string, unknown> | null }) {
@@ -162,7 +144,7 @@ export default function LogsPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="text-sm text-on-surface-variant py-8">Loading…</div>
+          <ListSkeleton items={10} />
       ) : entries.length === 0 ? (
         <div className="border-2 border-dashed border-on-surface p-12 text-center">
           <Text variant="caption" color="secondary">No log entries found.</Text>
@@ -187,7 +169,9 @@ export default function LogsPage() {
                 </Text>
                 <Text variant="body-md" className="pr-4">{entry.message}</Text>
                 <div className="flex flex-wrap gap-1 pr-4">
-                  {entry.tags.map(tag => <TagBadge key={tag} tag={tag} />)}
+                  {entry.tags.map(tag => (
+                    <Badge key={tag} status={tag || 'default'}/>
+                  ))}
                 </div>
                 <MetaCell meta={entry.meta} />
               </div>

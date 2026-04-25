@@ -5,9 +5,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSchemas } from '@/contexts/SchemaContext';
 import { useSetting, useSettings } from '@/contexts/SettingsContext';
-import { Skeleton } from '@/components/skeletons';
+import { ListSkeleton, Skeleton } from '@/components/skeletons';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 import { Button } from '@/components/ui/Button';
+import { Heading, Text } from '../ui';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -46,20 +47,29 @@ export default function Sidebar() {
   const settingsActive = pathname.startsWith('/settings');
 
   const navItem = (active: boolean) =>
-    `flex items-center px-4 py-3 text-sm font-label uppercase tracking-widest cursor-pointer border-b-2 border-on-surface transition-all ${
-      active
-        ? 'bg-primary text-white shadow-hard'
-        : 'border-on-surface text-on-surface hover:bg-surface-container'
+    `flex items-center px-4 py-3 text-sm font-label uppercase tracking-widest cursor-pointer border-b-2 border-on-surface transition-all ${active
+      ? 'bg-primary text-white shadow-hard'
+      : 'border-on-surface text-on-surface hover:bg-surface-container'
     }`;
+
+  if (settingsLoading) {
+    return (
+      <aside className="w-64 min-h-screen bg-surface text-on-surface flex flex-col shrink-0 border-r-2 border-on-surface">
+        <div className="px-6 py-6 border-b-2 border-on-surface">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-3 w-24 mt-1" />
+        </div>
+        <ListSkeleton items={6} />
+      </aside>
+    );
+  }
 
   return (
     <aside className="w-64 min-h-screen bg-surface text-on-surface flex flex-col shrink-0 border-r-2 border-on-surface">
       {/* Logo */}
       <div className="px-6 py-6 border-b-2 border-on-surface">
-        {settingsLoading
-          ? <Skeleton className="h-5 w-32" />
-          : <h2 className="text-label font-bold uppercase tracking-tighter">{siteName}</h2>}
-        <p className="text-code text-on-surface-variant text-xs mt-1">Headless Management</p>
+        <Heading className="text-label font-bold uppercase tracking-tighter">{siteName}</Heading>
+        <Text className="text-code text-on-surface-variant text-xs mt-1">Headless Management</Text>
       </div>
 
       <nav className="flex-1 overflow-y-auto">
@@ -77,11 +87,10 @@ export default function Sidebar() {
         <div>
           <button
             onClick={() => setContentOpen(o => !o)}
-            className={`w-full flex items-center justify-between px-4 py-3 text-sm font-label uppercase tracking-widest cursor-pointer border-b-2 transition-all ${
-              isOnContentRoute
+            className={`w-full flex items-center justify-between px-4 py-3 text-sm font-label uppercase tracking-widest cursor-pointer border-b-2 transition-all ${isOnContentRoute
                 ? 'bg-primary text-white shadow-hard'
                 : 'border-on-surface text-on-surface hover:bg-surface-container'
-            }`}
+              }`}
           >
             <span>Content</span>
             <span className="text-xs">{contentOpen ? '▲' : '▼'}</span>
@@ -98,11 +107,10 @@ export default function Sidebar() {
                   return (
                     <Link key={schema.slug} href={href} className="block no-underline">
                       <div
-                        className={`px-6 py-2 text-code text-xs border-l-2 border-on-surface transition-all truncate ${
-                          active
+                        className={`px-6 py-2 text-code text-xs border-l-2 border-on-surface transition-all truncate ${active
                             ? 'bg-surface-container text-on-surface font-semibold'
                             : 'text-on-surface-variant hover:text-on-surface hover:bg-white'
-                        }`}
+                          }`}
                       >
                         {schema.name}
                       </div>

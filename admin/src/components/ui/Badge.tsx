@@ -1,39 +1,32 @@
-'use client';
+const STATUS_MAP: Record<string, string> = {
+  published: 'badge-published',
+  scheduled: 'badge-scheduled',
+  archived: 'badge-archived',
+  draft: 'badge-draft',
+  error: 'badge-error',
+  success: 'badge-success',
+  client: 'badge-client',
+  create: 'badge-published',
+  update: 'badge-scheduled',
+  delete: 'badge-archived',
+  auth: 'badge-auth',
+  login: 'badge-auth',
+  logout: 'badge-auth',
+  restore: 'badge-restore',
+  content: 'badge-published',
+};
 
-import React from 'react';
+const SIZE_MAP: Record<string, string> = {
+  xs: 'px-2 py-1 text-xs',
+  sm: 'px-3 py-1.5 text-sm',
+  md: 'px-4 py-2 text-sm',
+  lg: 'px-5 py-3 text-base',
+};
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'primary' | 'success' | 'error' | 'warning';
-  size?: 'sm' | 'md';
+export function Badge({ status = 'draft', size = 'sm' }: { status?: string; size?: string }) {
+  return (
+    <span className={STATUS_MAP[status] || 'badge-draft' + ' ' + SIZE_MAP[size] || SIZE_MAP['sm']}>
+      {status}
+    </span>
+  );
 }
-
-export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
-  ({ variant = 'default', size = 'md', className = '', children, ...props }, ref) => {
-    const baseStyles = 'font-label uppercase tracking-widest inline-flex items-center gap-2 border-2 border-on-surface';
-
-    const variantStyles = {
-      default: 'bg-surface-container text-on-surface',
-      primary: 'bg-primary text-white',
-      success: 'bg-green-500 text-white',
-      error: 'bg-red-600 text-white',
-      warning: 'bg-yellow-500 text-black',
-    };
-
-    const sizeStyles = {
-      sm: 'px-2 py-1 text-[10px]',
-      md: 'px-4 py-2 text-sm',
-    };
-
-    return (
-      <div
-        ref={ref}
-        className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
-);
-
-Badge.displayName = 'Badge';

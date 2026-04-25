@@ -25,6 +25,9 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
   const fetchingRef = useRef(false);
 
   const fetchSchemas = async () => {
+    // add fake delay to better observe loading states during development
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     if (fetchingRef.current) return; // Bail if already fetching
     fetchingRef.current = true;
 

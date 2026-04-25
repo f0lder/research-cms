@@ -5,6 +5,7 @@ import { Client } from '@research-cms/shared-types';
 import { createClient, deleteClient, getAllClients } from '@/app/actions';
 import { formatDateTime, adminRoutes } from '@/lib/utils';
 import { ListSkeleton } from '@/components/skeletons';
+import { Button } from '@/components/ui';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ClientsPage() {
@@ -91,9 +92,9 @@ export default function ClientsPage() {
           onChange={e => setNewName(e.target.value)}
           className="field-input flex-1 uppercase text-xs"
         />
-        <button type="submit" disabled={creating || !newName.trim()} className="btn-primary whitespace-nowrap">
+        <Button type="submit" disabled={creating || !newName.trim()} variant="primary" size="sm">
           {creating ? 'Creating…' : 'Create client'}
-        </button>
+        </Button>
       </form>
 
       {/* Clients list */}
@@ -132,12 +133,13 @@ export default function ClientsPage() {
                     >
                       {isRevealed ? client.key : maskKey(client.key)}
                     </code>
-                    <button
+                    <Button
                       onClick={() => copyKey(client)}
-                      className="shrink-0 text-code text-on-surface-variant hover:text-on-surface border-2 border-on-surface px-2 py-1 bg-white hover:bg-surface-container transition-all font-bold uppercase"
+                      variant={isCopied ? 'secondary' : 'ghost'}
+                      size="sm"
                     >
                       {isCopied ? '✓' : 'copy'}
-                    </button>
+                    </Button>
                   </div>
 
                   {/* Hits + last used */}
@@ -160,28 +162,23 @@ export default function ClientsPage() {
                     </div>
                   )}
 
-                  {/* Custom layouts badge */}
-                  {client.layouts.length > 0 && (
-                    <span className="text-code bg-surface-container text-on-surface border-2 border-on-surface px-2 py-1 font-bold uppercase whitespace-nowrap">
-                      {client.layouts.length} layout{client.layouts.length !== 1 ? 's' : ''}
-                    </span>
-                  )}
-
                   {/* Actions */}
                   <div className="flex items-center gap-2 md:ml-auto shrink-0">
                     <Link
                       href={adminRoutes.clientDetail(client._id!)}
-                      className="flex-1 md:flex-initial text-center md:text-left text-code text-on-surface-variant hover:text-on-surface border-2 border-on-surface px-2 py-1 bg-white hover:bg-surface-container transition-all font-bold uppercase no-underline"
                     >
-                      Configure
+                      <Button variant="secondary" size="sm">
+                        Configure
+                      </Button>
                     </Link>
-                    <button
+                    <Button
                       onClick={() => client._id && handleDelete(client._id, client.name)}
                       disabled={deletingId === client._id}
-                      className="btn-danger text-code px-3 py-1 flex-initial"
+                      variant="destructive"
+                      size="sm"
                     >
                       {deletingId === client._id ? '…' : 'Delete'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>

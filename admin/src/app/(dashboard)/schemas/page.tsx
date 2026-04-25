@@ -5,6 +5,7 @@ import { formatDate } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSchemas } from '@/contexts/SchemaContext';
 import { Button, Heading, Text, Card } from '@/components/ui';
+import { ListSkeleton, PageHeaderSkeleton } from '@/components/skeletons';
 
 function SchemaRow({ schema, isAdmin }: { schema: ContentTypeDefinition; isAdmin: boolean }) {
   return (
@@ -47,7 +48,15 @@ export default function SchemasPage() {
   const isAdmin = user?.role === 'admin';
   const { schemas, systemSchemas, loading, error } = useSchemas();
 
-  if (loading) return <div className="page"><Text variant="caption" color="secondary">Loading…</Text></div>;
+  if (loading) return (
+    <div className='page'>
+      <PageHeaderSkeleton />
+      <ListSkeleton items={5} />;
+      <PageHeaderSkeleton />
+      <ListSkeleton items={3} />;
+    </div>
+  );
+
   if (error) return <div className="page"><div className="alert-error">{error}</div></div>;
 
   return (
