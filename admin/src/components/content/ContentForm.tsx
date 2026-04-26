@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { ContentTypeDefinition, ContentEntry, FieldValue } from '@research-cms/shared-types';
 import { createEntry, updateEntry } from '@/app/actions';
 import DynamicFieldInput from './DynamicFieldInput';
+import { Button } from '@/components/ui';
+import { Heading, Text } from '@/components/ui';
 
 interface ContentFormProps {
   mode: 'create' | 'edit';
@@ -155,20 +157,20 @@ export default function ContentForm({ mode, schema, initialData, onSuccess }: Co
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
       <div className="flex gap-3 pt-4 border-t border-zinc-100">
-        <button type="button" onClick={handleSaveDraft} disabled={saving} className="btn-secondary">
+        <Button type="button" onClick={handleSaveDraft} disabled={saving} className="btn-secondary">
           {saving ? 'Saving…' : 'Save Draft'}
-        </button>
-        <button type="button" onClick={handlePublish} disabled={saving} className="btn-primary">
+        </Button>
+        <Button type="button" onClick={handlePublish} disabled={saving} className="btn-primary">
           {saving ? 'Publishing…' : 'Publish'}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={() => router.back()}
           disabled={saving}
           className="btn-ghost"
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );
