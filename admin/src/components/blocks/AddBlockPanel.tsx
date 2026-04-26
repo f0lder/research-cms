@@ -2,6 +2,7 @@
 
 import { blockRegistry } from '@research-cms/shared-types';
 import { getBlockIcon } from '../../lib/blockIcons';
+import { Text } from '@/components/ui';
 
 /**
  * Panel to add new blocks to a page/layout.
@@ -28,9 +29,9 @@ export function AddBlockPanel({
 
         return (
           <div key={category}>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mb-2">
+            <Text variant="caption" color="secondary" className="uppercase tracking-wider font-bold mb-2">
               {category}
-            </p>
+            </Text>
             <div className="grid grid-cols-3 gap-2">
               {definitions.map(def => {
                 const Icon = getBlockIcon(def.type);
@@ -38,11 +39,11 @@ export function AddBlockPanel({
                   <button
                     key={def.type}
                     onClick={() => onAdd(def.type)}
-                    className="flex flex-col items-center p-3 border border-zinc-200 rounded bg-white hover:bg-zinc-50 hover:border-zinc-400 transition-colors"
+                    className="flex flex-col items-center p-3 border-2 border-on-surface bg-surface hover:bg-surface-container hover:shadow-hard transition-all cursor-pointer"
                     title={def.description}
                   >
-                    {Icon ? <Icon className="mb-1 text-zinc-700 w-6 h-6" /> : <span className="text-2xl mb-1">{def.icon}</span>}
-                    <span className="text-[10px] text-zinc-600 text-center font-mono leading-tight">
+                    {Icon ? <Icon className="mb-1 text-on-surface w-6 h-6" /> : <span className="text-2xl mb-1">{def.icon}</span>}
+                    <span className="text-caption text-on-surface text-center font-code leading-tight uppercase">
                       {def.label}
                     </span>
                   </button>

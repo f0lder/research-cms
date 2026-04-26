@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
 /** Built-in field types — well-typed, autocompleted. */
 export type BuiltInFieldType =
   | 'text'
@@ -226,6 +224,7 @@ export class BlockRegistry {
    */
   getDefaultConfig(type: string): Block {
     const def = this.get(type);
+    const { v4: uuidv4 } = require('uuid');
     if (!def) throw new Error(`Unknown block type: "${type}"`);
     return {
       id: uuidv4(),
@@ -471,7 +470,6 @@ export interface PageEntryResponse extends PublicEntryResponse {
     slug?: string;
     description?: string;
     featured_image?: string;
-    isHome?: boolean;
   };
 }
 
@@ -514,8 +512,6 @@ export interface Client {
   allowedSchemas: string[];
   /** Per-schema block layout overrides. */
   layouts: ClientLayout[];
-  /** _id of the page to show as the home/landing screen. */
-  homePage?: string | null;
   createdAt?: string;
 }
 

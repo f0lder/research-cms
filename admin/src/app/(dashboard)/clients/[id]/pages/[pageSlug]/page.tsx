@@ -5,8 +5,8 @@ import { useParams } from 'next/navigation';
 import { Block, blockRegistry, PAGE_SCHEMA_SLUG, ContentEntry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { createEntry, updateEntry, getEntry, getPageBySlug, bulkUpdateStatus } from '@/app/actions';
-import { setClientHomePage } from '@/app/actions';
 import { BlocksEditor } from '@/components/blocks';
+import { Button, Container, TextField, Text } from '@/components/ui';
 
 
 const IS_NEW = '_new';
@@ -30,7 +30,6 @@ export default function PageEditorPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [settingHomePage, setSettingHomePage] = useState(false);
 
   const load = useCallback(async () => {
     if (isNew) {
@@ -131,26 +130,21 @@ export default function PageEditorPage() {
     setSaving(false);
   };
 
-  const handleSetHomePage = async () => {
-    if (!pageEntry?._id) return;
-    setSettingHomePage(true);
-    try {
-      const { error: err } = await setClientHomePage(clientId, pageEntry._id);
-      if (err) { setError(err); }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set home page');
-    } finally {
-      setSettingHomePage(false);
-    }
-  };
-
-  if (loading) return <div className="page text-sm text-zinc-400">Loading…</div>;
-
-  if (error) {
+  if (loading) {
     return (
-      <div className="page">
-        <div className="alert-error">{error}</div>
-      </div>
+      <Container size="lg" padding="lg">
+        <Text variant="body-sm" color="secondary">Loading…</Text>
+      </Container>
+    );
+  }
+
+  if (error && !pageEntry && !isNew) {
+    return (
+      <Container size="lg" padding="lg">
+        <div className="border-2 border-error bg-surface px-4 py-3">
+          <Text variant="body-sm" color="error">{error}</Text>
+        </div>
+      </Container>
     );
   }
 
@@ -161,32 +155,34 @@ export default function PageEditorPage() {
       onHeaderContent={
         <div>
           {/* Breadcrumb */}
-          <p className="breadcrumb mb-4">
-            <Link href={adminRoutes.clients}>Clients</Link>
+          <Text variant="caption" color="secondary" className="mb-4 uppercase tracking-widest font-bold">
+            <Link href={adminRoutes.clients} className="hover:text-on-surface">Clients</Link>
             <span className="mx-1">/</span>
-            <Link href={adminRoutes.clientDetail(clientId)}>Client</Link>
+            <Link href={adminRoutes.clientDetail(clientId)} className="hover:text-on-surface">Client</Link>
             <span className="mx-1">/</span>
             {isNew ? 'New page' : title || 'Edit page'}
-          </p>
+          </Text>
 
-          {error && <div className="alert-error mb-4">{error}</div>}
+          {error && (
+            <div className="mb-4 border-2 border-error bg-surface px-4 py-3">
+              <Text variant="body-sm" color="error">{error}</Text>
+            </div>
+          )}
 
           {/* ── Meta fields ────────────────────────────────────── */}
-          <div className="border border-zinc-200 p-4 mb-6">
-            <div className="flex gap-4 mb-3 flex-wrap">
+          <div className="border-2 border-on-surface bg-surface p-4 mb-6">
+            <div className="flex gap-4 mb-4 flex-wrap">
               <div className="flex-1 min-w-48">
-                <label className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold block mb-1">Title</label>
-                <input
-                  className="field-input w-full"
+                <TextField
+                  label="Title"
                   placeholder="Page title"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                 />
               </div>
               <div className="flex-1 min-w-36">
-                <label className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold block mb-1">Slug</label>
-                <input
-                  className="field-input w-full font-mono"
+                <TextField
+                  label="Slug"
                   placeholder="page-slug"
                   value={slug}
                   onChange={e => {
@@ -196,21 +192,21 @@ export default function PageEditorPage() {
                 />
               </div>
             </div>
-            <div className="mb-3">
-              <label className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold block mb-1">Description</label>
+            <div className="mb-4 flex flex-col gap-2">
+              <label className="font-label uppercase text-label text-on-surface">Description</label>
               <textarea
-                className="field-input w-full font-mono text-sm resize-y"
+                className="w-full border-2 border-on-surface bg-surface px-4 py-2 font-code text-code text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-y"
                 placeholder="Optional page description"
                 rows={2}
                 value={description}
                 onChange={e => setDescription(e.target.value)}
               />
             </div>
-            <div className="flex gap-4 mb-3">
-              <div>
-                <label className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold block mb-1">Status</label>
+            <div className="flex gap-4 mb-4">
+              <div className="flex flex-col gap-2">
+                <label className="font-label uppercase text-label text-on-surface">Status</label>
                 <select
-                  className="field-input"
+                  className="border-2 border-on-surface bg-surface px-4 py-2 font-code text-code text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   value={status}
                   onChange={e => setStatus(e.target.value as 'draft' | 'published')}
                 >
@@ -219,41 +215,31 @@ export default function PageEditorPage() {
                 </select>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {pageEntry?._id && (
-                <button
-                  onClick={handleSetHomePage}
-                  disabled={settingHomePage}
-                  title="Set this page as the client's home page"
-                  className="text-[11px] border px-2 py-1 font-mono transition-colors border-zinc-200 text-zinc-400 bg-white hover:text-amber-600 hover:border-amber-200"
-                >
-                  {settingHomePage ? '⌂ setting…' : '⌂ set as home'}
-                </button>
-              )}
-            </div>
           </div>
 
           {/* ── Save button ────────────────────────────────────── */}
           <div className="flex justify-end items-center gap-4">
-            <span className="text-xs font-mono text-zinc-400">
+            <Text variant="code" color="secondary" as="span">
               {blocks.length} block{blocks.length !== 1 ? 's' : ''}
-            </span>
-            <button
+            </Text>
+            <Button
               onClick={handleSave}
               disabled={saving}
-              className={`btn-primary ${saved ? 'opacity-75' : ''}`}
+              variant="primary"
+              size="md"
+              className={saved ? 'opacity-75' : ''}
             >
               {saving ? 'Saving…' : saved ? 'Saved ✓' : isNew ? 'Create page' : 'Save page'}
-            </button>
+            </Button>
           </div>
         </div>
       }
       infoNote={
         <div>
-          <p className="font-semibold text-blue-900 mb-1">Page Builder</p>
-          <p className="text-blue-700">
+          <Text variant="body-sm" className="font-bold uppercase mb-1">Page Builder</Text>
+          <Text variant="body-sm" color="secondary">
             Add blocks to customize page layout. Click a block to edit its settings in the sidebar.
-          </p>
+          </Text>
         </div>
       }
     />

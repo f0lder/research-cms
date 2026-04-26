@@ -2,14 +2,34 @@
 
 import { ReactNode, useState, useEffect } from 'react';
 import Select from 'react-select';
-import { BlockSchemaField, Block, ColumnBlock, ContentTypeDefinition } from '@research-cms/shared-types';
+import { BlockSchemaField, Block, ColumnBlock } from '@research-cms/shared-types';
 import { getAllSchemas, getAllEntries } from '@/app/actions';
 import { NestedBlocksEditor } from './NestedBlocksEditor';
 import { ColumnsEditor } from './ColumnsEditor';
+import { Text } from '@/components/ui';
 
 interface SelectOption {
   value: string;
   label: string;
+}
+
+const compactInput = 'w-full border-2 border-on-surface bg-surface px-2 py-1 font-code text-caption text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent';
+
+const compactSelectStyles = {
+  control: (base: any) => ({ ...base, minHeight: 32, fontSize: 12, fontFamily: 'ui-monospace, monospace', borderColor: '#000', borderWidth: 2, borderRadius: 0, boxShadow: 'none', '&:hover': { borderColor: '#000' } }),
+  menu: (base: any) => ({ ...base, fontSize: 12, fontFamily: 'ui-monospace, monospace', borderRadius: 0, zIndex: 30, border: '2px solid #000', boxShadow: '4px 4px 0 #000' }),
+  option: (base: any, s: any) => ({ ...base, backgroundColor: s.isFocused ? '#f4f4f5' : 'white', color: '#000', fontSize: 12 }),
+  multiValue: (base: any) => ({ ...base, backgroundColor: '#f4f4f5', borderRadius: 0, border: '1px solid #000' }),
+  multiValueLabel: (base: any) => ({ ...base, fontSize: 11, fontFamily: 'ui-monospace, monospace' }),
+};
+
+function FieldLabel({ field }: { field: BlockSchemaField }) {
+  return (
+    <Text variant="caption" color="secondary" as="label" className="block mb-0.5 font-code">
+      {field.label}
+      {field.required && <span className="text-error ml-1">*</span>}
+    </Text>
+  );
 }
 
 /**
@@ -23,7 +43,6 @@ export function SchemaFieldInput({
   value,
   onChange,
   disabled = false,
-  options,
   block,
   contextSchemaSlug,
 }: {
@@ -35,12 +54,7 @@ export function SchemaFieldInput({
   block?: Block;
   contextSchemaSlug?: string;
 }): ReactNode {
-  const label = (
-    <label className="text-[9px] text-zinc-400 font-mono block mb-0.5">
-      {field.label}
-      {field.required && <span className="text-red-400 ml-1">*</span>}
-    </label>
-  );
+  const label = <FieldLabel field={field} />;
 
   switch (field.type) {
     case 'text':
@@ -49,7 +63,7 @@ export function SchemaFieldInput({
           {label}
           <input
             type="text"
-            className="field-input w-full text-xs py-1"
+            className={compactInput}
             placeholder={field.description || ''}
             value={String(value ?? '')}
             onChange={e => onChange(e.target.value || undefined)}
@@ -63,7 +77,7 @@ export function SchemaFieldInput({
         <div>
           {label}
           <textarea
-            className="field-input w-full text-xs resize-y py-1"
+            className={`${compactInput} resize-y`}
             rows={2}
             placeholder={field.description || ''}
             value={String(value ?? '')}
@@ -79,7 +93,7 @@ export function SchemaFieldInput({
           {label}
           <input
             type="number"
-            className="field-input w-full text-xs py-1"
+            className={compactInput}
             placeholder={field.description || ''}
             value={typeof value === 'number' ? value : ''}
             onChange={e => onChange(e.target.value ? Number(e.target.value) : undefined)}
@@ -96,9 +110,9 @@ export function SchemaFieldInput({
             checked={Boolean(value)}
             onChange={e => onChange(e.target.checked)}
             disabled={disabled}
-            className="w-3 h-3"
+            className="w-3 h-3 accent-primary"
           />
-          <span className="text-[9px] text-zinc-400 font-mono">{field.label}</span>
+          <Text variant="caption" color="secondary" as="span" className="font-code">{field.label}</Text>
         </label>
       );
 
@@ -107,7 +121,7 @@ export function SchemaFieldInput({
         <div>
           {label}
           <select
-            className="field-input w-full text-xs py-1"
+            className={compactInput}
             value={String(value ?? (field.defaultValue ?? ''))}
             onChange={e => onChange(e.target.value || undefined)}
             disabled={disabled}
@@ -129,14 +143,14 @@ export function SchemaFieldInput({
           <div className="flex gap-1">
             <input
               type="color"
-              className="field-input h-8 w-12 cursor-pointer"
+              className={`${compactInput} h-8 w-12 cursor-pointer p-0`}
               value={String(value ?? '#000000')}
               onChange={e => onChange(e.target.value)}
               disabled={disabled}
             />
             <input
               type="text"
-              className="field-input flex-1 text-xs font-mono py-1"
+              className={`${compactInput} flex-1`}
               value={String(value ?? '')}
               onChange={e => onChange(e.target.value || undefined)}
               disabled={disabled}
@@ -152,14 +166,14 @@ export function SchemaFieldInput({
           {label}
           <input
             type="text"
-            className="field-input w-full text-xs py-1"
+            className={compactInput}
             placeholder="https://example.com/image.png"
             value={String(value ?? '')}
             onChange={e => onChange(e.target.value || undefined)}
             disabled={disabled}
           />
           {value ? (
-            <div className="mt-2 rounded border border-zinc-200 overflow-hidden">
+            <div className="mt-2 border-2 border-on-surface overflow-hidden">
               <img
                 src={String(value)}
                 alt="Preview"
@@ -234,8 +248,8 @@ export function SchemaFieldInput({
       return (
         <NestedBlocksEditor
           blocks={(value as Block[]) ?? []}
-          onChange={onChange}
-          label={typeof label === 'string' ? label : 'Nested Blocks'}
+          onChange={onChange as (blocks: Block[]) => void}
+          label={field.label}
         />
       );
 
@@ -243,14 +257,14 @@ export function SchemaFieldInput({
       return (
         <ColumnsEditor
           columns={(value as ColumnBlock[]) ?? []}
-          onChange={onChange}
+          onChange={onChange as (cols: ColumnBlock[]) => void}
         />
       );
 
     default:
       return (
-        <div className="text-[11px] text-red-500 p-2 bg-red-50 border border-red-200 rounded">
-          Unknown field type: {field.type}
+        <div className="p-2 bg-surface border-2 border-error">
+          <Text variant="caption" color="error">Unknown field type: {(field as any).type}</Text>
         </div>
       );
   }
@@ -258,10 +272,6 @@ export function SchemaFieldInput({
 
 // ── Sub-components ────────────────────────────────────────────────────────
 
-/**
- * Spacing editor for padding/margin.
- * Allows setting top, right, bottom, left individually.
- */
 function SpacingInput({
   value,
   onChange,
@@ -279,7 +289,7 @@ function SpacingInput({
         <input
           key={side}
           type="number"
-          className="field-input w-full text-xs py-1"
+          className={compactInput}
           placeholder={side[0].toUpperCase()}
           title={side}
           value={current[side] ?? ''}
@@ -294,10 +304,6 @@ function SpacingInput({
   );
 }
 
-/**
- * Action picker for ButtonBlock actions.
- * Handles: navigate, url, schema, entry.
- */
 function ActionPickerInput({
   value,
   onChange,
@@ -312,7 +318,7 @@ function ActionPickerInput({
   return (
     <div className="flex flex-col gap-1">
       <select
-        className="field-input w-full text-xs py-1"
+        className={compactInput}
         value={current.type ?? 'url'}
         onChange={e => {
           const type = e.target.value;
@@ -333,7 +339,7 @@ function ActionPickerInput({
       {current.type === 'url' && (
         <input
           type="text"
-          className="field-input w-full text-xs py-1"
+          className={compactInput}
           placeholder="https://…"
           value={current.url ?? ''}
           onChange={e => onChange({ ...current, url: e.target.value })}
@@ -343,7 +349,7 @@ function ActionPickerInput({
       {current.type === 'navigate' && (
         <input
           type="text"
-          className="field-input w-full text-xs py-1"
+          className={compactInput}
           placeholder="page-slug"
           value={current.pageSlug ?? ''}
           onChange={e => onChange({ ...current, pageSlug: e.target.value })}
@@ -353,7 +359,7 @@ function ActionPickerInput({
       {current.type === 'schema' && (
         <input
           type="text"
-          className="field-input w-full text-xs py-1"
+          className={compactInput}
           placeholder="schema-slug"
           value={current.schemaSlug ?? ''}
           onChange={e => onChange({ ...current, schemaSlug: e.target.value })}
@@ -364,7 +370,7 @@ function ActionPickerInput({
         <>
           <input
             type="text"
-            className="field-input w-full text-xs py-1"
+            className={compactInput}
             placeholder="schema-slug"
             value={current.schemaSlug ?? ''}
             onChange={e => onChange({ ...current, schemaSlug: e.target.value })}
@@ -372,7 +378,7 @@ function ActionPickerInput({
           />
           <input
             type="text"
-            className="field-input w-full text-xs py-1"
+            className={compactInput}
             placeholder="entry-id"
             value={current.entryId ?? ''}
             onChange={e => onChange({ ...current, entryId: e.target.value })}
@@ -411,12 +417,6 @@ function SchemaPickerSelect({
       .finally(() => setLoading(false));
   }, []);
 
-  const reactSelectStyles = {
-    control: (base: any) => ({ ...base, minHeight: 28, fontSize: 11, fontFamily: 'monospace', borderColor: '#e4e4e7', borderRadius: 2, boxShadow: 'none' }),
-    menu: (base: any) => ({ ...base, fontSize: 11, fontFamily: 'monospace', borderRadius: 2, zIndex: 30 }),
-    option: (base: any, s: any) => ({ ...base, backgroundColor: s.isFocused ? '#f4f4f5' : 'white', color: '#18181b', fontSize: 11 }),
-  };
-
   return (
     <div>
       {label}
@@ -428,7 +428,7 @@ function SchemaPickerSelect({
         isDisabled={disabled}
         placeholder="Select schema…"
         classNamePrefix="rs"
-        styles={reactSelectStyles}
+        styles={compactSelectStyles}
       />
     </div>
   );
@@ -471,18 +471,12 @@ function FieldPickerSelect({
       .finally(() => setLoading(false));
   }, [schemaSlug]);
 
-  const reactSelectStyles = {
-    control: (base: any) => ({ ...base, minHeight: 28, fontSize: 11, fontFamily: 'monospace', borderColor: '#e4e4e7', borderRadius: 2, boxShadow: 'none' }),
-    menu: (base: any) => ({ ...base, fontSize: 11, fontFamily: 'monospace', borderRadius: 2, zIndex: 30 }),
-    option: (base: any, s: any) => ({ ...base, backgroundColor: s.isFocused ? '#f4f4f5' : 'white', color: '#18181b', fontSize: 11 }),
-  };
-
   return (
     <div>
       {label}
       {!schemaSlug ? (
-        <div className="text-[9px] text-zinc-400 p-2 bg-zinc-50 border border-zinc-200 rounded">
-          Select a schema first
+        <div className="p-2 bg-surface-container border-2 border-on-surface">
+          <Text variant="caption" color="secondary">Select a schema first</Text>
         </div>
       ) : (
         <Select<SelectOption>
@@ -493,7 +487,7 @@ function FieldPickerSelect({
           isDisabled={disabled || !schemaSlug}
           placeholder="Select field…"
           classNamePrefix="rs"
-          styles={reactSelectStyles}
+          styles={compactSelectStyles}
         />
       )}
     </div>
@@ -539,18 +533,12 @@ function EntryPickerSelect({
       .finally(() => setLoading(false));
   }, [schemaSlug]);
 
-  const reactSelectStyles = {
-    control: (base: any) => ({ ...base, minHeight: 28, fontSize: 11, fontFamily: 'monospace', borderColor: '#e4e4e7', borderRadius: 2, boxShadow: 'none' }),
-    menu: (base: any) => ({ ...base, fontSize: 11, fontFamily: 'monospace', borderRadius: 2, zIndex: 30 }),
-    option: (base: any, s: any) => ({ ...base, backgroundColor: s.isFocused ? '#f4f4f5' : 'white', color: '#18181b', fontSize: 11 }),
-  };
-
   return (
     <div>
       {label}
       {!schemaSlug ? (
-        <div className="text-[9px] text-zinc-400 p-2 bg-zinc-50 border border-zinc-200 rounded">
-          Select a schema first
+        <div className="p-2 bg-surface-container border-2 border-on-surface">
+          <Text variant="caption" color="secondary">Select a schema first</Text>
         </div>
       ) : (
         <Select<SelectOption>
@@ -561,7 +549,7 @@ function EntryPickerSelect({
           isDisabled={disabled || !schemaSlug}
           placeholder="Select entry…"
           classNamePrefix="rs"
-          styles={reactSelectStyles}
+          styles={compactSelectStyles}
         />
       )}
     </div>
@@ -605,12 +593,6 @@ function FieldPickerMultiSelect({
       .finally(() => setLoading(false));
   }, [schemaSlug]);
 
-  const reactSelectStyles = {
-    control: (base: any) => ({ ...base, minHeight: 28, fontSize: 11, fontFamily: 'monospace', borderColor: '#e4e4e7', borderRadius: 2, boxShadow: 'none' }),
-    menu: (base: any) => ({ ...base, fontSize: 11, fontFamily: 'monospace', borderRadius: 2, zIndex: 30 }),
-    option: (base: any, s: any) => ({ ...base, backgroundColor: s.isFocused ? '#f4f4f5' : 'white', color: '#18181b', fontSize: 11 }),
-  };
-
   const selectedValues = Array.isArray(value) ? value : [];
   const selectedOptions = selectedValues
     .map(v => fields.find(f => f.value === v))
@@ -620,8 +602,8 @@ function FieldPickerMultiSelect({
     <div>
       {label}
       {!schemaSlug ? (
-        <div className="text-[9px] text-zinc-400 p-2 bg-zinc-50 border border-zinc-200 rounded">
-          Select a schema first
+        <div className="p-2 bg-surface-container border-2 border-on-surface">
+          <Text variant="caption" color="secondary">Select a schema first</Text>
         </div>
       ) : (
         <Select<SelectOption, true>
@@ -633,7 +615,7 @@ function FieldPickerMultiSelect({
           isDisabled={disabled || !schemaSlug}
           placeholder="Select fields… (empty = all fields)"
           classNamePrefix="rs"
-          styles={reactSelectStyles}
+          styles={compactSelectStyles}
         />
       )}
     </div>

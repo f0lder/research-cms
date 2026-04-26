@@ -3,7 +3,7 @@ import { Stack, router, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { registerBuiltInBlocks, PageEntryResponse } from '@research-cms/shared-types';
-import { listSchemas, listPages } from '@/lib/api';
+import { listSchemas, listPages, getClientSettings } from '@/lib/api';
 import { Sidebar } from '@/components/Sidebar';
 import { C } from '@/lib/theme';
 
@@ -15,6 +15,7 @@ type Schema = { slug: string; name: string };
 type AppCtx = {
   schemas: Schema[];
   pages: PageEntryResponse[];
+  settings: Record<string, unknown>;
   loading: boolean;
   error: string;
   openSidebar: () => void;
@@ -23,6 +24,7 @@ type AppCtx = {
 const AppContext = createContext<AppCtx>({
   schemas: [],
   pages: [],
+  settings: {},
   loading: true,
   error: '',
   openSidebar: () => {},
@@ -33,6 +35,7 @@ export const useSchemasContext = () => useContext(AppContext);
 export default function RootLayout() {
   const [schemas, setSchemas] = useState<Schema[]>([]);
   const [pages, setPages] = useState<PageEntryResponse[]>([]);
+  const [settings, setSettings] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,9 +49,11 @@ export default function RootLayout() {
     Promise.all([
       listSchemas().catch(() => [] as Schema[]),
       listPages().catch(() => [] as PageEntryResponse[]),
-    ]).then(([s, p]) => {
+      getClientSettings().catch(() => ({} as Record<string, unknown>)),
+    ]).then(([s, p, st]) => {
       setSchemas(s);
       setPages(p);
+      setSettings(st);
       setLoading(false);
     }).catch((e: Error) => {
       setError(e.message);
@@ -64,7 +69,7 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <AppContext.Provider value={{ schemas, pages, loading, error, openSidebar }}>
+    <AppContext.Provider value={{ schemas, pages, settings, loading, error, openSidebar }}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -83,6 +88,7 @@ export default function RootLayout() {
         visible={sidebarOpen}
         schemas={schemas}
         pages={pages}
+        homePageId={(settings['client.homePage'] as string) ?? null}
         activeSlug={activeSlug}
         onSelect={handleSelect}
         onClose={() => setSidebarOpen(false)}

@@ -103,3 +103,8 @@ export function getMedia(id: string): Promise<PublicEntryResponse> {
   return get<PublicEntryResponse>(`/public/media/${id}`);
 }
 
+/** Fetch the client-scoped public settings (auto-resolved from the API key). */
+export function getClientSettings(): Promise<Record<string, unknown>> {
+  return get<Record<string, unknown>>('/public/settings');
+}
+

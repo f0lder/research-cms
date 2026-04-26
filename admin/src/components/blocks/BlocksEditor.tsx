@@ -10,6 +10,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Block, blockRegistry, ColumnBlock } from '@research-cms/shared-types';
 import { MdDelete, MdExpandMore, MdChevronRight, MdDragIndicator } from 'react-icons/md';
 import { BlockConfigForm, AddBlockPanel, NestedBlocksEditor, ColumnsEditor } from '.';
+import { Button, Heading, Text } from '@/components/ui';
 
 /**
  * Reusable block editor component with inline nested block editing.
@@ -43,22 +44,22 @@ export function BlocksEditor({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    
+
     // Find indices by block ID
     const activeIndex = blocks.findIndex(b => b.id === active.id);
     const overIndex = blocks.findIndex(b => b.id === over.id);
-    
+
     if (activeIndex === -1 || overIndex === -1) return;
-    
+
     // Reorder blocks array
     const reordered = arrayMove(blocks, activeIndex, overIndex);
-    
+
     // Update order field to match new position
     const withOrderUpdated = reordered.map((block, index) => ({
       ...block,
       order: index,
     }));
-    
+
     onBlocksChange(withOrderUpdated);
   };
 
@@ -107,13 +108,12 @@ export function BlocksEditor({
   };
 
   const selectedBlock = selectedBlockIndex !== null && blocks[selectedBlockIndex] ? blocks[selectedBlockIndex] : null;
-  const isContainerBlock = selectedBlock && ['row', 'column', 'card'].includes(selectedBlock.type);
 
   return (
     <div className="page flex flex-col h-screen overflow-hidden">
       {/* Header */}
       {onHeaderContent && (
-        <div className="flex-shrink-0 mb-6">
+        <div className="shrink-0 mb-6">
           {onHeaderContent}
         </div>
       )}
@@ -142,10 +142,10 @@ export function BlocksEditor({
                           }
                         }}
                       />
-                      
+
                       {/* Inline nested editor for expanded container blocks */}
                       {expandedBlockIndex === i && ['row', 'column', 'card'].includes(block.type) && (
-                        <div className="ml-4 mt-2 mb-3 rounded border-2 border-blue-300 bg-blue-50">
+                        <div className="ml-4 mt-2 mb-3 border-2 border-primary bg-surface-container">
                           {block.type === 'row' && (
                             <div className="p-3">
                               <ColumnsEditor
@@ -187,23 +187,25 @@ export function BlocksEditor({
             </DndContext>
           ) : (
             <div className="flex-1 flex items-center justify-center">
-              <div className="p-6 border border-dashed border-zinc-300 bg-zinc-50 rounded text-center text-zinc-400 font-mono text-xs max-w-xs">
-                <p className="mb-2">No blocks yet</p>
-                <p className="text-[11px]">Click the button below to add a block</p>
+              <div className="p-6 border-2 border-dashed border-on-surface bg-surface-container text-center max-w-xs">
+                <Text variant="body-sm" className="font-bold uppercase mb-2">No blocks yet</Text>
+                <Text variant="caption" color="secondary">Click the button below to add a block</Text>
               </div>
             </div>
           )}
 
           {/* Add Block button - main area */}
-          <div className="flex-shrink-0 mt-4 mb-4">
-            <button
+          <div className="shrink-0 mt-4 mb-4">
+            <Button
               onClick={() => setShowAddBlockPanel(!showAddBlockPanel)}
-              className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-mono rounded transition-colors"
+              variant="primary"
+              size="md"
+              className="w-full"
             >
               + Add Block
-            </button>
+            </Button>
             {showAddBlockPanel && (
-              <div className="mt-3 p-4 border border-blue-200 rounded-lg bg-blue-50">
+              <div className="mt-3 p-4 border-2 border-on-surface bg-surface-container">
                 <AddBlockPanel
                   onAdd={(type) => {
                     addBlock(type);
@@ -216,14 +218,14 @@ export function BlocksEditor({
 
           {/* Info note */}
           {infoNote && (
-            <div className="flex-shrink-0 mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-xs font-mono">
+            <div className="shrink-0 mt-4 p-3 bg-surface-container border-2 border-on-surface">
               {infoNote}
             </div>
           )}
         </div>
 
         {/* Right sidebar */}
-        <div className="w-80 flex-shrink-0 border-l border-zinc-200 bg-zinc-50 flex flex-col overflow-hidden">
+        <div className="w-80 shrink-0 border-l-2 border-on-surface bg-surface-container flex flex-col overflow-hidden">
           {/* Block settings section */}
           {selectedNestedBlock ? (
             // Nested block selected - show its settings in main sidebar
@@ -231,7 +233,7 @@ export function BlocksEditor({
               const nestedBlock = getSelectedNestedBlock();
               if (!nestedBlock) return null;
               const parentBlock = blocks[selectedNestedBlock.parentIndex];
-              
+
               // Get the parent blocks list (works for row->column->blocks, column->blocks, card->blocks)
               let parentBlocksList: Block[] = [];
               if (selectedNestedBlock.parentType === 'row') {
@@ -242,28 +244,26 @@ export function BlocksEditor({
               } else {
                 parentBlocksList = (parentBlock as any).blocks ?? [];
               }
-              
+
               return (
                 <div className="flex-1 overflow-y-auto p-4 min-h-0">
                   <div className="mb-4 flex items-start justify-between">
                     <div>
-                      <h3 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">
-                        Nested Block Settings
-                      </h3>
-                      <p className="text-[10px] text-zinc-500 font-mono mt-1">
+                      <Heading level={4}>Nested Block Settings</Heading>
+                      <Text variant="code" color="secondary" className="mt-1">
                         {blockRegistry.get(nestedBlock.type)?.label ?? nestedBlock.type}
-                      </p>
-                      <p className="text-[9px] text-zinc-400 mt-1">
+                      </Text>
+                      <Text variant="caption" color="secondary" className="mt-1">
                         in {selectedNestedBlock.parentType}{selectedNestedBlock.parentType === 'row' && (` (col ${(selectedNestedBlock as any).columnIndex + 1})`)}
-                      </p>
+                      </Text>
                     </div>
-                    <button
+                    <Button
                       onClick={() => {
                         const updated = parentBlocksList.filter((_: Block, idx: number) => idx !== selectedNestedBlock.nestedIndex);
                         if (selectedNestedBlock.parentType === 'row') {
                           const columnIndex = (selectedNestedBlock as any).columnIndex;
                           const columns = (parentBlock as any).columns ?? [];
-                          const updatedColumns = columns.map((col: ColumnBlock, idx: number) => 
+                          const updatedColumns = columns.map((col: ColumnBlock, idx: number) =>
                             idx === columnIndex ? { ...col, blocks: updated } : col
                           );
                           updateBlock(selectedNestedBlock.parentIndex, { ...(parentBlock as any), columns: updatedColumns });
@@ -272,11 +272,12 @@ export function BlocksEditor({
                         }
                         setSelectedNestedBlock(null);
                       }}
-                      className="text-xs text-red-400 hover:text-red-600 font-mono px-2 py-1 hover:bg-red-50 rounded"
+                      variant="destructive"
+                      size="xs"
                       title="Delete block"
                     >
                       Delete
-                    </button>
+                    </Button>
                   </div>
                   <BlockConfigForm
                     block={nestedBlock}
@@ -285,7 +286,7 @@ export function BlocksEditor({
                       if (selectedNestedBlock.parentType === 'row') {
                         const columnIndex = (selectedNestedBlock as any).columnIndex;
                         const columns = (parentBlock as any).columns ?? [];
-                        const updatedColumns = columns.map((col: ColumnBlock, idx: number) => 
+                        const updatedColumns = columns.map((col: ColumnBlock, idx: number) =>
                           idx === columnIndex ? { ...col, blocks: updated } : col
                         );
                         updateBlock(selectedNestedBlock.parentIndex, { ...(parentBlock as any), columns: updatedColumns });
@@ -302,21 +303,20 @@ export function BlocksEditor({
             <div className="flex-1 overflow-y-auto p-4 min-h-0">
               <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <h3 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">
-                    Block Settings
-                  </h3>
-                  <p className="text-[10px] text-zinc-500 font-mono mt-1">
+                  <Heading level={4}>Block Settings</Heading>
+                  <Text variant="code" color="secondary" className="mt-1">
                     {blockRegistry.get(selectedBlock.type)?.label ?? selectedBlock.type}
-                  </p>
+                  </Text>
                 </div>
-                <button
+                <Button
                   onClick={() => removeBlock(selectedBlockIndex ?? -1)}
-                  className="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-600 px-2 py-1 hover:bg-red-50 rounded transition-colors"
+                  variant="destructive"
+                  size="xs"
+                  icon={<MdDelete size={14} />}
                   title="Delete block"
                 >
-                  <MdDelete size={14} />
                   Delete
-                </button>
+                </Button>
               </div>
               <BlockConfigForm
                 block={selectedBlock}
@@ -326,23 +326,26 @@ export function BlocksEditor({
             </div>
           ) : selectedBlock && ['row', 'column', 'card'].includes(selectedBlock.type) ? (
             <div className="flex-1 flex items-center justify-center text-center p-4">
-              <div className="text-zinc-400 font-mono text-xs">
-                <p className="mb-2">Container Block</p>
-                <p className="text-[10px]">Edit content in the expanded area above</p>
-                <button
-                  onClick={() => removeBlock(selectedBlockIndex ?? -1)}
-                  className="mt-4 inline-flex items-center gap-2 px-2 py-1 text-xs text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors"
-                >
-                  <MdDelete size={14} />
-                  Delete
-                </button>
+              <div>
+                <Text variant="body-sm" className="font-bold uppercase mb-2">Container Block</Text>
+                <Text variant="caption" color="secondary">Edit content in the expanded area above</Text>
+                <div className="mt-4 flex justify-center">
+                  <Button
+                    onClick={() => removeBlock(selectedBlockIndex ?? -1)}
+                    variant="destructive"
+                    size="xs"
+                    icon={<MdDelete size={14} />}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </div>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center text-center p-4">
-              <div className="text-zinc-400 font-mono text-xs">
-                <p className="mb-1">No block selected</p>
-                <p className="text-[10px]">Click a block to edit its settings</p>
+              <div>
+                <Text variant="body-sm" color="secondary" className="font-bold uppercase mb-1">No block selected</Text>
+                <Text variant="caption" color="secondary">Click a block to edit its settings</Text>
               </div>
             </div>
           )}
@@ -357,7 +360,6 @@ export function BlocksEditor({
  */
 function SortableBlockItem({
   block,
-  index,
   isSelected,
   isExpanded,
   onSelect,
@@ -377,11 +379,10 @@ function SortableBlockItem({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
-      className={`border cursor-pointer transition-all ${
-        isSelected
-          ? 'border-blue-500 bg-blue-50 shadow-md'
-          : 'border-zinc-200 bg-white hover:border-zinc-300'
-      } rounded mb-3 ${isExpanded ? 'ring-2 ring-blue-300' : ''}`}
+      className={`border-2 cursor-pointer transition-all mb-3 ${isSelected
+        ? 'border-primary bg-surface-container shadow-hard'
+        : 'border-on-surface bg-surface hover:bg-surface-container'
+        } ${isExpanded ? 'shadow-hard' : ''}`}
     >
       <div
         onClick={onSelect}
@@ -390,20 +391,20 @@ function SortableBlockItem({
         <button
           {...attributes}
           {...listeners}
-          className="text-zinc-300 hover:text-zinc-500 cursor-grab active:cursor-grabbing leading-none select-none flex-shrink-0 flex items-center"
+          className="text-on-surface-variant hover:text-on-surface cursor-grab active:cursor-grabbing leading-none select-none shrink-0 flex items-center"
           aria-label="Drag to reorder"
           onClick={e => e.stopPropagation()}
         >
           <MdDragIndicator size={18} />
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider">{typeLabel}</p>
+          <Text variant="code" color="secondary" as="span" className="block uppercase tracking-wider font-bold">{typeLabel}</Text>
           {block && (block as any).config?.label && (
-            <p className="text-xs text-zinc-600 truncate">{(block as any).config.label}</p>
+            <Text variant="body-sm" as="span" className="block truncate">{(block as any).config.label}</Text>
           )}
         </div>
         {isContainer && (
-          <span className="text-zinc-400 flex-shrink-0 flex items-center">
+          <span className="text-on-surface-variant shrink-0 flex items-center">
             {isExpanded ? <MdExpandMore size={18} /> : <MdChevronRight size={18} />}
           </span>
         )}

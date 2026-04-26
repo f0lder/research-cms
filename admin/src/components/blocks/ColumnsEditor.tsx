@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { MdDelete } from 'react-icons/md';
 import { ColumnBlock } from '@research-cms/shared-types';
 import { NestedBlocksEditor } from './NestedBlocksEditor';
+import { Button, Text } from '@/components/ui';
 
 /**
  * Visual columns editor for Row blocks.
@@ -50,62 +51,63 @@ export function ColumnsEditor({
     <div className="flex flex-col gap-3">
       {/* Add column button - TOP */}
       {columns.length > 0 && (
-        <button
+        <Button
           onClick={addColumn}
-          className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-mono rounded transition-colors border border-blue-200 self-start"
+          variant="secondary"
+          size="xs"
+          className="self-start"
         >
           + Add Column
-        </button>
+        </Button>
       )}
 
       {/* Add column button for empty state */}
       {columns.length === 0 ? (
         <div className="text-center p-6">
-          <p className="text-xs text-zinc-500 mb-3">No columns yet</p>
-          <button
-            onClick={addColumn}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-mono rounded transition-colors"
-          >
-            + Add Column
-          </button>
+          <Text variant="body-sm" color="secondary" className="mb-3">No columns yet</Text>
+          <div className="flex justify-center">
+            <Button onClick={addColumn} variant="primary" size="sm">
+              + Add Column
+            </Button>
+          </div>
         </div>
       ) : (
         <>
           {/* Visual columns grid */}
-          <div className="flex gap-2 border border-zinc-200 rounded-lg p-3 bg-zinc-50 min-h-32">
+          <div className="flex gap-2 border-2 border-on-surface p-3 bg-surface-container min-h-32">
             {columns.map((col, i) => (
               <div
                 key={i}
                 onClick={() => setSelectedColumnIndex(i)}
-                className={`flex-1 border-2 rounded cursor-pointer transition-all min-h-32 p-2 flex flex-col items-center justify-center ${
-                  selectedColumnIndex === i
-                    ? 'border-blue-500 bg-blue-100'
-                    : 'border-zinc-300 bg-white hover:border-zinc-400'
-                }`}
+                className={`flex-1 border-2 cursor-pointer transition-all min-h-32 p-2 flex flex-col items-center justify-center ${selectedColumnIndex === i
+                  ? 'border-primary bg-surface shadow-hard'
+                  : 'border-on-surface bg-surface hover:bg-surface-container'
+                  }`}
               >
-                <p className="text-xs font-mono text-zinc-600 mb-1">Column {i + 1}</p>
-                <p className="text-[10px] text-zinc-500">
+                <Text variant="code" color="secondary" className="font-bold uppercase mb-1">Column {i + 1}</Text>
+                <Text variant="caption" color="secondary">
                   ({col.blocks?.length ?? 0} block{(col.blocks?.length ?? 0) !== 1 ? 's' : ''})
-                </p>
+                </Text>
               </div>
             ))}
           </div>
 
           {/* Selected column editor */}
           {selectedColumn && selectedColumnIndex !== null && (
-            <div className="border border-blue-300 rounded-lg p-3 bg-blue-50">
+            <div className="border-2 border-primary p-3 bg-surface-container">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-zinc-900">
+                <Text variant="body-sm" className="font-bold uppercase">
                   Column {selectedColumnIndex + 1} Content
-                </p>
-                <button
+                </Text>
+                <Button
                   onClick={() => removeColumn(selectedColumnIndex)}
-                  className="text-xs text-red-400 hover:text-red-600 inline-flex items-center gap-1 px-2 py-1 hover:bg-red-50 rounded transition-colors"
+                  variant="destructive"
+                  size="xs"
+                  icon={<MdDelete size={14} />}
                   title="Delete column"
                 >
-                  <MdDelete size={14} />
                   Delete
-                </button>
+                </Button>
               </div>
               <NestedBlocksEditor
                 blocks={selectedColumn.blocks ?? []}
@@ -116,7 +118,7 @@ export function ColumnsEditor({
                   })
                 }
                 label={`Column ${selectedColumnIndex + 1}`}
-                onSelectBlock={(block, index) =>
+                onSelectBlock={(block) =>
                   onSelectNestedBlock?.(block.id, selectedColumnIndex)
                 }
               />

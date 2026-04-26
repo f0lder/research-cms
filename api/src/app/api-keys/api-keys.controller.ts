@@ -41,14 +41,6 @@ export class ApiKeysController {
     return this.apiKeysService.updateAllowedSchemas(id, body.allowedSchemas);
   }
 
-  @Put(':id/home-page')
-  setHomePage(
-    @Param('id') id: string,
-    @Body() body: { pageId: string | null },
-  ) {
-    return this.apiKeysService.setHomePage(id, body.pageId);
-  }
-
   @Get(':id/usage')
   getUsage(
     @Param('id') id: string,

@@ -7,18 +7,19 @@ import { useSchemasContext } from '@/src/app/_layout';
 import { C, shared } from '@/lib/theme';
 
 export default function IndexScreen() {
-  const { schemas, pages, loading, error } = useSchemasContext();
+  const { schemas, pages, settings, loading, error } = useSchemasContext();
 
   useEffect(() => {
     if (loading) return;
     // Prefer pages navigation when the client has published pages
     if (pages.length > 0) {
-      const home = pages.find(p => p.data?.isHome) ?? pages[0];
+      const homePageId = settings['client.homePage'] as string | undefined;
+      const home = (homePageId && pages.find(p => p._id === homePageId)) || pages[0];
       router.replace(`/pages/${home.data?.slug}` as never);
     } else if (schemas.length > 0) {
       router.replace(`/${schemas[0].slug}` as never);
     }
-  }, [schemas, pages, loading]);
+  }, [schemas, pages, settings, loading]);
 
   if (!API_KEY) return <NoKeyNotice />;
 

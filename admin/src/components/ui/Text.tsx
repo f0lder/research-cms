@@ -2,16 +2,18 @@
 
 import React from 'react';
 
-export interface TextProps extends React.HTMLAttributes<HTMLParagraphElement> {
-  variant?: 'body-lg' | 'body-md' | 'label' | 'code' | 'caption';
+export interface TextProps extends React.HTMLAttributes<HTMLElement> {
+  variant?: 'body-lg' | 'body-md' | 'body-sm' | 'label' | 'code' | 'caption';
   color?: 'default' | 'secondary' | 'error';
+  as?: React.ElementType;
 }
 
-export const Text = React.forwardRef<HTMLParagraphElement, TextProps>(
-  ({ variant = 'body-md', color = 'default', className = '', children, ...props }, ref) => {
+export const Text = React.forwardRef<HTMLElement, TextProps>(
+  ({ variant = 'body-md', color = 'default', as: Component = 'p', className = '', children, ...props }, ref) => {
     const sizeStyles = {
       'body-lg': 'text-body-lg font-body',
       'body-md': 'text-body-md font-body',
+      'body-sm': 'text-body-sm font-body',
       'label': 'text-label font-heading',
       'code': 'text-code font-code',
       'caption': 'text-caption font-body',
@@ -24,13 +26,13 @@ export const Text = React.forwardRef<HTMLParagraphElement, TextProps>(
     };
 
     return (
-      <p
+      <Component
         ref={ref}
         className={`${sizeStyles[variant]} ${colorStyles[color]} ${className}`}
         {...props}
       >
         {children}
-      </p>
+      </Component>
     );
   }
 );

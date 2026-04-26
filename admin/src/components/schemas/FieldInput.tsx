@@ -4,6 +4,7 @@ import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import { FieldType, FieldDefinition, FieldConfig, ContentTypeDefinition } from '@research-cms/shared-types';
 import { labelToFieldKey } from '@/lib/utils';
+import { Button, Text } from '@/components/ui';
 
 type SelectOption = { value: string; label: string };
 
@@ -43,24 +44,38 @@ const rsStyles = (disabled: boolean) => ({
     fontSize: '13px',
     fontFamily: 'ui-monospace, monospace',
     borderRadius: 0,
-    borderColor: '#d4d4d8',
+    borderWidth: '2px',
+    borderColor: '#000',
     boxShadow: 'none',
-    minHeight: '34px',
-    backgroundColor: disabled ? '#fafafa' : '#fff',
-    '&:hover': { borderColor: '#52525b' },
+    minHeight: '38px',
+    backgroundColor: disabled ? '#f4f4f5' : '#fff',
+    '&:hover': { borderColor: '#000' },
   }),
   groupHeading: (base: object) => ({
     ...base,
     fontSize: '10px',
     textTransform: 'uppercase' as const,
-    color: '#a1a1aa',
+    color: '#71717a',
     letterSpacing: '0.05em',
+    fontWeight: 700,
   }),
-  multiValue: (base: object) => ({ ...base, backgroundColor: '#f4f4f5', borderRadius: 0 }),
+  menu: (base: object) => ({
+    ...base,
+    borderRadius: 0,
+    border: '2px solid #000',
+    boxShadow: '4px 4px 0 #000',
+  }),
+  multiValue: (base: object) => ({ ...base, backgroundColor: '#f4f4f5', borderRadius: 0, border: '1px solid #000' }),
   multiValueLabel: (base: object) => ({ ...base, fontSize: '12px', fontFamily: 'ui-monospace, monospace' }),
   valueContainer: (base: object) => ({ ...base, padding: '0 8px' }),
-  indicatorsContainer: (base: object) => ({ ...base, height: '34px' }),
+  indicatorsContainer: (base: object) => ({ ...base, height: '38px' }),
 });
+
+const inputClass = (error = false, disabled = false) =>
+  `w-full border-2 ${error ? 'border-error' : 'border-on-surface'} ${disabled ? 'bg-surface-container' : 'bg-surface'} px-3 py-2 font-code text-code text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent`;
+
+const keyInputClass = (error = false) =>
+  `w-full font-code text-caption bg-transparent border-0 border-b-2 outline-none px-1 py-0.5 ${error ? 'text-error border-error' : 'text-on-surface-variant border-transparent focus:border-on-surface'}`;
 
 interface FieldInputProps {
   field: FieldDefinition;
@@ -132,10 +147,10 @@ export default function FieldInput({
     || field.type === 'references';
 
   return (
-    <div className={`border border-zinc-200 mb-2 ${disabled ? 'bg-zinc-50' : 'bg-white'}`}>
+    <div className={`border-2 border-on-surface mb-3 ${disabled ? 'bg-surface-container' : 'bg-surface'}`}>
 
       {/* Main row */}
-      <div className="flex items-center gap-2 p-3">
+      <div className="flex items-start gap-3 p-3">
 
         {/* Label + key */}
         <div className="flex-1 min-w-0">
@@ -145,24 +160,20 @@ export default function FieldInput({
             value={field.label}
             onChange={e => handleLabelChange(e.target.value)}
             disabled={disabled}
-            className="field-input text-sm"
+            className={inputClass(false, disabled)}
           />
-          <div className="flex items-center gap-1 mt-1">
-            <span className="text-[11px] text-zinc-400 font-mono">key:</span>
+          <div className="flex items-center gap-2 mt-1.5">
+            <Text variant="caption" color="secondary" className="font-code shrink-0">key:</Text>
             <input
               placeholder="field_key"
               required
               value={field.name}
               onChange={e => handleNameChange(e.target.value)}
               disabled={disabled}
-              className={`text-[11px] font-mono bg-transparent border-0 border-b outline-none w-full
-                ${isDuplicate
-                  ? 'text-red-500 border-red-400'
-                  : 'text-zinc-500 border-transparent focus:border-zinc-300'
-                }`}
+              className={keyInputClass(isDuplicate)}
             />
             {isDuplicate && (
-              <span className="text-[11px] text-red-400 shrink-0">duplicate</span>
+              <Text variant="caption" color="error" className="shrink-0 font-bold uppercase">duplicate</Text>
             )}
           </div>
         </div>
@@ -182,34 +193,38 @@ export default function FieldInput({
         </div>
 
         {/* Required */}
-        <label className={`flex items-center gap-1.5 text-xs text-zinc-500 shrink-0 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+        <label className={`flex items-center gap-2 text-caption font-label uppercase text-on-surface-variant shrink-0 self-center ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
           <input
             type="checkbox"
             checked={field.required}
             onChange={e => onUpdate(index, 'required', e.target.checked)}
             disabled={disabled}
+            className="w-4 h-4 accent-primary"
           />
           Req
         </label>
 
         {/* Remove */}
-        <button
+        <Button
           type="button"
           onClick={() => onRemove(index)}
           disabled={disabled}
-          className="text-zinc-300 hover:text-red-400 transition-colors text-lg leading-none shrink-0 px-1"
+          variant="ghost"
+          size="xs"
+          aria-label="Remove field"
           title="Remove field"
+          className="self-center text-on-surface-variant hover:text-error"
         >
           ×
-        </button>
+        </Button>
       </div>
 
       {/* Config row — only for types that need extra options */}
       {needsConfig && (
-        <div className="border-t border-zinc-100 px-3 py-2.5 bg-zinc-50">
+        <div className="border-t-2 border-on-surface px-3 py-3 bg-surface-container">
           {field.type === 'select' && (
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-zinc-400 font-mono shrink-0">options:</span>
+              <Text variant="caption" color="secondary" className="font-code shrink-0">options:</Text>
               <CreatableSelect<SelectOption, true>
                 instanceId={`field-options-${index}`}
                 isMulti
@@ -226,7 +241,7 @@ export default function FieldInput({
           )}
           {(field.type === 'reference' || field.type === 'references') && (
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-zinc-400 font-mono shrink-0">target:</span>
+              <Text variant="caption" color="secondary" className="font-code shrink-0">target:</Text>
               <Select<SelectOption>
                 instanceId={`field-ref-${index}`}
                 options={schemaOptions}

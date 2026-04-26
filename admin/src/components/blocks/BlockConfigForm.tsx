@@ -1,7 +1,10 @@
 'use client';
 
-import { Block, blockRegistry, BaseBlock } from '@research-cms/shared-types';
+import { Block, blockRegistry } from '@research-cms/shared-types';
 import { SchemaFieldInput } from './SchemaFieldInput';
+import { Text } from '@/components/ui';
+
+const compactInput = 'w-full border-2 border-on-surface bg-surface px-2 py-1 font-code text-caption text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent';
 
 /**
  * Generic block configuration form renderer.
@@ -22,8 +25,8 @@ export function BlockConfigForm({
 
   if (!definition) {
     return (
-      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-        Unknown block type: {block.type}
+      <div className="p-4 bg-surface border-2 border-error">
+        <Text variant="body-sm" color="error">Unknown block type: {block.type}</Text>
       </div>
     );
   }
@@ -60,10 +63,10 @@ function BaseBlockConfig({
   onChange: (block: Block) => void;
 }) {
   return (
-    <div className="border-t border-zinc-200 pt-2 mt-2">
-      <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold mb-2">
+    <div className="border-t-2 border-on-surface pt-2 mt-2">
+      <Text variant="caption" color="secondary" className="uppercase tracking-wider font-bold mb-2">
         Properties
-      </p>
+      </Text>
 
       <div className="flex flex-col gap-1.5">
         {/* Visibility toggle */}
@@ -72,34 +75,34 @@ function BaseBlockConfig({
             type="checkbox"
             checked={block.visible ?? true}
             onChange={e => onChange({ ...block, visible: e.target.checked })}
-            className="w-3 h-3"
+            className="w-3 h-3 accent-primary"
           />
-          <span className="text-[10px] text-zinc-500 font-mono">Visible</span>
+          <Text variant="caption" color="secondary" as="span" className="font-code">Visible</Text>
         </label>
 
         {/* Order (for drag/drop context) */}
         <div>
-          <label className="text-[9px] text-zinc-400 font-mono block mb-0.5">Order</label>
+          <Text variant="caption" color="secondary" as="label" className="block mb-0.5 font-code">Order</Text>
           <input
             type="number"
-            className="field-input w-full text-xs py-1"
+            className={compactInput}
             value={block.order ?? 0}
             onChange={e => onChange({ ...block, order: Number(e.target.value) })}
           />
         </div>
 
         {/* Styling */}
-        <div className="space-y-1.5 border-t border-zinc-100 pt-1.5">
-          <p className="text-[9px] uppercase tracking-wider text-zinc-300 font-semibold">Styling</p>
+        <div className="space-y-1.5 border-t-2 border-on-surface pt-1.5">
+          <Text variant="caption" color="secondary" className="uppercase tracking-wider font-bold">Styling</Text>
 
           <div>
-            <label className="text-[9px] text-zinc-400 font-mono block mb-0.5">
+            <Text variant="caption" color="secondary" as="label" className="block mb-0.5 font-code">
               Background
-            </label>
+            </Text>
             <div className="flex gap-1">
               <input
                 type="color"
-                className="field-input h-8 w-12 cursor-pointer"
+                className={`${compactInput} h-8 w-12 cursor-pointer p-0`}
                 value={block.backgroundColor ?? '#ffffff'}
                 onChange={e =>
                   onChange({
@@ -110,7 +113,7 @@ function BaseBlockConfig({
               />
               <input
                 type="text"
-                className="field-input flex-1 text-xs font-mono py-1"
+                className={`${compactInput} flex-1`}
                 value={block.backgroundColor ?? ''}
                 onChange={e =>
                   onChange({
@@ -124,12 +127,12 @@ function BaseBlockConfig({
           </div>
 
           <div>
-            <label className="text-[9px] text-zinc-400 font-mono block mb-0.5">
+            <Text variant="caption" color="secondary" as="label" className="block mb-0.5 font-code">
               Border Radius
-            </label>
+            </Text>
             <input
               type="number"
-              className="field-input w-full text-xs py-1"
+              className={compactInput}
               value={block.borderRadius ?? 0}
               onChange={e =>
                 onChange({
@@ -142,10 +145,10 @@ function BaseBlockConfig({
         </div>
 
         {/* Spacing */}
-        <div className="space-y-1.5 border-t border-zinc-100 pt-1.5">
-          <p className="text-[9px] uppercase tracking-wider text-zinc-300 font-semibold">
+        <div className="space-y-1.5 border-t-2 border-on-surface pt-1.5">
+          <Text variant="caption" color="secondary" className="uppercase tracking-wider font-bold">
             Spacing
-          </p>
+          </Text>
 
           <SpacingConfig
             label="Padding"
@@ -161,13 +164,13 @@ function BaseBlockConfig({
         </div>
 
         {/* Responsive */}
-        <div className="space-y-1 border-t border-zinc-100 pt-1.5">
-          <p className="text-[9px] uppercase tracking-wider text-zinc-300 font-semibold">
+        <div className="space-y-1 border-t-2 border-on-surface pt-1.5">
+          <Text variant="caption" color="secondary" className="uppercase tracking-wider font-bold">
             Responsive
-          </p>
-          <div className="flex gap-1 flex-wrap">
+          </Text>
+          <div className="flex gap-2 flex-wrap">
             {(['mobile', 'tablet', 'desktop'] as const).map(device => (
-              <label key={device} className="flex items-center gap-1">
+              <label key={device} className="flex items-center gap-1 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={(block.hideOn ?? []).includes(device)}
@@ -185,11 +188,11 @@ function BaseBlockConfig({
                       });
                     }
                   }}
-                  className="w-3 h-3"
+                  className="w-3 h-3 accent-primary"
                 />
-                <span className="text-[9px] text-zinc-500 font-mono capitalize">
+                <Text variant="caption" color="secondary" as="span" className="font-code capitalize">
                   {device}
-                </span>
+                </Text>
               </label>
             ))}
           </div>
@@ -215,13 +218,13 @@ function SpacingConfig({
 
   return (
     <div>
-      <label className="text-[9px] text-zinc-400 font-mono block mb-1">{label}</label>
+      <Text variant="caption" color="secondary" as="label" className="block mb-1 font-code">{label}</Text>
       <div className="grid grid-cols-4 gap-1">
         {(['top', 'right', 'bottom', 'left'] as const).map(side => (
           <input
             key={side}
             type="number"
-            className="field-input w-full text-xs py-1"
+            className={compactInput}
             placeholder={side[0].toUpperCase()}
             title={side}
             value={current[side] ?? ''}
@@ -232,7 +235,7 @@ function SpacingConfig({
           />
         ))}
       </div>
-      <p className="text-[8px] text-zinc-400 mt-0.5">T / R / B / L</p>
+      <Text variant="caption" color="secondary" className="mt-0.5">T / R / B / L</Text>
     </div>
   );
 }

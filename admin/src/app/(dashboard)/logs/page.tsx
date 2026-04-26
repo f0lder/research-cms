@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { Fragment, useState, useEffect, useCallback } from 'react';
 import Select from 'react-select';
 import { LogEntry } from '@research-cms/shared-types';
 import { formatDateTime } from '@/lib/utils';
@@ -9,30 +9,6 @@ import { Button, TextField, Heading, Text, Badge } from '@/components/ui';
 import { ListSkeleton } from '@/components/skeletons';
 
 
-// ── Meta viewer ───────────────────────────────────────────────────────────────
-function MetaCell({ meta }: { meta?: Record<string, unknown> | null }) {
-  const [open, setOpen] = useState(false);
-  if (!meta || Object.keys(meta).length === 0) return <Text variant="caption" color="secondary">—</Text>;
-  return (
-    <div>
-      <Button
-        onClick={() => setOpen(o => !o)}
-        variant="ghost"
-        size="sm"
-        className="text-code"
-      >
-        {open ? 'hide' : 'meta'}
-      </Button>
-      {open && (
-        <pre className="mt-1 text-code text-on-surface-variant bg-surface-container border-2 border-on-surface p-2 whitespace-pre-wrap max-w-xs">
-          {JSON.stringify(meta, null, 2)}
-        </pre>
-      )}
-    </div>
-  );
-}
-
-// ── Page ──────────────────────────────────────────────────────────────────────
 const PAGE_SIZE = 50;
 
 type Option = { value: string; label: string };
@@ -48,6 +24,16 @@ export default function LogsPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(0);
+  const [expandedMeta, setExpandedMeta] = useState<Set<string>>(new Set());
+
+  const toggleMeta = (id: string) => {
+    setExpandedMeta(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // Debounce search
   useEffect(() => {
@@ -151,31 +137,68 @@ export default function LogsPage() {
         </div>
       ) : (
         <>
-          <div className="border-2 border-on-surface">
-            <div className="grid grid-cols-[160px_1fr_200px_100px] gap-0 bg-surface-container border-b-2 border-on-surface px-4 py-2.5 text-code font-bold text-on-surface-variant uppercase">
-              <span>Time</span>
-              <span>Message</span>
-              <span>Tags</span>
-              <span>Meta</span>
-            </div>
-
-            {entries.map(entry => (
-              <div
-                key={entry._id}
-                className="grid grid-cols-[160px_1fr_200px_100px] gap-0 px-4 py-3 border-b border-on-surface last:border-0 hover:bg-surface-container items-start"
-              >
-                <Text variant="code" color="secondary" className="whitespace-nowrap pt-0.5">
-                  {entry.createdAt ? formatDateTime(entry.createdAt) : '—'}
-                </Text>
-                <Text variant="body-md" className="pr-4">{entry.message}</Text>
-                <div className="flex flex-wrap gap-1 pr-4">
-                  {entry.tags.map(tag => (
-                    <Badge key={tag} status={tag || 'default'}/>
-                  ))}
-                </div>
-                <MetaCell meta={entry.meta} />
-              </div>
-            ))}
+          <div className="border-2 border-on-surface overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-surface-container border-b-2 border-on-surface text-code font-bold text-on-surface-variant uppercase">
+                  <th className="text-left px-4 py-2.5 w-40">Time</th>
+                  <th className="text-left px-4 py-2.5">Message</th>
+                  <th className="text-left px-4 py-2.5 w-52">Tags</th>
+                  <th className="text-left px-4 py-2.5 w-24">Meta</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map(entry => {
+                  const id = entry._id ?? '';
+                  const hasMeta = !!entry.meta && Object.keys(entry.meta).length > 0;
+                  const isExpanded = expandedMeta.has(id);
+                  return (
+                    <Fragment key={id}>
+                      <tr className="border-b border-on-surface hover:bg-surface-container align-top">
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <Text variant="code" color="secondary">
+                            {entry.createdAt ? formatDateTime(entry.createdAt) : '—'}
+                          </Text>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Text variant="body-md">{entry.message}</Text>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {entry.tags.map(tag => (
+                              <Badge key={tag} status={tag || 'default'} />
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {hasMeta ? (
+                            <Button
+                              onClick={() => toggleMeta(id)}
+                              variant="ghost"
+                              size="sm"
+                              className="text-code"
+                            >
+                              {isExpanded ? 'hide' : 'show'}
+                            </Button>
+                          ) : (
+                            <Text variant="caption" color="secondary">—</Text>
+                          )}
+                        </td>
+                      </tr>
+                      {isExpanded && hasMeta && (
+                        <tr className="border-b-2 border-on-surface bg-surface-container">
+                          <td colSpan={4} className="p-0">
+                            <pre className="text-code text-on-surface-variant p-4 whitespace-pre-wrap break-all">
+                              {JSON.stringify(entry.meta, null, 2)}
+                            </pre>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
           {/* Pagination */}

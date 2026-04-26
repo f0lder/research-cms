@@ -8,6 +8,8 @@ import {
   SettingItem,
 } from '@/app/actions';
 import { ListSkeleton } from '@/components/skeletons';
+import { Button } from '@/components/ui/Button';
+import { Text } from '@/components/ui/Text';
 
 export default function GlobalSettingsPage() {
   const [items, setItems] = useState<SettingItem[]>([]);
@@ -125,27 +127,34 @@ function SettingRow({ item, saving, onSave, onReset }: SettingRowProps) {
     <div className="panel">
       <div className="flex items-start justify-between gap-4 mb-2">
         <div>
-          <p className="text-sm font-semibold text-zinc-900">{definition.label}</p>
+          <Text variant='body-lg'>{definition.label}</Text>
           {definition.description && (
-            <p className="text-xs text-zinc-500 mt-0.5">{definition.description}</p>
+            <Text variant='body-sm'>
+              {definition.description}
+            </Text>
           )}
-          <p className="text-xs text-zinc-300 mt-0.5">{definition.key}</p>
+          <Text variant='code'>
+            {definition.key}
+          </Text>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             className="text-xs text-zinc-500 hover:text-zinc-900"
             onClick={onReset}
             disabled={saving}
           >
             Reset
-          </button>
-          <button
-            className="btn-primary text-xs"
+          </Button>
+          <Button
+            variant='primary'
+            size="sm"
             onClick={() => onSave(draft)}
             disabled={!dirty || saving}
           >
             {saving ? 'Saving…' : 'Save'}
-          </button>
+          </Button>
         </div>
       </div>
       <SettingField definition={definition} value={draft} onChange={setDraft} />

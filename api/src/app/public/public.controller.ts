@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { PublicService } from './public.service';
 import { ApiKeysService } from '../api-keys/api-keys.service';
 import { SchemaService } from '../schema/schema.service';
+import { SettingsService } from '../settings/settings.service';
 import { ApiKeyGuard } from '../api-keys/guards/api-key.guard';
 
 type PublicRequest = Request & {
@@ -17,11 +18,18 @@ export class PublicController {
     private readonly publicService: PublicService,
     private readonly apiKeysService: ApiKeysService,
     private readonly schemaService: SchemaService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   @Get()
   listSchemas(@Req() req: PublicRequest) {
     return this.publicService.listSchemas(req.apiKeyAllowedSchemas);
+  }
+
+  /** Public client-scoped settings, auto-resolved from the API key. */
+  @Get('settings')
+  async getClientSettings(@Req() req: PublicRequest) {
+    return this.settingsService.listPublic({ scope: 'client', scopeId: req.clientId });
   }
 
   // ── Entry Layouts ────────────────────────────────────────────────────────────

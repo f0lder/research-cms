@@ -41,7 +41,6 @@ export const PAGE_SCHEMA_DEFINITION: SystemSchema = {
     { name: 'slug',           label: 'URL Slug',           type: 'text',     required: true  },
     { name: 'description',    label: 'Description',        type: 'textarea', required: false },
     { name: 'featured_image', label: 'Featured Image',     type: 'media',    required: false },
-    { name: 'isHome',         label: 'Mark as Homepage',   type: 'boolean',  required: false },
     { name: 'blocks',         label: 'Page Blocks',        type: 'blocks',   required: false },
   ],
 };
@@ -113,6 +112,15 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     key: 'client.brandName',
     label: 'Brand Name',
     category: 'Branding',
+    type: 'text',
+    scope: 'client',
+    isPublic: true,
+  },
+  {
+    key: 'client.homePage',
+    label: 'Home Page',
+    description: 'Page entry id served as the home page for this client.',
+    category: 'General',
     type: 'text',
     scope: 'client',
     isPublic: true,

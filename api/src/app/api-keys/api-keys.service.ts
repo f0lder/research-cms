@@ -61,16 +61,6 @@ export class ApiKeysService implements OnModuleInit {
     return doc;
   }
 
-  async setHomePage(id: string, pageId: string | null): Promise<ApiKeyDocument> {
-    const doc = await this.model.findByIdAndUpdate(
-      id,
-      { $set: { homePage: pageId } },
-      { returnDocument: 'after' },
-    ).exec();
-    if (!doc) throw new NotFoundException('Client not found');
-    return doc;
-  }
-
   /**
    * Read a client's layout for a schema, synced against the schema's current fields.
    * Returns both the schemaId and schemaSlug for clarity.

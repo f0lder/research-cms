@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { FieldDefinition, FieldConfig, ContentTypeDefinition } from '@research-cms/shared-types';
 import { getAllSchemas, createSchema, updateSchema, deleteSchema } from '@/app/actions';
 import { generateSlugFromName, validateSlug, generateRandomId, getErrorMessage } from '@/lib/utils';
+import { Button, Container, TextField, Heading, Text } from '@/components/ui';
 import FieldInput from './FieldInput';
 
 const DEFAULT_FIELDS: FieldDefinition[] = [
@@ -106,55 +107,56 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
   };
 
   return (
-    <div className="page">
+    <Container size="lg" padding="lg">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="page-heading">
+        <Heading level={1}>
           {mode === 'create' ? 'Create Content Type' : 'Edit Content Type'}
-        </h1>
+        </Heading>
         {mode === 'edit' && (
-          <button
+          <Button
             type="button"
             onClick={handleDelete}
             disabled={isSubmitting}
-            className="btn-danger"
+            variant="destructive"
+            size="sm"
           >
             Delete Schema
-          </button>
+          </Button>
         )}
       </div>
 
-      {error && <div className="alert-error">{error}</div>}
+      {error && (
+        <div className="mb-6 border-2 border-error bg-surface px-4 py-3">
+          <Text variant="body-sm" color="error">{error}</Text>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <div className="field-wrap">
-          <label className="field-label">Schema Name *</label>
-          <input
-            required
-            value={name}
-            onChange={e => handleNameChange(e.target.value)}
-            disabled={isSubmitting}
-            placeholder="e.g., Product"
-            className="field-input"
-          />
-        </div>
+        <TextField
+          label="Schema Name *"
+          required
+          value={name}
+          onChange={e => handleNameChange(e.target.value)}
+          disabled={isSubmitting}
+          placeholder="e.g., Product"
+        />
 
-        <div className="field-wrap">
-          <label className="field-label">URL Slug *</label>
-          <input
-            required
-            value={slug}
-            onChange={e => handleSlugChange(e.target.value)}
-            disabled={isSubmitting}
-            placeholder="e.g., product"
-            className="field-input"
-          />
-          <span className="field-hint">Lowercase letters, numbers, and dashes only</span>
-        </div>
+        <TextField
+          label="URL Slug *"
+          required
+          value={slug}
+          onChange={e => handleSlugChange(e.target.value)}
+          disabled={isSubmitting}
+          placeholder="e.g., product"
+          helperText="Lowercase letters, numbers, and dashes only"
+        />
 
         <div>
-          <h3 className="text-sm font-semibold text-zinc-700 mb-3">Fields</h3>
+          <Heading level={3} className="mb-3">Fields</Heading>
           {fields.length === 0 && (
-            <p className="text-sm text-zinc-400 mb-3">No fields defined. Click "Add Field" to start.</p>
+            <Text variant="body-sm" color="secondary" className="mb-3">
+              No fields defined. Click &quot;Add Field&quot; to start.
+            </Text>
           )}
           {fields.map((field, i) => (
             <FieldInput
@@ -169,34 +171,39 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
               existingKeys={fields.filter((_, j) => j !== i).map(f => f.name).filter(Boolean)}
             />
           ))}
-          <button
+          <Button
             type="button"
             onClick={addField}
             disabled={isSubmitting}
-            className="btn-secondary mt-2"
+            variant="secondary"
+            size="sm"
+            className="mt-2"
           >
             + Add Field
-          </button>
+          </Button>
         </div>
 
-        <div className="flex gap-3 pt-2 border-t border-zinc-100">
-          <button
+        <div className="flex gap-3 pt-4 border-t-2 border-on-surface">
+          <Button
             type="submit"
             disabled={isSubmitting}
-            className="btn-primary flex-1 py-3"
+            variant="primary"
+            size="lg"
+            className="flex-1"
           >
             {isSubmitting ? 'Saving…' : mode === 'create' ? 'Create Schema' : 'Update Schema'}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => router.push('/schemas')}
             disabled={isSubmitting}
-            className="btn-secondary px-8 py-3"
+            variant="secondary"
+            size="lg"
           >
             Cancel
-          </button>
+          </Button>
         </div>
       </form>
-    </div>
+    </Container>
   );
 }

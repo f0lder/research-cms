@@ -149,10 +149,6 @@ export async function updateClientSchemas(id: string, allowedSchemas: string[]) 
   return serverApi.patch<Client>(`/clients/${id}/schemas`, { allowedSchemas });
 }
 
-export async function setClientHomePage(id: string, pageId: string | null) {
-  return serverApi.put<Client>(`/clients/${id}/home-page`, { pageId });
-}
-
 export async function getClientUsage(id: string, days = 30) {
   return serverApi.get<{ date: string; userCount: number; users: string[]; schemas: Record<string, number> }[]>(
     `/clients/${id}/usage?days=${days}`

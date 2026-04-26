@@ -8,12 +8,13 @@ interface Props {
   visible: boolean;
   schemas: Schema[];
   pages: PageEntryResponse[];
+  homePageId?: string | null;
   activeSlug: string | null;
   onSelect: (path: string) => void;
   onClose: () => void;
 }
 
-export function Sidebar({ visible, schemas, pages, activeSlug, onSelect, onClose }: Props) {
+export function Sidebar({ visible, schemas, pages, homePageId, activeSlug, onSelect, onClose }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade">
       <Pressable style={s.scrim} onPress={onClose} />
@@ -44,7 +45,7 @@ export function Sidebar({ visible, schemas, pages, activeSlug, onSelect, onClose
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <Text style={[s.itemText, active && s.itemTextActive]}>{page.data?.title}</Text>
-                        {page.data?.isHome && <Text style={s.homeTag}>home</Text>}
+                        {homePageId === page._id && <Text style={s.homeTag}>home</Text>}
                       </View>
                       <Text style={s.itemSlug}>/{page.data?.slug}</Text>
                     </TouchableOpacity>

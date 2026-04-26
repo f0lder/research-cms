@@ -1,14 +1,15 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import Select from 'react-select';
-import { Client, ContentTypeDefinition, ContentEntry, PAGE_SCHEMA_SLUG } from '@research-cms/shared-types';
+import { Client, ContentTypeDefinition, ContentEntry, PAGE_SCHEMA_SLUG, SettingDefinition } from '@research-cms/shared-types';
 import {
   formatDateTime, extractParam, adminRoutes,
 } from '@/lib/utils';
-import { getClient, getAllSchemas, getAllEntries, deleteEntry, updateClientSchemas, deleteClient, setClientHomePage } from '@/app/actions';
+import { getClient, getAllSchemas, getAllEntries, deleteEntry, updateClientSchemas, deleteClient, getSettings, updateSetting, type SettingItem } from '@/app/actions';
 import { SectionsSkeleton } from '@/components/skeletons';
+import { Button, Container, Heading, Text, TextField } from '@/components/ui';
 
 type Option = { value: string; label: string };
 
@@ -42,29 +43,43 @@ export default function ClientDetailPage() {
 
   const [deletingClient, setDeletingClient] = useState(false);
   const [deletingPageId, setDeletingPageId] = useState<string | null>(null);
-  const [settingHomePage, setSettingHomePage] = useState(false);
+  const [settingItems, setSettingItems] = useState<SettingItem[]>([]);
+  const [savingKey, setSavingKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const [clientRes, schemasRes, pagesRes] = await Promise.all([
+      const [clientRes, schemasRes, pagesRes, settingsRes] = await Promise.all([
         getClient(id),
         getAllSchemas(),
         getAllEntries(PAGE_SCHEMA_SLUG),
+        getSettings({ scope: 'client', scopeId: id }),
       ]);
       if (clientRes.error) { setError(clientRes.error); setLoading(false); return; }
       setClient(clientRes.data ?? null);
       setSchemas(schemasRes.data ?? []);
-      if (pagesRes.error) { 
+      setSettingItems(settingsRes.data ?? []);
+      if (pagesRes.error) {
         console.error('Pages fetch error:', pagesRes.error);
         setPagesError(pagesRes.error);
       } else {
-        console.log('Pages loaded:', pagesRes.data?.items?.length ?? 0, 'pages');
         setPages(pagesRes.data?.items ?? []);
       }
       setLoading(false);
     })();
   }, [id]);
+
+  const homePageId =
+    (settingItems.find(s => s.definition.key === 'client.homePage')?.value as string | null | undefined) ?? null;
+
+  const setSettingValue = async (key: string, value: unknown) => {
+    if (!id) return;
+    setSavingKey(key);
+    const { error: err } = await updateSetting({ scope: 'client', scopeId: id }, key, value);
+    setSavingKey(null);
+    if (err) { setError(err); return; }
+    setSettingItems(prev => prev.map(it => it.definition.key === key ? { ...it, value } : it));
+  };
 
   const currentSchemas = pendingSchemas ?? client?.allowedSchemas ?? [];
   const schemasDirty = pendingSchemas !== null;
@@ -94,17 +109,8 @@ export default function ClientDetailPage() {
     if (err) { setError(err); setDeletingPageId(null); return; }
     setPages(prev => prev.filter(p => p._id !== pageId));
     setDeletingPageId(null);
-    // If deleted page was home, clear it
-    if (client?.homePage === pageId) setClient(prev => prev ? { ...prev, homePage: null } : prev);
-  };
-
-  const handleSetHomePage = async (pageId: string | null) => {
-    if (!client?._id) return;
-    setSettingHomePage(true);
-    const { data, error: err } = await setClientHomePage(client._id, pageId);
-    setSettingHomePage(false);
-    if (err) { setError(err); return; }
-    if (data) setClient(data);
+    // If deleted page was home, clear the setting
+    if (homePageId === pageId) setSettingValue('client.homePage', null);
   };
 
   const copyKey = async () => {
@@ -124,16 +130,24 @@ export default function ClientDetailPage() {
 
   if (loading) {
     return (
-      <div className="page">
+      <Container size="lg" padding="lg">
         <div className="mb-6 space-y-2 w-1/2">
           <div className="h-8 bg-surface-container rounded animate-pulse" />
           <div className="h-4 bg-surface-container-low rounded animate-pulse" />
         </div>
         <SectionsSkeleton />
-      </div>
+      </Container>
     );
   }
-  if (error && !client) return <div className="page"><div className="alert-error">{error}</div></div>;
+  if (error && !client) {
+    return (
+      <Container size="lg" padding="lg">
+        <div className="border-2 border-error bg-surface px-4 py-3">
+          <Text variant="body-sm" color="error">{error}</Text>
+        </div>
+      </Container>
+    );
+  }
   if (!client) return null;
 
   const schemaOptions: Option[] = schemas.map(s => ({ value: s.slug, label: s.name }));
@@ -141,56 +155,81 @@ export default function ClientDetailPage() {
   const pageTree = buildTree(pages, id);
 
   return (
-    <div className="page">
-      <p className="breadcrumb mb-6">
-        <Link href={adminRoutes.clients}>Clients</Link>
+    <Container size="lg" padding="lg">
+      <Text variant="caption" color="secondary" className="mb-6 uppercase tracking-widest font-bold">
+        <Link href={adminRoutes.clients} className="hover:text-on-surface">Clients</Link>
         <span className="mx-1">/</span>
         {client.name}
-      </p>
+      </Text>
 
-      {error && <div className="alert-error mb-4">{error}</div>}
+      {error && (
+        <div className="mb-4 border-2 border-error bg-surface px-4 py-3">
+          <Text variant="body-sm" color="error">{error}</Text>
+        </div>
+      )}
 
       {/* ── Header ─────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6 mb-6">
         <div className="min-w-0">
-          <h1 className="page-heading">{client.name}</h1>
+          <Heading level={1}>{client.name}</Heading>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
-            <span className="text-code text-on-surface-variant">
+            <Text variant="code" color="secondary" as="span">
               <span className="text-on-surface font-bold">{client.hits.toLocaleString()}</span> hits
-            </span>
-            {client.lastUsedAt && <span className="text-code text-on-surface-variant hidden sm:inline">· last used {formatDateTime(client.lastUsedAt)}</span>}
-            {!client.active && <span className="text-code bg-red-100 text-red-600 px-2 py-1 font-bold uppercase">inactive</span>}
+            </Text>
+            {client.lastUsedAt && (
+              <Text variant="code" color="secondary" as="span" className="hidden sm:inline">
+                · last used {formatDateTime(client.lastUsedAt)}
+              </Text>
+            )}
+            {!client.active && (
+              <span className="text-code bg-surface text-error border-2 border-error px-2 py-1 font-bold uppercase">
+                inactive
+              </span>
+            )}
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-          <Link href={adminRoutes.clientUsage(id)} className="btn-primary text-code px-3 py-2 no-underline text-center uppercase">
-            Usage
+          <Link href={adminRoutes.clientUsage(id)} className="no-underline">
+            <Button variant="primary" size="sm" className="w-full">Usage</Button>
           </Link>
-          <button onClick={handleDeleteClient} disabled={deletingClient} className="btn-danger text-code px-3 py-2 whitespace-nowrap uppercase">
+          <Button
+            onClick={handleDeleteClient}
+            disabled={deletingClient}
+            variant="destructive"
+            size="sm"
+            className="whitespace-nowrap"
+          >
             {deletingClient ? 'Deleting…' : 'Delete client'}
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* ── API Key ─────────────────────────────────── */}
       <section className="section">
-        <p className="text-code text-on-surface-variant uppercase tracking-widest font-bold mb-3">API Key</p>
+        <Heading level={3} className="mb-3">API Key</Heading>
         <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
-          <code className="text-code text-on-surface-variant cursor-pointer hover:text-on-surface flex-1 truncate px-3 py-2 bg-surface-container-low font-bold uppercase"
-            onClick={() => setRevealKey(r => !r)} title={revealKey ? 'Click to hide' : 'Click to reveal'}>
+          <code
+            className="text-code text-on-surface-variant cursor-pointer hover:text-on-surface flex-1 truncate px-3 py-2 bg-surface-container-low font-bold uppercase border-2 border-on-surface"
+            onClick={() => setRevealKey(r => !r)}
+            title={revealKey ? 'Click to hide' : 'Click to reveal'}
+          >
             {revealKey ? client.key : maskKey(client.key)}
           </code>
-          <button onClick={copyKey} className="shrink-0 text-code text-on-surface-variant hover:text-on-surface border-2 border-on-surface px-2 py-1 bg-white hover:bg-surface-container transition-all font-bold uppercase whitespace-nowrap">
+          <Button onClick={copyKey} variant="secondary" size="sm" className="shrink-0 whitespace-nowrap">
             {copiedKey ? '✓ copied' : 'copy'}
-          </button>
+          </Button>
         </div>
-        <p className="mt-2 text-code text-on-surface-variant">Pass as <code className="font-bold">X-API-Key</code> header on all public API requests.</p>
+        <Text variant="code" color="secondary" className="mt-2">
+          Pass as <code className="font-bold">X-API-Key</code> header on all public API requests.
+        </Text>
       </section>
 
       {/* ── Schema access ───────────────────────────── */}
       <section className="section">
-        <p className="text-code text-on-surface-variant uppercase tracking-widest font-bold mb-3">Schema Access</p>
-        <p className="text-body-md text-on-surface-variant mb-3">Leave empty to allow all content types. Select specific types to restrict.</p>
+        <Heading level={3} className="mb-3">Schema Access</Heading>
+        <Text variant="body-md" color="secondary" className="mb-3">
+          Leave empty to allow all content types. Select specific types to restrict.
+        </Text>
         <div className="flex flex-col md:flex-row md:items-start gap-3">
           <div className="flex-1 min-w-0">
             <Select<Option, true>
@@ -200,7 +239,7 @@ export default function ClientDetailPage() {
               classNamePrefix="rs"
               styles={{
                 control: base => ({ ...base, minHeight: 40, fontSize: 13, fontFamily: 'Inter', fontWeight: 600, borderColor: '#000000', borderWidth: 2, borderRadius: 0, boxShadow: 'none', '&:hover': { borderColor: '#000000' } }),
-                menu: base => ({ ...base, fontSize: 13, fontFamily: 'Inter', fontWeight: 600, borderRadius: 0, zIndex: 30 }),
+                menu: base => ({ ...base, fontSize: 13, fontFamily: 'Inter', fontWeight: 600, borderRadius: 0, zIndex: 30, border: '2px solid #000', boxShadow: '4px 4px 0 #000' }),
                 option: (base, s) => ({ ...base, backgroundColor: s.isFocused ? '#F5F5F5' : '#FFFFFF', color: '#000000' }),
                 multiValue: base => ({ ...base, backgroundColor: '#F5F5F5', borderRadius: 0 }),
                 multiValueLabel: base => ({ ...base, fontSize: 12, color: '#000000', fontWeight: 600 }),
@@ -210,9 +249,15 @@ export default function ClientDetailPage() {
             />
           </div>
           {schemasDirty && (
-            <button onClick={handleSaveSchemas} disabled={savingSchemas} className="btn-primary text-code px-3 py-2 shrink-0 uppercase">
+            <Button
+              onClick={handleSaveSchemas}
+              disabled={savingSchemas}
+              variant="primary"
+              size="sm"
+              className="shrink-0"
+            >
               {savingSchemas ? 'Saving…' : savedSchemas ? 'Saved ✓' : 'Save'}
-            </button>
+            </Button>
           )}
         </div>
       </section>
@@ -221,30 +266,43 @@ export default function ClientDetailPage() {
       <section className="section">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
           <div>
-            <p className="text-code text-on-surface-variant uppercase tracking-widest font-bold">Pages</p>
-            <p className="text-body-md text-on-surface-variant mt-1">Custom pages with a block editor, served via the public API.</p>
+            <Heading level={3}>Pages</Heading>
+            <Text variant="body-md" color="secondary" className="mt-1">
+              Custom pages with a block editor, served via the public API.
+            </Text>
           </div>
-          <Link href={adminRoutes.clientPageNew(id)} className="btn-primary text-code px-3 py-2 no-underline text-center md:text-left whitespace-nowrap uppercase">
-            + New page
+          <Link href={adminRoutes.clientPageNew(id)} className="no-underline">
+            <Button variant="primary" size="sm" className="whitespace-nowrap">+ New page</Button>
           </Link>
         </div>
 
-        {pagesError && <div className="alert-error mb-3 text-code">{pagesError}</div>}
+        {pagesError && (
+          <div className="mb-3 border-2 border-error bg-surface px-4 py-3">
+            <Text variant="body-sm" color="error">{pagesError}</Text>
+          </div>
+        )}
 
         {pages.length === 0 && !pagesError ? (
-          <p className="text-body-md text-on-surface-variant pt-1">No pages yet.</p>
+          <Text variant="body-md" color="secondary" className="pt-1">No pages yet.</Text>
         ) : (
           <div className="divide-y-2 divide-on-surface">
             {pageTree.map(({ page, depth }) => {
-              const isHome = client.homePage === page._id;
+              const isHome = homePageId === page._id;
               return (
                 <div key={page._id} className="flex items-center justify-between py-3" style={{ paddingLeft: depth * 20 }}>
                   <div className="flex items-center gap-2 flex-wrap min-w-0">
-                    {depth > 0 && <span className="text-on-surface-variant text-code">└</span>}
-                    <span className="text-body-md text-on-surface truncate font-bold uppercase">{(page.data?.title as string) ?? page._id}</span>
+                    {depth > 0 && <Text variant="code" color="secondary" as="span">└</Text>}
+                    <Text variant="body-md" as="span" className="truncate font-bold uppercase">
+                      {(page.data?.title as string) ?? page._id}
+                    </Text>
+                    {isHome && (
+                      <span className="text-code bg-primary text-white border-2 border-on-surface px-2 py-1 font-bold uppercase">
+                        ⌂ home
+                      </span>
+                    )}
                     {(() => {
                       const blocks = Array.isArray(page.data?.blocks) ? page.data.blocks : [];
-                      return <span className="text-code text-on-surface-variant font-bold">{blocks.length}b</span>;
+                      return <Text variant="code" color="secondary" as="span" className="font-bold">{blocks.length}b</Text>;
                     })()}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
@@ -253,25 +311,17 @@ export default function ClientDetailPage() {
                       const pageSlug = (page.data?.slug as string) ?? page._id;
                       return (
                         <>
-                          <button
-                            onClick={() => handleSetHomePage(isHome ? null : pageId)}
-                            disabled={settingHomePage}
-                            title={isHome ? 'Unset home page' : 'Set as home page'}
-                            className={`text-[11px] border px-2 py-1 font-mono transition-colors ${isHome
-                                ? 'border-amber-200 text-amber-600 bg-amber-50 hover:bg-white'
-                                : 'border-zinc-200 text-zinc-400 bg-white hover:text-amber-600 hover:border-amber-200'
-                              }`}
-                          >
-                            {isHome ? '⌂ home' : '⌂'}
-                          </button>
-                          <Link href={adminRoutes.clientPageEdit(id, pageSlug)}
-                            className="text-[11px] text-zinc-400 hover:text-zinc-700 border border-zinc-200 px-2 py-1 bg-white hover:border-zinc-400 transition-colors font-mono no-underline">
-                            Edit
+                          <Link href={adminRoutes.clientPageEdit(id, pageSlug)} className="no-underline">
+                            <Button variant="secondary" size="xs">Edit</Button>
                           </Link>
-                          <button onClick={() => handleDeletePage(pageId, (page.data?.title as string) ?? 'Untitled')}
-                            disabled={deletingPageId === pageId} className="btn-danger text-xs px-2 py-1">
+                          <Button
+                            onClick={() => handleDeletePage(pageId, (page.data?.title as string) ?? 'Untitled')}
+                            disabled={deletingPageId === pageId}
+                            variant="destructive"
+                            size="xs"
+                          >
                             {deletingPageId === pageId ? '…' : 'Delete'}
-                          </button>
+                          </Button>
                         </>
                       );
                     })()}
@@ -285,12 +335,12 @@ export default function ClientDetailPage() {
 
       {/* ── Block layouts ───────────────────────────── */}
       <section className="section">
-        <p className="text-code text-on-surface-variant uppercase tracking-widest font-bold mb-1">Block Layouts</p>
-        <p className="text-body-md text-on-surface-variant mb-4">
+        <Heading level={3} className="mb-1">Block Layouts</Heading>
+        <Text variant="body-md" color="secondary" className="mb-4">
           Customise which fields are visible and in what order for this client.
-        </p>
+        </Text>
         {visibleSchemas.length === 0 ? (
-          <p className="text-body-md text-on-surface-variant">No schemas available.</p>
+          <Text variant="body-md" color="secondary">No schemas available.</Text>
         ) : (
           <div className="divide-y-2 divide-on-surface">
             {visibleSchemas.map(schema => {
@@ -298,17 +348,19 @@ export default function ClientDetailPage() {
               return (
                 <div key={schema.slug} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 py-3">
                   <div className="min-w-0">
-                    <span className="text-body-md text-on-surface font-bold uppercase">{schema.name}</span>
-                    <span className="ml-2 text-code text-on-surface-variant font-bold uppercase">{schema.slug}</span>
-                    {hasCustom
-                      ? <span className="ml-2 text-code bg-surface-container text-on-surface border-2 border-on-surface px-2 py-1 font-bold uppercase whitespace-nowrap">customised</span>
-                      : <span className="ml-2 text-code text-on-surface-variant font-bold uppercase">not customised</span>
-                    }
+                    <Text variant="body-md" as="span" className="font-bold uppercase">{schema.name}</Text>
+                    <Text variant="code" color="secondary" as="span" className="ml-2 font-bold uppercase">{schema.slug}</Text>
+                    {hasCustom ? (
+                      <span className="ml-2 text-code bg-surface-container text-on-surface border-2 border-on-surface px-2 py-1 font-bold uppercase whitespace-nowrap">
+                        customised
+                      </span>
+                    ) : (
+                      <Text variant="code" color="secondary" as="span" className="ml-2 font-bold uppercase">not customised</Text>
+                    )}
                   </div>
                   {client._id && (
-                    <Link href={adminRoutes.clientLayout(client._id, schema.slug)}
-                      className="text-code text-on-surface-variant hover:text-on-surface border-2 border-on-surface px-2 py-1 bg-white hover:bg-surface-container transition-all font-bold uppercase no-underline text-center md:text-left whitespace-nowrap">
-                      Edit layout
+                    <Link href={adminRoutes.clientLayout(client._id, schema.slug)} className="no-underline">
+                      <Button variant="secondary" size="sm" className="whitespace-nowrap">Edit layout</Button>
                     </Link>
                   )}
                 </div>
@@ -317,6 +369,283 @@ export default function ClientDetailPage() {
           </div>
         )}
       </section>
+
+      {/* ── Settings ────────────────────────────────── */}
+      <section className="section">
+        <Heading level={3} className="mb-1">Settings</Heading>
+        <Text variant="body-md" color="secondary" className="mb-4">
+          Per-client configuration. Changes save automatically.
+        </Text>
+        {settingItems.length === 0 ? (
+          <Text variant="body-md" color="secondary">No settings registered for clients.</Text>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {settingItems.map(item => (
+              <SettingField
+                key={item.definition.key}
+                definition={item.definition}
+                value={item.value}
+                saving={savingKey === item.definition.key}
+                pages={pageTree.map(({ page }) => page)}
+                onChange={value => setSettingValue(item.definition.key, value)}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    </Container>
+  );
+}
+
+/**
+ * Renders a single client-scoped setting based on its registered type.
+ * Special-cases `client.homePage` with a page picker since the registry
+ * has no dynamic-options type yet.
+ */
+function SettingField({
+  definition,
+  value,
+  saving,
+  pages,
+  onChange,
+}: {
+  definition: SettingDefinition;
+  value: unknown;
+  saving: boolean;
+  pages: ContentEntry[];
+  onChange: (value: unknown) => void;
+}) {
+  const label = (
+    <div className="flex items-center justify-between mb-1">
+      <Text variant="caption" color="secondary" as="label" className="uppercase tracking-widest font-bold">
+        {definition.label}
+      </Text>
+      {saving && <Text variant="caption" color="secondary">Saving…</Text>}
+    </div>
+  );
+
+  // Page picker — special case for the home page setting
+  if (definition.key === 'client.homePage') {
+    const opts = pages.map(p => ({
+      value: p._id ?? '',
+      label: (p.data?.title as string) ?? p._id ?? '',
+    }));
+    return (
+      <div>
+        {label}
+        {definition.description && (
+          <Text variant="caption" color="secondary" className="mb-2">{definition.description}</Text>
+        )}
+        <Select<Option>
+          isClearable
+          options={opts}
+          value={opts.find(o => o.value === value) ?? null}
+          onChange={opt => onChange(opt?.value ?? null)}
+          isDisabled={saving || opts.length === 0}
+          placeholder={opts.length === 0 ? 'No pages available' : 'No home page set'}
+          classNamePrefix="rs"
+          styles={{
+            control: base => ({ ...base, minHeight: 40, fontSize: 13, fontFamily: 'Inter', fontWeight: 600, borderColor: '#000000', borderWidth: 2, borderRadius: 0, boxShadow: 'none', '&:hover': { borderColor: '#000000' } }),
+            menu: base => ({ ...base, fontSize: 13, fontFamily: 'Inter', fontWeight: 600, borderRadius: 0, zIndex: 30, border: '2px solid #000', boxShadow: '4px 4px 0 #000' }),
+            option: (base, s) => ({ ...base, backgroundColor: s.isFocused ? '#F5F5F5' : '#FFFFFF', color: '#000000' }),
+            placeholder: base => ({ ...base, color: '#5a4136' }),
+          }}
+        />
+      </div>
+    );
+  }
+
+  switch (definition.type) {
+    case 'text':
+      return (
+        <TextInputSetting
+          definition={definition}
+          value={value}
+          saving={saving}
+          onCommit={onChange}
+        />
+      );
+
+    case 'textarea':
+      return (
+        <TextAreaSetting
+          definition={definition}
+          value={value}
+          saving={saving}
+          label={label}
+          onCommit={onChange}
+        />
+      );
+
+    case 'number':
+      return (
+        <NumberInputSetting
+          definition={definition}
+          value={value}
+          saving={saving}
+          onCommit={onChange}
+        />
+      );
+
+    case 'boolean':
+      return (
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={Boolean(value)}
+            onChange={e => onChange(e.target.checked)}
+            disabled={saving}
+            className="w-4 h-4 accent-primary"
+          />
+          <div>
+            <Text variant="body-sm" className="font-bold uppercase">{definition.label}</Text>
+            {definition.description && (
+              <Text variant="caption" color="secondary">{definition.description}</Text>
+            )}
+          </div>
+        </label>
+      );
+
+    case 'color':
+      return (
+        <div>
+          {label}
+          {definition.description && (
+            <Text variant="caption" color="secondary" className="mb-2">{definition.description}</Text>
+          )}
+          <div className="flex gap-2">
+            <input
+              type="color"
+              className="h-10 w-16 border-2 border-on-surface bg-surface cursor-pointer p-0"
+              value={String(value ?? '#000000')}
+              onChange={e => onChange(e.target.value)}
+              disabled={saving}
+            />
+            <input
+              type="text"
+              className="flex-1 border-2 border-on-surface bg-surface px-4 py-2 font-code text-code text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              value={String(value ?? '')}
+              onChange={e => onChange(e.target.value || null)}
+              disabled={saving}
+              placeholder="#000000"
+            />
+          </div>
+        </div>
+      );
+
+    case 'select': {
+      const opts = (definition.options ?? []).map(o => ({ value: o, label: o }));
+      return (
+        <div>
+          {label}
+          {definition.description && (
+            <Text variant="caption" color="secondary" className="mb-2">{definition.description}</Text>
+          )}
+          <Select<Option>
+            isClearable
+            options={opts}
+            value={opts.find(o => o.value === value) ?? null}
+            onChange={opt => onChange(opt?.value ?? null)}
+            isDisabled={saving}
+            classNamePrefix="rs"
+            styles={{
+              control: base => ({ ...base, minHeight: 40, fontSize: 13, borderColor: '#000', borderWidth: 2, borderRadius: 0, boxShadow: 'none', '&:hover': { borderColor: '#000' } }),
+              menu: base => ({ ...base, fontSize: 13, borderRadius: 0, zIndex: 30, border: '2px solid #000', boxShadow: '4px 4px 0 #000' }),
+              option: (base, s) => ({ ...base, backgroundColor: s.isFocused ? '#F5F5F5' : '#FFFFFF', color: '#000' }),
+            }}
+          />
+        </div>
+      );
+    }
+
+    default:
+      return (
+        <div>
+          {label}
+          <Text variant="caption" color="secondary">
+            Unsupported setting type: {definition.type}
+          </Text>
+        </div>
+      );
+  }
+}
+
+/** Text input that only commits on blur (avoids saving on every keystroke). */
+function TextInputSetting({
+  definition, value, saving, onCommit,
+}: {
+  definition: SettingDefinition;
+  value: unknown;
+  saving: boolean;
+  onCommit: (value: unknown) => void;
+}) {
+  const [local, setLocal] = useState(String(value ?? ''));
+  useEffect(() => { setLocal(String(value ?? '')); }, [value]);
+  return (
+    <TextField
+      label={definition.label}
+      helperText={definition.description}
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={() => { if (local !== String(value ?? '')) onCommit(local || null); }}
+      disabled={saving}
+    />
+  );
+}
+
+/** Number input that only commits on blur. */
+function NumberInputSetting({
+  definition, value, saving, onCommit,
+}: {
+  definition: SettingDefinition;
+  value: unknown;
+  saving: boolean;
+  onCommit: (value: unknown) => void;
+}) {
+  const [local, setLocal] = useState(typeof value === 'number' ? String(value) : '');
+  useEffect(() => { setLocal(typeof value === 'number' ? String(value) : ''); }, [value]);
+  return (
+    <TextField
+      label={definition.label}
+      helperText={definition.description}
+      type="number"
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={() => {
+        const next = local === '' ? null : Number(local);
+        if (next !== value) onCommit(next);
+      }}
+      disabled={saving}
+    />
+  );
+}
+
+/** Textarea that only commits on blur. */
+function TextAreaSetting({
+  definition, value, saving, label, onCommit,
+}: {
+  definition: SettingDefinition;
+  value: unknown;
+  saving: boolean;
+  label: ReactNode;
+  onCommit: (value: unknown) => void;
+}) {
+  const [local, setLocal] = useState(String(value ?? ''));
+  useEffect(() => { setLocal(String(value ?? '')); }, [value]);
+  return (
+    <div>
+      {label}
+      {definition.description && (
+        <Text variant="caption" color="secondary" className="mb-2">{definition.description}</Text>
+      )}
+      <textarea
+        className="w-full border-2 border-on-surface bg-surface px-4 py-2 font-code text-code text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-y"
+        rows={3}
+        value={local}
+        onChange={e => setLocal(e.target.value)}
+        onBlur={() => { if (local !== String(value ?? '')) onCommit(local || null); }}
+        disabled={saving}
+      />
     </div>
   );
 }
