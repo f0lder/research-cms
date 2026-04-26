@@ -11,6 +11,9 @@ import { Block, blockRegistry, ColumnBlock } from '@research-cms/shared-types';
 import { MdDelete, MdExpandMore, MdChevronRight, MdDragIndicator } from 'react-icons/md';
 import { BlockConfigForm, AddBlockPanel, NestedBlocksEditor, ColumnsEditor } from '.';
 import { Button, Heading, Text } from '@/components/ui';
+import { registerBuiltInBlocks } from '@research-cms/shared-types';
+
+registerBuiltInBlocks(); // Ensure blocks are registered before any editor is rendered
 
 /**
  * Reusable block editor component with inline nested block editing.

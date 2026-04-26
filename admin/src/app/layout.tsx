@@ -2,7 +2,6 @@ import './global.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SchemaProvider } from '@/contexts/SchemaContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
-import { initializeAdmin } from '@/lib/admin-init';
 import { Inter } from 'next/font/google';
 
 // Font imports
@@ -13,8 +12,6 @@ const inter = Inter({
   display: 'swap',
 });
 
-// Initialize admin on startup
-initializeAdmin();
 
 export const metadata = {
   title: 'CMS Admin',

@@ -7,6 +7,7 @@ import { Block, ContentTypeDefinition, blockRegistry } from '@research-cms/share
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { getSchema, getClientLayout, updateClientLayout } from '@/app/actions';
 import { BlocksEditor } from '@/components/blocks';
+import { Button, Heading, Text } from '@/components/ui';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -97,28 +98,28 @@ export default function EntryDetailLayoutPage() {
           {/* Header */}
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="page-heading">{schema?.name} Entry Layout</h1>
+              <Heading level={1} className="page-heading">{schema?.name} Entry Layout</Heading>
               <p className="page-sub font-mono text-sm">
                 {blocks.length} block{blocks.length !== 1 ? 's' : ''} · drag to reorder
               </p>
             </div>
-            <button
+            <Button
               onClick={handleSave}
               disabled={saving}
               className={`btn-primary ${saved ? 'opacity-75' : ''}`}
             >
               {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save layout'}
-            </button>
+            </Button>
           </div>
         </div>
       }
       infoNote={
         <div>
-          <p className="font-semibold text-blue-900 mb-1">Entry Layout Template</p>
-          <p className="text-blue-700">
+          <Text variant='body-lg' >Entry Layout Template</Text>
+          <Text>
             Add field blocks and archives to customize how entries from this schema are displayed.
             Click a block to configure it in the sidebar.
-          </p>
+          </Text>
         </div>
       }
     />
