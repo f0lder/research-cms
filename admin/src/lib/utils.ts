@@ -174,13 +174,12 @@ export interface StorageResult {
 
 /** Upload a file and create a media entry. Returns the full MediaEntry. */
 export async function uploadMedia(file: File, title?: string): Promise<import('@research-cms/shared-types').MediaEntry> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const form = new FormData();
   form.append('file', file);
   const qs = title ? `?title=${encodeURIComponent(title)}` : '';
   const res = await fetch(`${API_URL}/media/upload${qs}`, {
     method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: 'include',
     body: form,
   });
   const json = await res.json();
