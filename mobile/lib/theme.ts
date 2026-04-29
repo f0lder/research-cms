@@ -1,19 +1,60 @@
 import { StyleSheet } from 'react-native';
 
-export const C = {
-  bg:           '#fafafa',
-  headerBg:     '#18181b',
-  headerText:   '#ffffff',
-  accent:       '#3b82f6',
-  border:       '#e4e4e7',
-  text:         '#18181b',
-  subText:      '#71717a',
-  metaText:     '#a1a1aa',
-  cardBg:       '#ffffff',
-  drawerBg:     '#18181b',
-  drawerText:   '#d4d4d8',
-  drawerActive: '#3f3f46',
+// Default theme colors (fallback)
+const defaultTheme = {
+  primaryColor:     '#3B82F6',
+  secondaryColor:   '#6366F1',
+  accentColor:      '#EC4899',
+  backgroundColor:  '#FFFFFF',
+  textColor:        '#1F2937',
+  borderColor:      '#E5E7EB',
+  borderRadius:     8,
+  borderWidth:      1,
 };
+
+// Create colors from theme settings
+export function createColors(settings: Record<string, unknown>) {
+  const primary = String(settings['client.theme.primaryColor'] ?? defaultTheme.primaryColor);
+  const secondary = String(settings['client.theme.secondaryColor'] ?? defaultTheme.secondaryColor);
+  const accent = String(settings['client.theme.accentColor'] ?? defaultTheme.accentColor);
+  const bg = String(settings['client.theme.backgroundColor'] ?? defaultTheme.backgroundColor);
+  const text = String(settings['client.theme.textColor'] ?? defaultTheme.textColor);
+  const border = String(settings['client.theme.borderColor'] ?? defaultTheme.borderColor);
+
+  return {
+    bg,
+    headerBg:     primary,
+    headerText:   '#ffffff',
+    primary,
+    secondary,
+    accent,
+    border,
+    text,
+    subText:      adjustAlpha(text, 0.6),
+    metaText:     adjustAlpha(text, 0.4),
+    cardBg:       bg,
+    drawerBg:     primary,
+    drawerText:   '#d4d4d8',
+    drawerActive: secondary,
+  };
+}
+
+// Default colors for initial app render
+export const C = createColors({
+  'client.theme.primaryColor':     defaultTheme.primaryColor,
+  'client.theme.secondaryColor':   defaultTheme.secondaryColor,
+  'client.theme.accentColor':      defaultTheme.accentColor,
+  'client.theme.backgroundColor':  defaultTheme.backgroundColor,
+  'client.theme.textColor':        defaultTheme.textColor,
+  'client.theme.borderColor':      defaultTheme.borderColor,
+});
+
+// Adjust color opacity (simple implementation for hex colors with alpha)
+function adjustAlpha(hex: string, opacity: number): string {
+  if (!hex.startsWith('#') || hex.length !== 7) return hex;
+  const alpha = Math.round(opacity * 255).toString(16).padStart(2, '0');
+  return hex + alpha;
+}
 
 export const shared = StyleSheet.create({
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },

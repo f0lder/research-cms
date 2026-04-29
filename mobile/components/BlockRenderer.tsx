@@ -12,20 +12,20 @@ import {
   PublicEntryResponse,
 } from '@research-cms/shared-types';
 import { Block as FieldBlockComponent } from '@/components/Block';
-import { C } from '@/lib/theme';
-import { listEntries, getEntry, getMedia, type MediaEntry } from '@/lib/api';
+import { useTheme } from '../src/app/_layout';
+import { listEntries, getEntry, getMedia } from '@/lib/api';
 
 // ── Static Block Renderers ─────────────────────────────────────────────────────
 
-function HeadingBlockRenderer({ block }: { block: HeadingBlock }) {
+function HeadingBlockRenderer({ block, colors }: { block: HeadingBlock; colors: ReturnType<typeof useTheme> }) {
   const style = [
-    s.heading,
-    block.level === 1 && s.h1,
-    block.level === 2 && s.h2,
-    block.level === 3 && s.h3,
-    block.level === 4 && s.h4,
-    block.align === 'center' && s.textCenter,
-    block.align === 'right' && s.textRight,
+    s(colors).heading,
+    block.level === 1 && s(colors).h1,
+    block.level === 2 && s(colors).h2,
+    block.level === 3 && s(colors).h3,
+    block.level === 4 && s(colors).h4,
+    block.align === 'center' && s(colors).textCenter,
+    block.align === 'right' && s(colors).textRight,
     block.color && { color: block.color },
     block.fontWeight === 'semibold' && { fontWeight: '600' as const },
     block.fontWeight === 'bold' && { fontWeight: '700' as const },
@@ -44,27 +44,27 @@ function HeadingBlockRenderer({ block }: { block: HeadingBlock }) {
   );
 }
 
-function TextBlockRenderer({ block }: { block: TextBlock }) {
+function TextBlockRenderer({ block, colors }: { block: TextBlock; colors: ReturnType<typeof useTheme> }) {
   const style = [
-    s.text,
-    block.align === 'center' && s.textCenter,
-    block.align === 'right' && s.textRight,
-    block.align === 'justify' && s.textJustify,
+    s(colors).text,
+    block.align === 'center' && s(colors).textCenter,
+    block.align === 'right' && s(colors).textRight,
+    block.align === 'justify' && s(colors).textJustify,
     block.color && { color: block.color },
-    block.fontSize === 'sm' && s.textSm,
-    block.fontSize === 'lg' && s.textLg,
-    block.fontSize === 'xl' && s.textXl,
+    block.fontSize === 'sm' && s(colors).textSm,
+    block.fontSize === 'lg' && s(colors).textLg,
+    block.fontSize === 'xl' && s(colors).textXl,
     block.padding && getPaddingStyle(block.padding),
     block.margin && getMarginStyle(block.margin),
   ];
   return <Text style={style}>{block.content}</Text>;
 }
 
-function DividerBlockRenderer({ block }: { block: DividerBlock }) {
+function DividerBlockRenderer({ block, colors }: { block: DividerBlock; colors: ReturnType<typeof useTheme> }) {
   const style = [
-    s.divider,
+    s(colors).divider,
     {
-      borderColor: block.color ?? '#e5e7eb',
+      borderColor: block.color ?? colors.border,
       borderWidth: block.thickness ?? 1,
       borderStyle: (block.style ?? 'solid') as 'solid' | 'dashed' | 'dotted',
     },
@@ -84,7 +84,7 @@ function SpacerBlockRenderer({ block }: { block: SpacerBlock }) {
   );
 }
 
-function ImageBlockRenderer({ block }: { block: ImageBlock }) {
+function ImageBlockRenderer({ block, colors }: { block: ImageBlock; colors: ReturnType<typeof useTheme> }) {
   const [media, setMedia] = useState<any>(null);
   const [loading, setLoading] = useState(block.mediaId ? true : false);
 
@@ -125,23 +125,23 @@ function ImageBlockRenderer({ block }: { block: ImageBlock }) {
 
   if (loading) {
     return (
-      <View style={[s.image, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator color={C.accent} size="small" />
+      <View style={[s(colors).image, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator color={colors.accent} size="small" />
       </View>
     );
   }
 
   if (!resolvedMedia?.url) {
-    return <Text style={s.textMuted}>— Image not available</Text>;
+    return <Text style={s(colors).textMuted}>— Image not available</Text>;
   }
 
   const imageStyle = [
-    s.image,
-    block.width === 'full' && s.fullWidth,
+    s(colors).image,
+    block.width === 'full' && s(colors).fullWidth,
     block.height && { height: block.height },
     block.padding && getPaddingStyle(block.padding),
     block.margin && getMarginStyle(block.margin),
-  ].filter(Boolean) as (typeof s.image | typeof s.fullWidth | Record<string, number | undefined>)[];
+  ].filter(Boolean) as any;
 
   const imageContent = (
     <Image
@@ -156,7 +156,7 @@ function ImageBlockRenderer({ block }: { block: ImageBlock }) {
     return (
       <TouchableOpacity onPress={handleImagePress}>
         {imageContent}
-        {resolvedMedia.caption ? <Text style={s.caption}>{resolvedMedia.caption}</Text> : null}
+        {resolvedMedia.caption ? <Text style={s(colors).caption}>{resolvedMedia.caption}</Text> : null}
       </TouchableOpacity>
     );
   }
@@ -164,22 +164,22 @@ function ImageBlockRenderer({ block }: { block: ImageBlock }) {
   return (
     <View>
       {imageContent}
-      {resolvedMedia.caption ? <Text style={s.caption}>{resolvedMedia.caption}</Text> : null}
+      {resolvedMedia.caption ? <Text style={s(colors).caption}>{resolvedMedia.caption}</Text> : null}
     </View>
   );
 }
 
-function ButtonBlockRenderer({ block }: { block: ButtonBlock }) {
+function ButtonBlockRenderer({ block, colors }: { block: ButtonBlock; colors: ReturnType<typeof useTheme> }) {
   const handlePress = useCallback(() => {
     handleButtonAction(block.action);
   }, [block.action]);
 
   const buttonStyle = [
-    s.button,
-    getButtonVariantStyle(block.variant),
-    block.align === 'center' && s.buttonCenter,
-    block.align === 'right' && s.buttonRight,
-    block.align === 'full' && s.buttonFull,
+    s(colors).button,
+    getButtonVariantStyle(block.variant, colors),
+    block.align === 'center' && s(colors).buttonCenter,
+    block.align === 'right' && s(colors).buttonRight,
+    block.align === 'full' && s(colors).buttonFull,
     block.padding && getPaddingStyle(block.padding),
     block.margin && getMarginStyle(block.margin),
   ];
@@ -190,14 +190,14 @@ function ButtonBlockRenderer({ block }: { block: ButtonBlock }) {
       onPress={handlePress}
       activeOpacity={0.7}
     >
-      <Text style={s.buttonText}>{block.label}</Text>
+      <Text style={s(colors).buttonText}>{block.label}</Text>
     </TouchableOpacity>
   );
 }
 
 // ── Content Block Renderers ────────────────────────────────────────────────────
 
-function FieldBlockRenderer({ block, entryData }: { block: FieldBlock; entryData?: Record<string, any> }) {
+function FieldBlockRenderer({ block, entryData, colors }: { block: FieldBlock; entryData?: Record<string, any>; colors: ReturnType<typeof useTheme> }) {
   const [resolvedValue, setResolvedValue] = useState<any>(null);
   const [loading, setLoading] = useState(
     (block.fieldType === 'media' || block.fieldType === 'reference' || block.fieldType === 'references') && entryData
@@ -325,7 +325,7 @@ function FieldBlockRenderer({ block, entryData }: { block: FieldBlock; entryData
   if (loading) {
     return (
       <View style={containerStyle}>
-        <ActivityIndicator color={C.accent} size="small" />
+        <ActivityIndicator color={colors.accent} size="small" />
       </View>
     );
   }
@@ -340,8 +340,8 @@ function FieldBlockRenderer({ block, entryData }: { block: FieldBlock; entryData
     <View style={containerStyle}>
       {block.showLabel && block.labelPosition !== 'hidden' && (
         <Text style={[
-          s.fieldLabel,
-          block.labelPosition === 'inline' && s.fieldLabelInline,
+          s(colors).fieldLabel,
+          block.labelPosition === 'inline' && s(colors).fieldLabelInline,
         ]}>
           {block.label}
         </Text>
@@ -351,7 +351,7 @@ function FieldBlockRenderer({ block, entryData }: { block: FieldBlock; entryData
   );
 }
 
-function ArchiveBlockRenderer({ block }: { block: ArchiveBlock }) {
+function ArchiveBlockRenderer({ block, colors }: { block: ArchiveBlock; colors: ReturnType<typeof useTheme> }) {
   const [items, setItems] = useState<PublicEntryResponse[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -377,8 +377,8 @@ function ArchiveBlockRenderer({ block }: { block: ArchiveBlock }) {
 
   if (loading) {
     return (
-      <View style={[s.archiveBlock, { justifyContent: 'center', alignItems: 'center', height: 100 }]}>
-        <ActivityIndicator color={C.accent} />
+      <View style={[s(colors).archiveBlock, { justifyContent: 'center', alignItems: 'center', height: 100 }]}>
+        <ActivityIndicator color={colors.accent} />
       </View>
     );
   }
@@ -386,17 +386,17 @@ function ArchiveBlockRenderer({ block }: { block: ArchiveBlock }) {
   if (error || !items || items.length === 0) {
     return (
       <View style={[
-        s.archiveBlock,
+        s(colors).archiveBlock,
         block.padding && getPaddingStyle(block.padding),
         block.margin && getMarginStyle(block.margin),
       ]}>
-        <Text style={s.empty}>{block.emptyMessage ?? 'No items found'}</Text>
+        <Text style={s(colors).empty}>{block.emptyMessage ?? 'No items found'}</Text>
       </View>
     );
   }
 
   const containerStyle = [
-    s.archiveBlock,
+    s(colors).archiveBlock,
     block.backgroundColor && { backgroundColor: block.backgroundColor },
     block.padding && getPaddingStyle(block.padding),
     block.margin && getMarginStyle(block.margin),
@@ -405,18 +405,18 @@ function ArchiveBlockRenderer({ block }: { block: ArchiveBlock }) {
   if (block.layout === 'grid') {
     return (
       <View style={containerStyle}>
-        {block.title && <Text style={s.archiveTitle}>{block.title}</Text>}
+        {block.title && <Text style={s(colors).archiveTitle}>{block.title}</Text>}
         <FlatList
           scrollEnabled={false}
           data={items}
           numColumns={block.columns ?? 1}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={s.gridItem}
+              style={s(colors).gridItem}
               onPress={() => router.push(`/${item.schemaSlug}/${item._id}`)}
             >
-              <Text style={s.archiveCardTitle}>{(item.data as any)?.title || (item.data as any)?.name || item.schemaSlug}</Text>
-              <Text style={s.archiveCardSub}>{item._id.slice(0, 8)}</Text>
+              <Text style={s(colors).archiveCardTitle}>{(item.data as any)?.title || (item.data as any)?.name || item.schemaSlug}</Text>
+              <Text style={s(colors).archiveCardSub}>{item._id.slice(0, 8)}</Text>
             </TouchableOpacity>
           )}
           keyExtractor={(_, i) => String(i)}
@@ -427,22 +427,22 @@ function ArchiveBlockRenderer({ block }: { block: ArchiveBlock }) {
 
   return (
     <View style={containerStyle}>
-      {block.title && <Text style={s.archiveTitle}>{block.title}</Text>}
+      {block.title && <Text style={s(colors).archiveTitle}>{block.title}</Text>}
       {items.map((item, i) => (
         <TouchableOpacity
           key={i}
-          style={s.archiveCard}
+          style={s(colors).archiveCard}
           onPress={() => router.push(`/${item.schemaSlug}/${item._id}`)}
         >
-          <Text style={s.archiveCardTitle}>{item.schemaSlug}</Text>
-          <Text style={s.archiveCardSub}>ID: {item._id.slice(0, 12)}</Text>
+          <Text style={s(colors).archiveCardTitle}>{item.schemaSlug}</Text>
+          <Text style={s(colors).archiveCardSub}>ID: {item._id.slice(0, 12)}</Text>
         </TouchableOpacity>
       ))}
     </View>
   );
 }
 
-function EntryBlockRenderer({ block }: { block: EntryBlock }) {
+function EntryBlockRenderer({ block, colors }: { block: EntryBlock; colors: ReturnType<typeof useTheme> }) {
   const [entry, setEntry] = useState<PublicEntryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -466,14 +466,14 @@ function EntryBlockRenderer({ block }: { block: EntryBlock }) {
   if (loading) {
     return (
       <View style={[{ justifyContent: 'center', alignItems: 'center', height: 100 }]}>
-        <ActivityIndicator color={C.accent} />
+        <ActivityIndicator color={colors.accent} />
       </View>
     );
   }
 
   if (error || !entry) {
     return (
-      <Text style={[s.textMuted, block.padding && getPaddingStyle(block.padding)]}>
+      <Text style={[s(colors).textMuted, block.padding && getPaddingStyle(block.padding)]}>
         — {error || 'Entry not found'}
       </Text>
     );
@@ -498,9 +498,9 @@ function EntryBlockRenderer({ block }: { block: EntryBlock }) {
 
 // ── Layout Block Renderers ────────────────────────────────────────────────────
 
-function RowBlockRenderer({ block, entryData }: { block: RowBlock; entryData?: Record<string, any> }) {
+function RowBlockRenderer({ block, entryData, colors }: { block: RowBlock; entryData?: Record<string, any>; colors: ReturnType<typeof useTheme> }) {
   const containerStyle = [
-    s.row,
+    s(colors).row,
     {
       gap: block.gap ?? 8,
       justifyContent: getJustifyContent(block.align),
@@ -532,7 +532,7 @@ function RowBlockRenderer({ block, entryData }: { block: RowBlock; entryData?: R
   );
 }
 
-function ColumnBlockRenderer({ block, entryData }: { block: ColumnBlock; entryData?: Record<string, any> }) {
+function ColumnBlockRenderer({ block, entryData, colors: _colors }: { block: ColumnBlock; entryData?: Record<string, any>; colors: ReturnType<typeof useTheme> }) {
   const containerStyle = [
     {
       flex: block.width === 'auto' ? undefined : 1,
@@ -552,12 +552,12 @@ function ColumnBlockRenderer({ block, entryData }: { block: ColumnBlock; entryDa
   );
 }
 
-function CardBlockRenderer({ block, entryData }: { block: CardBlock; entryData?: Record<string, any> }) {
+function CardBlockRenderer({ block, entryData, colors }: { block: CardBlock; entryData?: Record<string, any>; colors: ReturnType<typeof useTheme> }) {
   const cardStyle = [
-    s.card,
+    s(colors).card,
     {
       elevation: block.elevation ?? 2,
-      backgroundColor: block.backgroundColor ?? '#fff',
+      backgroundColor: block.backgroundColor ?? colors.cardBg,
     },
     block.padding && getPaddingStyle(block.padding),
     block.margin && getMarginStyle(block.margin),
@@ -587,7 +587,7 @@ function CardBlockRenderer({ block, entryData }: { block: CardBlock; entryData?:
 
 // ── Main Block Renderer ────────────────────────────────────────────────────────
 
-export function BlockRenderer({ block, entryData }: { block: Block; entryData?: Record<string, any> }) {
+function BlockRendererCore({ block, entryData, colors }: { block: Block; entryData?: Record<string, any>; colors: ReturnType<typeof useTheme> }) {
   // Skip invisible blocks (default to visible if not specified)
   if (block.visible === false) {
     return null;
@@ -601,44 +601,49 @@ export function BlockRenderer({ block, entryData }: { block: Block; entryData?: 
 
   switch (block.type) {
     case 'heading':
-      return <HeadingBlockRenderer block={block} />;
+      return <HeadingBlockRenderer block={block} colors={colors} />;
 
     case 'text':
-      return <TextBlockRenderer block={block} />;
+      return <TextBlockRenderer block={block} colors={colors} />;
 
     case 'divider':
-      return <DividerBlockRenderer block={block} />;
+      return <DividerBlockRenderer block={block} colors={colors} />;
 
     case 'spacer':
       return <SpacerBlockRenderer block={block} />;
 
     case 'image':
-      return <ImageBlockRenderer block={block} />;
+      return <ImageBlockRenderer block={block} colors={colors} />;
 
     case 'button':
-      return <ButtonBlockRenderer block={block} />;
+      return <ButtonBlockRenderer block={block} colors={colors} />;
 
     case 'field':
-      return <FieldBlockRenderer block={block} entryData={entryData} />;
+      return <FieldBlockRenderer block={block} entryData={entryData} colors={colors} />;
 
     case 'archive':
-      return <ArchiveBlockRenderer block={block} />;
+      return <ArchiveBlockRenderer block={block} colors={colors} />;
 
     case 'entry':
-      return <EntryBlockRenderer block={block} />;
+      return <EntryBlockRenderer block={block} colors={colors} />;
 
     case 'row':
-      return <RowBlockRenderer block={block} entryData={entryData} />;
+      return <RowBlockRenderer block={block} entryData={entryData} colors={colors} />;
 
     case 'column':
-      return <ColumnBlockRenderer block={block} entryData={entryData} />;
+      return <ColumnBlockRenderer block={block} entryData={entryData} colors={colors} />;
 
     case 'card':
-      return <CardBlockRenderer block={block} entryData={entryData} />;
+      return <CardBlockRenderer block={block} entryData={entryData} colors={colors} />;
 
     default:
       return null;
   }
+}
+
+export function BlockRenderer({ block, entryData }: { block: Block; entryData?: Record<string, any> }) {
+  const colors = useTheme();
+  return <BlockRendererCore block={block} entryData={entryData} colors={colors} />;
 }
 
 // ── Helper Functions ───────────────────────────────────────────────────────────
@@ -664,14 +669,15 @@ function handleButtonAction(action: ButtonAction) {
   }
 }
 
-function getButtonVariantStyle(variant?: string) {
+function getButtonVariantStyle(variant?: string, colors?: ReturnType<typeof useTheme>) {
+  if (!colors) return {};
   const variants = {
-    primary: s.buttonPrimary,
-    secondary: s.buttonSecondary,
-    outline: s.buttonOutline,
-    ghost: s.buttonGhost,
+    primary: { backgroundColor: colors.accent },
+    secondary: { backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.accent },
+    outline: { borderWidth: 2, borderColor: colors.accent },
+    ghost: { backgroundColor: 'transparent' },
   } as const;
-  return variants[variant as keyof typeof variants] ?? s.buttonPrimary;
+  return variants[variant as keyof typeof variants] ?? variants.primary;
 }
 
 function getJustifyContent(align?: string) {
@@ -704,91 +710,93 @@ function getMarginStyle(margin?: Spacing) {
 
 // ── Styles ─────────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
-  // Text alignment
-  textCenter: { textAlign: 'center' },
-  textRight: { textAlign: 'right' },
-  textJustify: { textAlign: 'justify' },
-  
-  // Headings
-  heading: { fontWeight: '700', color: C.text, marginBottom: 12 },
-  h1: { fontSize: 32 },
-  h2: { fontSize: 28 },
-  h3: { fontSize: 24 },
-  h4: { fontSize: 20 },
-  
-  // Text
-  text: { fontSize: 16, color: C.text, lineHeight: 24, marginBottom: 16 },
-  textSm: { fontSize: 14 },
-  textLg: { fontSize: 18 },
-  textXl: { fontSize: 20 },
-  
-  // Divider
-  divider: { marginVertical: 12 },
-  
-  // Image
-  image: { width: '100%', height: 200, marginVertical: 8 },
-  fullWidth: { width: '100%' },
-  caption: { fontSize: 13, color: C.subText, marginTop: 6, fontStyle: 'italic' },
-  
-  // Button
-  button: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 6,
-    marginVertical: 8,
-    alignItems: 'center',
-  },
-  buttonPrimary: {
-    backgroundColor: C.accent,
-  },
-  buttonSecondary: {
-    backgroundColor: C.cardBg,
-    borderWidth: 1,
-    borderColor: C.accent,
-  },
-  buttonOutline: {
-    borderWidth: 2,
-    borderColor: C.accent,
-  },
-  buttonGhost: {
-    backgroundColor: 'transparent',
-  },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  buttonCenter: { alignSelf: 'center' },
-  buttonRight: { alignSelf: 'flex-end' },
-  buttonFull: { alignSelf: 'stretch' },
-  
-  // Field
-  fieldLabel: { fontSize: 12, fontWeight: '600', color: C.subText, marginBottom: 4 },
-  fieldLabelInline: { marginRight: 8 },
-  
-  // Archive
-  archiveBlock: { marginVertical: 16 },
-  archiveTitle: { fontSize: 18, fontWeight: '600', color: C.text, marginBottom: 12 },
-  archiveCard: { padding: 12, marginBottom: 8, backgroundColor: C.cardBg, borderRadius: 4 },
-  archiveCardTitle: { fontSize: 15, fontWeight: '600', color: C.text },
-  archiveCardSub: { fontSize: 12, color: C.subText, marginTop: 4 },
-  listItem: { marginBottom: 16 },
-  gridItem: { flex: 1, margin: 4 },
-  
-  // Card
-  card: {
-    padding: 16,
-    marginVertical: 8,
-    borderRadius: 8,
-    borderColor: '#e5e7eb',
-    borderWidth: 1,
-  },
-  
-  // Row/Column
-  row: { flexDirection: 'row', flex: 1 },
-  
-  // Utility
-  empty: { fontSize: 14, color: C.subText, textAlign: 'center', marginVertical: 16 },
-  textMuted: { fontSize: 14, color: C.subText },
-});
+function s(colors: ReturnType<typeof useTheme>) {
+  return StyleSheet.create({
+    // Text alignment
+    textCenter: { textAlign: 'center' },
+    textRight: { textAlign: 'right' },
+    textJustify: { textAlign: 'justify' },
+    
+    // Headings
+    heading: { fontWeight: '700', color: colors.text, marginBottom: 12 },
+    h1: { fontSize: 32 },
+    h2: { fontSize: 28 },
+    h3: { fontSize: 24 },
+    h4: { fontSize: 20 },
+    
+    // Text
+    text: { fontSize: 16, color: colors.text, lineHeight: 24, marginBottom: 16 },
+    textSm: { fontSize: 14 },
+    textLg: { fontSize: 18 },
+    textXl: { fontSize: 20 },
+    
+    // Divider
+    divider: { marginVertical: 12 },
+    
+    // Image
+    image: { width: '100%', height: 200, marginVertical: 8 },
+    fullWidth: { width: '100%' },
+    caption: { fontSize: 13, color: colors.subText, marginTop: 6, fontStyle: 'italic' },
+    
+    // Button
+    button: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderRadius: 6,
+      marginVertical: 8,
+      alignItems: 'center',
+    },
+    buttonPrimary: {
+      backgroundColor: colors.accent,
+    },
+    buttonSecondary: {
+      backgroundColor: colors.cardBg,
+      borderWidth: 1,
+      borderColor: colors.accent,
+    },
+    buttonOutline: {
+      borderWidth: 2,
+      borderColor: colors.accent,
+    },
+    buttonGhost: {
+      backgroundColor: 'transparent',
+    },
+    buttonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#fff',
+    },
+    buttonCenter: { alignSelf: 'center' },
+    buttonRight: { alignSelf: 'flex-end' },
+    buttonFull: { alignSelf: 'stretch' },
+    
+    // Field
+    fieldLabel: { fontSize: 12, fontWeight: '600', color: colors.subText, marginBottom: 4 },
+    fieldLabelInline: { marginRight: 8 },
+    
+    // Archive
+    archiveBlock: { marginVertical: 16 },
+    archiveTitle: { fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: 12 },
+    archiveCard: { padding: 12, marginBottom: 8, backgroundColor: colors.cardBg, borderRadius: 4 },
+    archiveCardTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
+    archiveCardSub: { fontSize: 12, color: colors.subText, marginTop: 4 },
+    listItem: { marginBottom: 16 },
+    gridItem: { flex: 1, margin: 4 },
+    
+    // Card
+    card: {
+      padding: 16,
+      marginVertical: 8,
+      borderRadius: 8,
+      borderColor: colors.border,
+      borderWidth: 1,
+    },
+    
+    // Row/Column
+    row: { flexDirection: 'row', flex: 1 },
+    
+    // Utility
+    empty: { fontSize: 14, color: colors.subText, textAlign: 'center', marginVertical: 16 },
+    textMuted: { fontSize: 14, color: colors.subText },
+  });
+}

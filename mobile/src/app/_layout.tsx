@@ -5,17 +5,20 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { registerBuiltInBlocks, PageEntryResponse } from '@research-cms/shared-types';
 import { listSchemas, listPages, getClientSettings } from '@/lib/api';
 import { Sidebar } from '@/components/Sidebar';
-import { C } from '@/lib/theme';
+import { C, createColors } from '@/lib/theme';
 
 // Initialize block registry on app startup
 registerBuiltInBlocks();
 
 type Schema = { slug: string; name: string };
 
+type ThemeColors = ReturnType<typeof createColors>;
+
 type AppCtx = {
   schemas: Schema[];
   pages: PageEntryResponse[];
   settings: Record<string, unknown>;
+  colors: ThemeColors;
   loading: boolean;
   error: string;
   openSidebar: () => void;
@@ -25,17 +28,20 @@ const AppContext = createContext<AppCtx>({
   schemas: [],
   pages: [],
   settings: {},
+  colors: C,
   loading: true,
   error: '',
   openSidebar: () => {},
 });
 
 export const useSchemasContext = () => useContext(AppContext);
+export const useTheme = () => useContext(AppContext).colors;
 
 export default function RootLayout() {
   const [schemas, setSchemas] = useState<Schema[]>([]);
   const [pages, setPages] = useState<PageEntryResponse[]>([]);
   const [settings, setSettings] = useState<Record<string, unknown>>({});
+  const [colors, setColors] = useState<ThemeColors>(C);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -54,6 +60,7 @@ export default function RootLayout() {
       setSchemas(s);
       setPages(p);
       setSettings(st);
+      setColors(createColors(st));
       setLoading(false);
     }).catch((e: Error) => {
       setError(e.message);
@@ -69,19 +76,19 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <AppContext.Provider value={{ schemas, pages, settings, loading, error, openSidebar }}>
+    <AppContext.Provider value={{ schemas, pages, settings, colors, loading, error, openSidebar }}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: C.headerBg },
-          headerTintColor: C.headerText,
+          headerStyle: { backgroundColor: colors.headerBg },
+          headerTintColor: colors.headerText,
           headerTitleStyle: { fontWeight: '600', fontSize: 16 },
           headerLeft: () => (
             <TouchableOpacity onPress={openSidebar} hitSlop={12} style={s.menuBtn}>
-              <Text style={s.menuIcon}>☰</Text>
+              <Text style={{ color: colors.headerText, fontSize: 20 }}>☰</Text>
             </TouchableOpacity>
           ),
-          contentStyle: { backgroundColor: C.bg },
+          contentStyle: { backgroundColor: colors.bg },
         }}
       />
       <Sidebar
@@ -99,5 +106,4 @@ export default function RootLayout() {
 
 const s = StyleSheet.create({
   menuBtn:  { marginLeft: 4 },
-  menuIcon: { color: C.headerText, fontSize: 20 },
 });
