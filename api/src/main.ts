@@ -1,9 +1,12 @@
-import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app/app.module';
+import dns from 'dns';
+
+// Resolve DNS to prevent potential issues with MongoDB Atlas connections
+dns.setServers(['1.1.1.1']);
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
