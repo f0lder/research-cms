@@ -74,15 +74,17 @@ export default function ContentEditPage() {
         onSuccess={() => router.push(adminRoutes.schemaDetail(slug))}
       />
 
-      <VersionHistory
-        schemaSlug={slug}
-        entryId={entry._id ?? ''}
-        currentVersion={entry.version ?? 1}
-        onRestore={() => {
-          // Refresh the page data
-          window.location.reload();
-        }}
-      />
+      {schema.features?.revisions && (
+        <VersionHistory
+          schemaSlug={slug}
+          entryId={entry._id ?? ''}
+          currentVersion={entry.version ?? 1}
+          onRestore={() => {
+            // Refresh the page data
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }

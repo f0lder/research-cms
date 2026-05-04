@@ -283,6 +283,7 @@ export class ContentService {
 		data: Record<string, FieldValue>,
 	): Promise<ContentEntryDocument> {
 		const entry = await this.findOne(schemaSlug, id);
+		const schema = await this.schemaService.findOne(schemaSlug);
 		await this.validateData(schemaSlug, data, true);
 
 		// Check slug uniqueness for page schema (if slug is being updated)
@@ -301,14 +302,16 @@ export class ContentService {
 			}
 		}
 		
-		// Save current state as a version before overwriting
-		const currentVersion = entry.version ?? 1;
-		await this.versionModel.create({
-			entryId: String(entry._id),
-			schemaSlug,
-			data: entry.data,
-			version: currentVersion,
-		});
+		// Save current state as a version before overwriting (only if revisions are enabled)
+		if (schema.features?.revisions) {
+			const currentVersion = entry.version ?? 1;
+			await this.versionModel.create({
+				entryId: String(entry._id),
+				schemaSlug,
+				data: entry.data,
+				version: currentVersion,
+			});
+		}
 		
 		// Extract system fields (top-level) from input data
 		const systemFields = ['status', 'publishAt', 'unpublishAt', 'deletedAt', 'version'];
@@ -512,6 +515,14 @@ export class ContentService {
 		if (!isValidObjectId(id)) {
 			throw new BadRequestException(`Invalid entry ID: "${id}"`);
 		}
+		
+		const schema = await this.schemaService.findOne(schemaSlug);
+		
+		// Only return versions if revisions are enabled
+		if (!schema.features?.revisions) {
+			throw new BadRequestException('Revisions are not enabled for this schema');
+		}
+		
 		// Verify entry exists
 		await this.findOne(schemaSlug, id);
 		
@@ -530,6 +541,13 @@ export class ContentService {
 	): Promise<ContentEntryDocument> {
 		if (!isValidObjectId(id)) {
 			throw new BadRequestException(`Invalid entry ID: "${id}"`);
+		}
+		
+		const schema = await this.schemaService.findOne(schemaSlug);
+		
+		// Only allow restoring if revisions are enabled
+		if (!schema.features?.revisions) {
+			throw new BadRequestException('Revisions are not enabled for this schema');
 		}
 		
 		// Find the version to restore

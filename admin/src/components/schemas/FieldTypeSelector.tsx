@@ -1,46 +1,47 @@
 'use client';
 import { FieldType } from '@research-cms/shared-types';
+import { Card, Grid } from '@/components/ui';
 
 interface FieldTypeSelectorProps {
   onSelect: (type: FieldType) => void;
 }
 
-const FIELD_TYPES: Record<FieldType, string> = {
-  text: 'Text',
-  textarea: 'Textarea',
-  richtext: 'Rich Text',
-  number: 'Number',
-  boolean: 'Boolean',
-  date: 'Date',
-  datetime: 'Date & Time',
-  select: 'Select',
-  reference: 'Reference',
-  email: 'Email',
-  url: 'URL',
-  tags: 'Tags',
-  media: 'Media',
-  references: 'References',
-  blocks: 'Blocks',
+const FIELD_TYPES: Record<FieldType, { label: string; description: string }> = {
+  text: { label: 'Text', description: 'Short text input' },
+  textarea: { label: 'Textarea', description: 'Long text input' },
+  richtext: { label: 'Rich Text', description: 'Formatted text' },
+  number: { label: 'Number', description: 'Numeric value' },
+  boolean: { label: 'Boolean', description: 'True/False toggle' },
+  date: { label: 'Date', description: 'Date picker' },
+  datetime: { label: 'Date & Time', description: 'Date and time' },
+  select: { label: 'Select', description: 'Dropdown menu' },
+  reference: { label: 'Reference', description: 'Link to document' },
+  email: { label: 'Email', description: 'Email address' },
+  url: { label: 'URL', description: 'Web link' },
+  tags: { label: 'Tags', description: 'Multiple tags' },
+  media: { label: 'Media', description: 'Image or file' },
+  references: { label: 'References', description: 'Multiple links' },
+  blocks: { label: 'Blocks', description: 'Complex content' },
 };
 
 export function FieldTypeSelector({ onSelect }: FieldTypeSelectorProps) {
   return (
-    <div className="space-y-4">
-		  {Object.entries(FIELD_TYPES).map(([type, label]) => (
-        <div key={type}>
-          <h3 className="text-xs font-bold uppercase text-on-surface-variant mb-2">{label}</h3>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-                key={type}
-                onClick={() => onSelect(type)}
-                className="border-2 border-on-surface p-3 text-left hover:bg-primary hover:text-surface hover:border-primary transition-colors"
-              >
-                <div className="font-semibold text-sm">{FIELD_TYPES[type]}</div>
-                <div className="text-xs text-on-surface-variant">{type}</div>
-              </button>
-		  </div>
+    <Grid columns={2} gap="sm">
+      {Object.entries(FIELD_TYPES).map(([type, { label, description }]) => (
+        <Card
+          key={type}
+          interactive
+          variant="outlined"
+          onClick={() => onSelect(type as FieldType)}
+          className="cursor-pointer"
+        >
+          <div className="text-left">
+            <div className="font-bold text-sm uppercase text-on-surface">{label}</div>
+            <div className="text-xs text-on-surface-variant mt-1">{description}</div>
+            <div className="text-xs text-on-surface-variant font-mono mt-2">{type}</div>
           </div>
+        </Card>
       ))}
-    </div>
+    </Grid>
   );
 }

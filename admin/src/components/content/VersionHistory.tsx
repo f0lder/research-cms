@@ -66,7 +66,7 @@ export function VersionHistory({
     if (onRestore) onRestore();
   };
 
-  const showDiifPopup = (version: Version) => {
+  const showDiffPopup = (version: Version) => {
     // show a simple popup with a table that contains this verions data (no current data)
     const diffWindow = window.open('', '_blank', 'width=600,height=400,scrollbars=yes');
     if (diffWindow) {
@@ -123,7 +123,7 @@ export function VersionHistory({
               <Button
                 size="xs"
                 variant='secondary'
-                onClick={() => showDiifPopup(v)}
+                onClick={() => showDiffPopup(v)}
               >
                 Preview (diff)
               </Button>

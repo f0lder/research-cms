@@ -31,36 +31,39 @@ export function FieldConfigForm({ type, field, onChange, mode }: FieldConfigForm
   };
 
   return (
-    <div className="space-y-4">
-      {/* Label */}
-      <div>
-        <label className="block text-sm font-bold uppercase text-on-surface mb-1">Label *</label>
-        <input
-          type="text"
-          value={field.label || ''}
-          onChange={e => handleLabelChange(e.target.value)}
-          placeholder="e.g., Product Title"
-          className="w-full border-2 border-on-surface px-3 py-2 font-mono text-sm"
-        />
-      </div>
+    <div className="space-y-3">
+      {/* Label and Slug in two columns */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Label */}
+        <div>
+          <label className="block text-xs font-bold uppercase text-on-surface mb-1">Label *</label>
+          <input
+            type="text"
+            value={field.label || ''}
+            onChange={e => handleLabelChange(e.target.value)}
+            placeholder="e.g., Product Title"
+            className="w-full border-2 border-on-surface px-2 py-1 font-mono text-sm"
+          />
+        </div>
 
-      {/* Slug */}
-      <div>
-        <label className="block text-sm font-bold uppercase text-on-surface mb-1">
-          Slug {mode === 'edit' && '(Read-only)'}
-        </label>
-        <input
-          type="text"
-          value={field.name || ''}
-          onChange={e => handleSlugChange(e.target.value)}
-          disabled={mode === 'edit'}
-          placeholder="e.g., product_title"
-          className="w-full border-2 border-on-surface px-3 py-2 font-mono text-sm disabled:bg-surface-container"
-        />
+        {/* Slug */}
+        <div>
+          <label className="block text-xs font-bold uppercase text-on-surface mb-1">
+            Slug {mode === 'edit' && '(R/O)'}
+          </label>
+          <input
+            type="text"
+            value={field.name || ''}
+            onChange={e => handleSlugChange(e.target.value)}
+            disabled={mode === 'edit'}
+            placeholder="e.g., product_title"
+            className="w-full border-2 border-on-surface px-2 py-1 font-mono text-sm disabled:bg-surface-container"
+          />
+        </div>
       </div>
 
       {/* Required checkbox */}
-      <label className="flex items-center gap-2 text-sm cursor-pointer">
+      <label className="flex items-center gap-2 text-xs cursor-pointer">
         <input
           type="checkbox"
           checked={field.required || false}
@@ -85,9 +88,9 @@ export function FieldConfigForm({ type, field, onChange, mode }: FieldConfigForm
       )}
 
       {/* Type badge */}
-      <div className="bg-surface-container-low border border-on-surface p-3 rounded text-sm">
+      <div className="bg-surface-container-low border border-on-surface p-2 rounded text-xs">
         <strong>Type:</strong> <span className="font-mono text-primary">{type}</span>
-        <div className="text-xs text-on-surface-variant mt-1">Cannot be changed after creation</div>
+        <div className="text-xs text-on-surface-variant mt-0.5">Cannot be changed after creation</div>
       </div>
     </div>
   );

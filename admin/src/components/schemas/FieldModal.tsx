@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FieldType, FieldDefinition } from '@research-cms/shared-types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui';
@@ -18,6 +18,15 @@ export function FieldModal({ isOpen, onClose, onSave, existingField, mode }: Fie
   const [step, setStep] = useState<'type-select' | 'config'>(existingField ? 'config' : 'type-select');
   const [selectedType, setSelectedType] = useState<FieldType | null>(existingField?.type || null);
   const [fieldData, setFieldData] = useState<Partial<FieldDefinition>>(existingField || {});
+
+  // Sync state when modal opens or existingField changes
+  useEffect(() => {
+    if (isOpen) {
+      setStep(existingField ? 'config' : 'type-select');
+      setSelectedType(existingField?.type || null);
+      setFieldData(existingField || {});
+    }
+  }, [isOpen, existingField]);
 
   const handleTypeSelect = (type: FieldType) => {
     setSelectedType(type);
@@ -54,7 +63,7 @@ export function FieldModal({ isOpen, onClose, onSave, existingField, mode }: Fie
       onClose={handleClose}
       size="lg"
       footer={
-        <div className="flex gap-2">
+        <div className="grid gap-2 w-full grid-cols-3">
           {step === 'config' && mode === 'create' && (
             <Button variant="secondary" onClick={() => setStep('type-select')}>
               Back

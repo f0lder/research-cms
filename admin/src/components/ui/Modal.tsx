@@ -15,8 +15,8 @@ export function Modal({ isOpen, title, onClose, children, size = 'md', footer }:
 
   const sizeClass = {
     sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
+    md: 'max-w-2xl',
+    lg: 'max-w-4xl',
   }[size];
 
   return (
