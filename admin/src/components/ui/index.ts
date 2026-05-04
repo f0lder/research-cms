@@ -7,3 +7,4 @@ export { Heading, type HeadingProps } from './Heading';
 export { Text, type TextProps } from './Text';
 export { Grid, type GridProps } from './Grid';
 export { Container, type ContainerProps } from './Container';
+export { Modal, type ModalProps } from './Modal';

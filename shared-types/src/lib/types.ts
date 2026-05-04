@@ -2,6 +2,7 @@
 export type BuiltInFieldType =
   | 'text'
   | 'textarea'
+  | 'richtext'
   | 'email'
   | 'url'
   | 'number'
@@ -58,15 +59,27 @@ export interface FieldDefinition {
   required: boolean;
   /** Present only for types that need extra configuration (select, tags, …). */
   config?: FieldConfig;
+  /** System fields cannot be modified in the schema editor. */
+  system?: boolean;
 }
 
 export interface ContentTypeDefinition {
   _id?: string;
   name: string;
+  singularName?: string;
+  pluralName?: string;
   slug: string;
+  description?: string;
   fields: FieldDefinition[];
   /** System schemas (e.g. media) cannot be deleted or renamed. */
   system?: boolean;
+  /** Feature toggles for this content type */
+  features?: {
+    drafts?: boolean;
+    revisions?: boolean;
+    search?: boolean;
+    seo?: boolean;
+  };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -77,14 +90,14 @@ export interface ContentEntry {
   schemaSlug: string;
   /** Keyed by field name, values depend on FieldType. */
   data: Record<string, FieldValue>;
-  /** Publishing status — draft, scheduled, published, archived. */
-  status?: 'draft' | 'published' | 'scheduled' | 'archived';
+  /** Entry slug — unique identifier for the entry. */
+  slug?: string;
+  /** Publishing status — draft or published. */
+  status?: 'draft' | 'published' | 'archived';
   /** Soft delete marker — if set, entry is in trash. */
   deletedAt?: string;
-  /** Publish at this time (for scheduled publishing). */
-  publishAt?: string;
-  /** Unpublish at this time (for automatic archiving). */
-  unpublishAt?: string;
+  /** When the entry was published. */
+  publishedAt?: string;
   /** Version number for content versioning. */
   version?: number;
   createdAt?: string;

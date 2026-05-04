@@ -284,3 +284,178 @@
     @apply hover:text-on-surface transition-colors;
   }
 }
+
+/* ── Rich Text Editor (Outside layers) ────────────── */
+.richtext-editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--color-on-surface);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-hard);
+}
+
+.richtext-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  align-items: center;
+  border-bottom: 2px solid var(--color-on-surface);
+  background-color: var(--color-surface-container-low);
+  padding: 4px;
+}
+
+.richtext-toolbar .toolbar-btn {
+  padding: 8px 8px;
+  border: 2px solid var(--color-on-surface);
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  margin: 4px;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.richtext-toolbar .toolbar-btn:hover:not(:disabled) {
+  background-color: var(--color-surface-container);
+}
+
+.richtext-toolbar .toolbar-btn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
+.richtext-toolbar .toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.richtext-toolbar .toolbar-btn.active {
+  background-color: var(--color-on-surface);
+  color: var(--color-surface);
+  border-color: var(--color-on-surface);
+}
+
+.richtext-toolbar .toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--color-on-surface);
+  margin: 4px;
+}
+
+.richtext-content {
+  padding: 12px;
+  min-height: 200px;
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: var(--font-body);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.richtext-content:focus {
+  outline: none;
+}
+
+.richtext-content.disabled {
+  background-color: var(--color-surface-container);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* TipTap editor content semantic styles */
+.richtext-content p {
+  margin: 8px 0;
+}
+
+.richtext-content h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: var(--color-on-surface);
+}
+
+.richtext-content h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 12px 0 8px;
+  color: var(--color-on-surface);
+}
+
+.richtext-content h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 8px 0;
+  color: var(--color-on-surface);
+}
+
+.richtext-content ul {
+  margin: 8px 0;
+  padding-left: 24px;
+  list-style-type: disc;
+}
+
+.richtext-content ol {
+  margin: 8px 0;
+  padding-left: 24px;
+  list-style-type: decimal;
+}
+
+.richtext-content li {
+  margin: 4px 0;
+}
+
+.richtext-content blockquote {
+  border-left: 4px solid var(--color-on-surface-variant);
+  padding-left: 16px;
+  margin: 8px 0;
+  color: var(--color-on-surface-variant);
+  font-style: italic;
+}
+
+.richtext-content pre {
+  background-color: var(--color-surface-container);
+  padding: 12px;
+  border: 2px solid var(--color-on-surface-variant);
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.richtext-content code {
+  background-color: var(--color-surface-container);
+  padding: 2px 4px;
+  border-radius: 2px;
+  border: 2px solid var(--color-on-surface-variant);
+  font-family: var(--font-code);
+  font-size: 12px;
+}
+
+.richtext-content pre code {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+}
+
+.richtext-content hr {
+  border: none;
+  border-top: 2px solid var(--color-on-surface);
+  margin: 16px 0;
+}
+
+.richtext-content a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.richtext-content a:hover {
+  opacity: 0.8;
+}

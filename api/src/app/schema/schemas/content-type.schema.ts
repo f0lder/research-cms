@@ -11,9 +11,21 @@ export class ContentType implements ContentTypeDefinition {
 
 	@Prop({ required: true, unique: true })
 	slug: string;
+
+	@Prop()
+	singularName?: string;
+
+	@Prop()
+	pluralName?: string;
+
+	@Prop()
+	description?: string;
 	
 	@Prop({ type: [Object], required: true })
 	fields: FieldDefinition[];
+
+	@Prop({ type: Object, default: {} })
+	features?: { drafts?: boolean; revisions?: boolean; search?: boolean; seo?: boolean };
 
 	@Prop({ default: false })
 	system: boolean;

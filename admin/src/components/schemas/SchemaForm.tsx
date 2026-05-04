@@ -1,11 +1,15 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FieldDefinition, FieldConfig, ContentTypeDefinition } from '@research-cms/shared-types';
+import { FieldDefinition, ContentTypeDefinition } from '@research-cms/shared-types';
 import { getAllSchemas, createSchema, updateSchema, deleteSchema } from '@/app/actions';
-import { generateSlugFromName, validateSlug, generateRandomId, getErrorMessage } from '@/lib/utils';
+import { generateSlugFromName, validateSlug, getErrorMessage } from '@/lib/utils';
 import { Button, Container, TextField, Heading, Text } from '@/components/ui';
-import FieldInput from './FieldInput';
+import { FieldModal } from './FieldModal';
+import { SchemaMetadata } from './SchemaMetadata';
+import { SchemaFieldsList } from './SchemaFieldsList';
+import { SchemaSaveActions } from './SchemaSaveActions';
+import { useToast } from '@/contexts/ToastContext';
 
 const DEFAULT_FIELDS: FieldDefinition[] = [
   { name: 'title', label: 'Title', type: 'text', required: true },
@@ -21,19 +25,30 @@ interface SchemaFormProps {
 
 export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormProps) {
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [name, setName] = useState(initialData?.name || '');
+  const [singularName, setSingularName] = useState(initialData?.singularName || '');
+  const [pluralName, setPluralName] = useState(initialData?.pluralName || '');
+  const [description, setDescription] = useState(initialData?.description || '');
   const [slug, setSlug] = useState(initialData?.slug || '');
   const [fields, setFields] = useState<FieldDefinition[]>(
     initialData?.fields ?? (mode === 'create' ? DEFAULT_FIELDS : [])
-  );
-  const [fieldIds, setFieldIds] = useState<string[]>(() =>
-    (initialData?.fields ?? (mode === 'create' ? DEFAULT_FIELDS : [])).map(() => generateRandomId())
   );
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manualSlugEdit, setManualSlugEdit] = useState(false);
   const [availableSchemas, setAvailableSchemas] = useState<ContentTypeDefinition[]>([]);
+  const [features, setFeatures] = useState(initialData?.features || {
+    drafts: true,
+    revisions: false,
+    search: true,
+    seo: false,
+  });
+
+  // Field modal state
+  const [fieldModalOpen, setFieldModalOpen] = useState(false);
+  const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -52,22 +67,39 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
     setManualSlugEdit(true);
   };
 
-  const addField = () => {
-    setFields(prev => [...prev, { name: '', label: '', type: 'text', required: false }]);
-    setFieldIds(prev => [...prev, generateRandomId()]);
+  const openFieldModal = (index?: number) => {
+    if (index !== undefined) {
+      setEditingFieldIndex(index);
+    } else {
+      setEditingFieldIndex(null);
+    }
+    setFieldModalOpen(true);
+  };
+
+  const closeFieldModal = () => {
+    setFieldModalOpen(false);
+    setEditingFieldIndex(null);
+  };
+
+  const handleFieldSave = (field: FieldDefinition) => {
+    if (editingFieldIndex !== null) {
+      setFields(prev => {
+        const updated = [...prev];
+        updated[editingFieldIndex] = field;
+        return updated;
+      });
+      showToast('Field updated successfully', 'success');
+    } else {
+      setFields(prev => [...prev, field]);
+      showToast('Field added successfully', 'success');
+    }
+    closeFieldModal();
   };
 
   const removeField = (index: number) => {
+    const fieldLabel = fields[index].label;
     setFields(prev => prev.filter((_, i) => i !== index));
-    setFieldIds(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const updateField = (index: number, key: keyof FieldDefinition, value: string | boolean | FieldConfig | undefined) => {
-    setFields(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [key]: value };
-      return updated;
-    });
+    showToast(`Deleted field: ${fieldLabel}`, 'info');
   };
 
   const handleSubmit = async (e: { preventDefault(): void }) => {
@@ -75,25 +107,51 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
     setError('');
 
     const slugValidation = validateSlug(slug);
-    if (!slugValidation.valid) { setError(slugValidation.error ?? 'Invalid slug'); return; }
-    if (fields.length === 0) { setError('At least one field is required'); return; }
+    if (!slugValidation.valid) { 
+      setError(slugValidation.error ?? 'Invalid slug'); 
+      showToast(`Schema Error: ${slugValidation.error}`, 'error');
+      return; 
+    }
+    if (fields.length === 0) { 
+      setError('At least one field is required'); 
+      showToast('Schema must have at least one field', 'error');
+      return; 
+    }
 
     const fieldNames = fields.map(f => f.name);
     const duplicates = fieldNames.filter((n, i) => fieldNames.indexOf(n) !== i);
-    if (duplicates.length > 0) { setError(`Duplicate field names: ${duplicates.join(', ')}`); return; }
+    if (duplicates.length > 0) { 
+      setError(`Duplicate field names: ${duplicates.join(', ')}`); 
+      showToast(`Duplicate field names: ${duplicates.join(', ')}`, 'error');
+      return; 
+    }
 
     setIsSubmitting(true);
     try {
       if (mode === 'create') {
-        const { error: err } = await createSchema({ name, slug, fields });
-        if (err) { setError(err); setIsSubmitting(false); return; }
+        const { error: err } = await createSchema({ name, slug, singularName, pluralName, description, fields, features });
+        if (err) { 
+          setError(err); 
+          showToast(`Failed to create schema: ${err}`, 'error');
+          setIsSubmitting(false); 
+          return; 
+        }
+        showToast(`Schema "${name}" created successfully`, 'success');
       } else {
-        const { error: err } = await updateSchema(initialData?.slug || slug, { name, slug, fields });
-        if (err) { setError(err); setIsSubmitting(false); return; }
+        const { error: err } = await updateSchema(initialData?.slug || slug, { name, slug, singularName, pluralName, description, fields, features });
+        if (err) { 
+          setError(err); 
+          showToast(`Failed to update schema: ${err}`, 'error');
+          setIsSubmitting(false); 
+          return; 
+        }
+        showToast(`Schema "${name}" updated successfully`, 'success');
       }
       if (onSuccess) onSuccess(); else router.push('/schemas');
     } catch (err) {
-      setError(getErrorMessage(err));
+      const errMsg = getErrorMessage(err);
+      setError(errMsg);
+      showToast(`Error: ${errMsg}`, 'error');
       setIsSubmitting(false);
     }
   };
@@ -102,7 +160,13 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
     if (!confirm('Delete this schema? This cannot be undone.')) return;
     setIsSubmitting(true);
     const { error: err } = await deleteSchema(initialData?.slug ?? '');
-    if (err) { setError(err); setIsSubmitting(false); return; }
+    if (err) { 
+      setError(err); 
+      showToast(`Failed to delete schema: ${err}`, 'error');
+      setIsSubmitting(false); 
+      return; 
+    }
+    showToast('Schema deleted successfully', 'success');
     router.push('/schemas');
   };
 
@@ -151,58 +215,39 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
           helperText="Lowercase letters, numbers, and dashes only"
         />
 
-        <div>
-          <Heading level={3} className="mb-3">Fields</Heading>
-          {fields.length === 0 && (
-            <Text variant="body-sm" color="secondary" className="mb-3">
-              No fields defined. Click &quot;Add Field&quot; to start.
-            </Text>
-          )}
-          {fields.map((field, i) => (
-            <FieldInput
-              key={fieldIds[i]}
-              index={i}
-              field={field}
-              onUpdate={updateField}
-              onRemove={removeField}
-              disabled={isSubmitting}
-              availableSchemas={availableSchemas}
-              currentSlug={slug}
-              existingKeys={fields.filter((_, j) => j !== i).map(f => f.name).filter(Boolean)}
-            />
-          ))}
-          <Button
-            type="button"
-            onClick={addField}
-            disabled={isSubmitting}
-            variant="secondary"
-            size="sm"
-            className="mt-2"
-          >
-            + Add Field
-          </Button>
-        </div>
+        <SchemaMetadata
+          singularName={singularName}
+          pluralName={pluralName}
+          description={description}
+          features={features}
+          disabled={isSubmitting}
+          onSingularNameChange={setSingularName}
+          onPluralNameChange={setPluralName}
+          onDescriptionChange={setDescription}
+          onFeaturesChange={setFeatures}
+        />
 
-        <div className="flex gap-3 pt-4 border-t-2 border-on-surface">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            variant="primary"
-            size="lg"
-            className="flex-1"
-          >
-            {isSubmitting ? 'Saving…' : mode === 'create' ? 'Create Schema' : 'Update Schema'}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => router.push('/schemas')}
-            disabled={isSubmitting}
-            variant="secondary"
-            size="lg"
-          >
-            Cancel
-          </Button>
-        </div>
+        <SchemaFieldsList
+          fields={fields}
+          disabled={isSubmitting}
+          onAddField={() => openFieldModal()}
+          onEditField={openFieldModal}
+          onDeleteField={removeField}
+        />
+
+        <FieldModal
+          isOpen={fieldModalOpen}
+          onClose={closeFieldModal}
+          onSave={handleFieldSave}
+          existingField={editingFieldIndex !== null ? fields[editingFieldIndex] : undefined}
+          mode={editingFieldIndex !== null ? 'edit' : 'create'}
+        />
+
+        <SchemaSaveActions
+          mode={mode}
+          isSubmitting={isSubmitting}
+          onCancel={() => router.push('/schemas')}
+        />
       </form>
     </Container>
   );

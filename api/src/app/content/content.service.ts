@@ -53,8 +53,8 @@ export class ContentService {
 		const allowed = new Set([
 			...resolvedSchema.fields.map(f => f.name),
 			'status',
-			'publishAt',
-			'unpublishAt',
+			'slug',
+			'publishedAt',
 			'deletedAt',
 			'version',
 		]);
@@ -62,9 +62,14 @@ export class ContentService {
 			if (!allowed.has(key)) errors.push(`Unknown field: "${key}"`);
 		}
 
-		// Validate scheduled publishing: if status is 'scheduled', publishAt must be set
-		if (data.status === 'scheduled' && !data.publishAt) {
-			errors.push('"publishAt" is required when status is "scheduled"');
+		// Validate status is one of the allowed values
+		if (data.status && !['draft', 'published'].includes(String(data.status))) {
+			errors.push(`Status must be one of: draft, published`);
+		}
+
+		// Validate status against schema features
+		if (data.status === 'draft' && resolvedSchema.features?.drafts === false) {
+			errors.push(`This schema does not allow draft entries (drafts feature is disabled)`);
 		}
 
 		// Collect reference existence checks so they run in parallel instead of sequentially
@@ -108,6 +113,14 @@ export class ContentService {
 					try { new URL(String(value)); } catch {
 						errors.push(`"${field.label || field.name}" must be a valid URL`);
 					}
+					break;
+				case 'text':
+				case 'textarea':
+				case 'richtext':
+					if (typeof value !== 'string') {
+						errors.push(`"${field.label || field.name}" must be a string`);
+					}
+					break;
 					break;
 				case 'select': {
 					const opts = (field.config?.type === 'select' ? field.config.options : []) as string[];

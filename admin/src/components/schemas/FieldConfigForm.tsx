@@ -1,0 +1,162 @@
+'use client';
+import { FieldType, FieldDefinition } from '@research-cms/shared-types';
+import { Text } from './ui';
+
+interface FieldConfigFormProps {
+  type: FieldType;
+  field: Partial<FieldDefinition>;
+  onChange: (updates: Partial<FieldDefinition>) => void;
+  mode: 'create' | 'edit';
+}
+
+export function FieldConfigForm({ type, field, onChange, mode }: FieldConfigFormProps) {
+  const handleLabelChange = (value: string) => {
+    onChange({ label: value });
+  };
+
+  const handleSlugChange = (value: string) => {
+    onChange({ name: value });
+  };
+
+  const handleRequiredChange = (value: boolean) => {
+    onChange({ required: value });
+  };
+
+  const handleSelectOptionsChange = (options: string[]) => {
+    onChange({ selectOptions: options });
+  };
+
+  const handleTargetSlugChange = (value: string) => {
+    onChange({ targetSlug: value });
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Label */}
+      <div>
+        <label className="block text-sm font-bold uppercase text-on-surface mb-1">Label *</label>
+        <input
+          type="text"
+          value={field.label || ''}
+          onChange={e => handleLabelChange(e.target.value)}
+          placeholder="e.g., Product Title"
+          className="w-full border-2 border-on-surface px-3 py-2 font-mono text-sm"
+        />
+      </div>
+
+      {/* Slug */}
+      <div>
+        <label className="block text-sm font-bold uppercase text-on-surface mb-1">
+          Slug {mode === 'edit' && '(Read-only)'}
+        </label>
+        <input
+          type="text"
+          value={field.name || ''}
+          onChange={e => handleSlugChange(e.target.value)}
+          disabled={mode === 'edit'}
+          placeholder="e.g., product_title"
+          className="w-full border-2 border-on-surface px-3 py-2 font-mono text-sm disabled:bg-surface-container"
+        />
+      </div>
+
+      {/* Required checkbox */}
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <input
+          type="checkbox"
+          checked={field.required || false}
+          onChange={e => handleRequiredChange(e.target.checked)}
+        />
+        <span className="font-bold uppercase text-on-surface">Required</span>
+      </label>
+
+      {/* Type-specific config */}
+      {type === 'select' && (
+        <SelectOptions
+          options={field.selectOptions || []}
+          onChange={handleSelectOptionsChange}
+        />
+      )}
+
+      {(type === 'reference' || type === 'references') && (
+        <ReferenceConfig
+          targetSlug={field.targetSlug || ''}
+          onChange={handleTargetSlugChange}
+        />
+      )}
+
+      {/* Type badge */}
+      <div className="bg-surface-container-low border border-on-surface p-3 rounded text-sm">
+        <strong>Type:</strong> <span className="font-mono text-primary">{type}</span>
+        <div className="text-xs text-on-surface-variant mt-1">Cannot be changed after creation</div>
+      </div>
+    </div>
+  );
+}
+
+function SelectOptions({
+  options,
+  onChange,
+}: {
+  options: string[];
+  onChange: (options: string[]) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-bold uppercase text-on-surface mb-2">Options</label>
+      <div className="space-y-2">
+        {options.map((opt, i) => (
+          <div key={i} className="flex gap-2">
+            <input
+              type="text"
+              value={opt}
+              onChange={e => {
+                const newOpts = [...options];
+                newOpts[i] = e.target.value;
+                onChange(newOpts);
+              }}
+              placeholder="Option value"
+              className="flex-1 border-2 border-on-surface px-3 py-2 font-mono text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => onChange(options.filter((_, idx) => idx !== i))}
+              className="px-3 py-2 bg-error text-surface font-bold text-sm"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange([...options, ''])}
+        className="mt-2 border-2 border-on-surface px-3 py-2 text-sm font-bold uppercase hover:bg-surface-container w-full"
+      >
+        + Add Option
+      </button>
+    </div>
+  );
+}
+
+function ReferenceConfig({
+  targetSlug,
+  onChange,
+}: {
+  targetSlug: string;
+  onChange: (slug: string) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-bold uppercase text-on-surface mb-1">
+        Target Schema Slug *
+      </label>
+      <input
+        type="text"
+        value={targetSlug}
+        onChange={e => onChange(e.target.value)}
+        placeholder="e.g., author"
+        className="w-full border-2 border-on-surface px-3 py-2 font-mono text-sm"
+      />
+    </div>
+  );
+}

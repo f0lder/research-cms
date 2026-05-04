@@ -88,9 +88,21 @@ export function EntryListPageHeader({ schema, slug, isAdmin }: PageHeaderProps) 
       <div className="flex items-start justify-between mb-6">
         <div>
           <Heading level={1} className="page-heading">
-            {schema.name}
+            {schema.singularName || schema.name}
+            {schema.pluralName && <span className="text-sm font-normal text-zinc-500 ml-2">({schema.pluralName})</span>}
           </Heading>
           <Text>/{schema.slug} · {schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}</Text>
+          {schema.description && (
+            <Text className="text-sm text-zinc-600 mt-1">{schema.description}</Text>
+          )}
+          {schema.features && (
+            <div className="flex gap-2 mt-2 text-xs">
+              {schema.features.drafts && <span className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded">Drafts</span>}
+              {schema.features.revisions && <span className="px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded">Revisions</span>}
+              {schema.features.search && <span className="px-2 py-1 bg-green-50 text-green-700 border border-green-200 rounded">Search</span>}
+              {schema.features.seo && <span className="px-2 py-1 bg-orange-50 text-orange-700 border border-orange-200 rounded">SEO</span>}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {rebuildMessage && (

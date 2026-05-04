@@ -2,6 +2,7 @@ import './global.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SchemaProvider } from '@/contexts/SchemaContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 import { Inter } from 'next/font/google';
 
 // Font imports
@@ -27,9 +28,11 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body>
         <AuthProvider>
-          <SettingsProvider>
-            <SchemaProvider>{children}</SchemaProvider>
-          </SettingsProvider>
+          <ToastProvider>
+            <SettingsProvider>
+              <SchemaProvider>{children}</SchemaProvider>
+            </SettingsProvider>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

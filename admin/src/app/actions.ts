@@ -38,7 +38,11 @@ export async function getSystemSchemas() {
 export async function createSchema(data: {
   name: string;
   slug: string;
+  singularName?: string;
+  pluralName?: string;
+  description?: string;
   fields: FieldDefinition[];
+  features?: { drafts?: boolean; revisions?: boolean; search?: boolean; seo?: boolean };
 }) {
   return serverApi.post(`/schemas`, data);
 }

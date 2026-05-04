@@ -9,6 +9,7 @@ import { getAllEntries, getMediaLibrary } from '@/app/actions';
 import { getEntryTitle } from '@/lib/utils';
 
 const MediaPickerModal = dynamic(() => import('./MediaPickerModal'), { ssr: false });
+const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
 
 interface DynamicFieldInputProps {
   field: FieldDefinition;
@@ -79,6 +80,15 @@ export default function DynamicFieldInput({
           disabled={disabled}
           rows={4}
           className="field-input resize-y"
+        />
+      );
+
+    case 'richtext':
+      return (
+        <RichTextEditor
+          value={String(value ?? '')}
+          onChange={html => onChange(field.name, html)}
+          disabled={disabled}
         />
       );
 
