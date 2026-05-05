@@ -5,7 +5,6 @@ import { ContentController } from './content.controller';
 import { ContentEntryModel, ContentEntrySchema } from './schemas/content-entry.schema';
 import { ContentVersionModel, ContentVersionSchema } from './schemas/content-version.schema';
 import { SchemaModule } from '../schema/schema.module';
-import { ScheduledPublishingService } from './scheduled-publishing.service';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
@@ -18,7 +17,7 @@ import { AuthModule } from '../auth/auth.module';
 		AuthModule,
 	],
 	controllers: [ContentController],
-	providers: [ContentService, ScheduledPublishingService],
+	providers: [ContentService],
 	exports: [ContentService],
 })
 export class ContentModule {}

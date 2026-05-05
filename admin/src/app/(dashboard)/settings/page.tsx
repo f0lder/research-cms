@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { SettingDefinition } from '@research-cms/shared-types';
 import {
   getSettings,
   updateSetting,
@@ -10,6 +9,7 @@ import {
 import { ListSkeleton } from '@/components/skeletons';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
+import { SettingRow } from '@/components/settings/SettingRow';
 
 export default function GlobalSettingsPage() {
   const [items, setItems] = useState<SettingItem[]>([]);
@@ -106,139 +106,4 @@ function groupByCategory(items: SettingItem[]): Record<string, SettingItem[]> {
     (out[cat] ??= []).push(item);
   }
   return out;
-}
-
-interface SettingRowProps {
-  item: SettingItem;
-  saving: boolean;
-  onSave: (value: unknown) => void;
-  onReset: () => void;
-}
-
-function SettingRow({ item, saving, onSave, onReset }: SettingRowProps) {
-  const { definition, value } = item;
-  const [draft, setDraft] = useState<unknown>(value);
-
-  useEffect(() => { setDraft(value); }, [value]);
-
-  const dirty = draft !== value;
-
-  return (
-    <div className="panel">
-      <div className="flex items-start justify-between gap-4 mb-2">
-        <div>
-          <Text variant='body-lg'>{definition.label}</Text>
-          {definition.description && (
-            <Text variant='body-sm'>
-              {definition.description}
-            </Text>
-          )}
-          <Text variant='code'>
-            {definition.key}
-          </Text>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs text-zinc-500 hover:text-zinc-900"
-            onClick={onReset}
-            disabled={saving}
-          >
-            Reset
-          </Button>
-          <Button
-            variant='primary'
-            size="sm"
-            onClick={() => onSave(draft)}
-            disabled={!dirty || saving}
-          >
-            {saving ? 'Saving…' : 'Save'}
-          </Button>
-        </div>
-      </div>
-      <SettingField definition={definition} value={draft} onChange={setDraft} />
-    </div>
-  );
-}
-
-interface SettingFieldProps {
-  definition: SettingDefinition;
-  value: unknown;
-  onChange: (value: unknown) => void;
-}
-
-function SettingField({ definition, value, onChange }: SettingFieldProps) {
-  switch (definition.type) {
-    case 'text':
-      return (
-        <input
-          type="text"
-          className="field-input"
-          value={(value as string | undefined) ?? ''}
-          onChange={e => onChange(e.target.value)}
-        />
-      );
-    case 'textarea':
-      return (
-        <textarea
-          className="field-input"
-          rows={3}
-          value={(value as string | undefined) ?? ''}
-          onChange={e => onChange(e.target.value)}
-        />
-      );
-    case 'number':
-      return (
-        <input
-          type="number"
-          className="field-input"
-          value={(value as number | undefined) ?? ''}
-          onChange={e => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
-        />
-      );
-    case 'boolean':
-      return (
-        <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
-          <input
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={e => onChange(e.target.checked)}
-          />
-          <span>Enabled</span>
-        </label>
-      );
-    case 'color':
-      return (
-        <input
-          type="color"
-          className="h-9 w-20 rounded border border-zinc-200"
-          value={(value as string | undefined) ?? '#000000'}
-          onChange={e => onChange(e.target.value)}
-        />
-      );
-    case 'select':
-      return (
-        <select
-          className="field-input"
-          value={(value as string | undefined) ?? ''}
-          onChange={e => onChange(e.target.value)}
-        >
-          <option value="">— Select —</option>
-          {(definition.options ?? []).map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
-      );
-    case 'media':
-      return (
-        <input
-          type="text"
-          className="field-input"
-          placeholder="Media entry id"
-          value={(value as string | undefined) ?? ''}
-          onChange={e => onChange(e.target.value)}
-        />
-      );
-  }
 }

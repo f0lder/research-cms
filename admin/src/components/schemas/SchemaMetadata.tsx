@@ -1,6 +1,6 @@
 'use client';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
-import { TextField, Heading } from '@/components/ui';
+import { TextField, Heading, Toggle } from '@/components/ui';
 
 interface SchemaMetadataProps {
   singularName: string;
@@ -57,66 +57,70 @@ export function SchemaMetadata({
       <div className="border-2 border-on-surface p-4 bg-surface-container-low">
         <Heading level={3} className="mb-4">Features</Heading>
         <div className="space-y-3">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
+          <div className="flex items-start gap-2">
+            <Toggle
               checked={features?.drafts ?? true}
-              onChange={e =>
+              onChange={checked =>
                 onFeaturesChange({
                   ...features,
-                  drafts: e.target.checked,
+                  drafts: checked,
                 })
               }
               disabled={disabled}
             />
-            <span className="font-bold uppercase text-on-surface">Enable Drafts</span>
-            <span className="text-xs text-on-surface-variant">Allow unpublished drafts</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
+            <div>
+              <span className="font-bold uppercase text-on-surface block">Enable Drafts</span>
+              <span className="text-xs text-on-surface-variant">Allow unpublished drafts</span>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <Toggle
               checked={features?.revisions ?? false}
-              onChange={e =>
+              onChange={checked =>
                 onFeaturesChange({
                   ...features,
-                  revisions: e.target.checked,
+                  revisions: checked,
                 })
               }
               disabled={disabled}
             />
-            <span className="font-bold uppercase text-on-surface">Enable Revisions</span>
-            <span className="text-xs text-on-surface-variant">Track version history</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
+            <div>
+              <span className="font-bold uppercase text-on-surface block">Enable Revisions</span>
+              <span className="text-xs text-on-surface-variant">Track version history</span>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <Toggle
               checked={features?.search ?? true}
-              onChange={e =>
+              onChange={checked =>
                 onFeaturesChange({
                   ...features,
-                  search: e.target.checked,
+                  search: checked,
                 })
               }
               disabled={disabled}
             />
-            <span className="font-bold uppercase text-on-surface">Enable Search</span>
-            <span className="text-xs text-on-surface-variant">Index entries in search</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
+            <div>
+              <span className="font-bold uppercase text-on-surface block">Enable Search</span>
+              <span className="text-xs text-on-surface-variant">Index entries in search</span>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <Toggle
               checked={features?.seo ?? false}
-              onChange={e =>
+              onChange={checked =>
                 onFeaturesChange({
                   ...features,
-                  seo: e.target.checked,
+                  seo: checked,
                 })
               }
               disabled={disabled}
             />
-            <span className="font-bold uppercase text-on-surface">Enable SEO Fields</span>
-            <span className="text-xs text-on-surface-variant">Add meta title, description</span>
-          </label>
+            <div>
+              <span className="font-bold uppercase text-on-surface block">Enable SEO Fields</span>
+              <span className="text-xs text-on-surface-variant">Add meta title, description</span>
+            </div>
+          </div>
         </div>
       </div>
     </>

@@ -2,14 +2,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ContentTypeDefinition } from '@research-cms/shared-types';
+import { ContentTypeDefinition, ContentEntry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { getSchema } from '@/app/actions';
 import ContentForm from '@/components/content/ContentForm';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function ContentCreatePage() {
   const params = useParams();
   const router = useRouter();
+  const { showToast } = useToast();
   const slug = extractParam(params, 'slug');
 
   const [schema, setSchema] = useState<ContentTypeDefinition | null>(null);
@@ -56,7 +58,16 @@ export default function ContentCreatePage() {
       <ContentForm
         mode="create"
         schema={schema}
-        onSuccess={() => router.push(adminRoutes.schemaDetail(slug))}
+        onSuccess={(createdEntry: ContentEntry) => {
+          showToast(`${schema.name} created successfully`, 'success');
+          // Navigate to the edit page for the newly created entry
+          if (createdEntry._id) {
+            router.push(adminRoutes.contentEdit(slug, createdEntry._id.toString()));
+          } else {
+            // Fallback to schema detail if ID wasn't returned
+            router.push(adminRoutes.schemaDetail(slug));
+          }
+        }}
       />
     </div>
   );

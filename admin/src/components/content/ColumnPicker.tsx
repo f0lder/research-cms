@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
+import { Toggle } from '../ui';
 
 interface ColumnPickerProps {
   open: boolean;
@@ -41,41 +42,35 @@ export function ColumnPicker({ open, onOpenChange, visibleCols, onToggleCol, sch
             Visible columns
           </p>
           {schema.fields.map(field => (
-            <label
+            <div
               key={field.name}
-              className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-zinc-50 cursor-pointer text-sm text-zinc-700"
+              className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-zinc-50 text-sm text-zinc-700"
             >
-              <input
-                type="checkbox"
+              <Toggle
                 checked={visibleCols.includes(field.name)}
                 onChange={() => onToggleCol(field.name)}
-                className="cursor-pointer"
               />
               {field.label}
               <span className="ml-auto text-[10px] text-zinc-300 font-mono">{field.type}</span>
-            </label>
+            </div>
           ))}
           <div className="border-t border-zinc-100 mt-1 pt-1">
-            <label className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-zinc-50 cursor-pointer text-sm text-zinc-700">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-zinc-50 text-sm text-zinc-700">
+              <Toggle
                 checked={showStatus}
                 onChange={() => onToggleCol('status')}
-                className="cursor-pointer"
               />
               Status
               <span className="ml-auto text-[10px] text-zinc-300 font-mono">system</span>
-            </label>
-            <label className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-zinc-50 cursor-pointer text-sm text-zinc-700">
-              <input
-                type="checkbox"
+            </div>
+            <div className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-zinc-50 text-sm text-zinc-700">
+              <Toggle
                 checked={showDate}
                 onChange={() => onToggleCol('date')}
-                className="cursor-pointer"
               />
               Date
               <span className="ml-auto text-[10px] text-zinc-300 font-mono">system</span>
-            </label>
+            </div>
           </div>
         </div>
       )}

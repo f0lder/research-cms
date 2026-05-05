@@ -5,8 +5,10 @@ import { uploadMedia, formatDateTime } from '@/lib/utils';
 import { getMediaLibrary, updateMedia, deleteMedia } from '@/app/actions';
 import { MediaGridSkeleton } from '@/components/skeletons';
 import { Button, TextField, Heading, Text } from '@/components/ui';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function MediaPage() {
+  const { showToast } = useToast();
   const [items, setItems] = useState<MediaEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -40,8 +42,11 @@ export default function MediaPage() {
     try {
       await Promise.all(files.map(f => uploadMedia(f)));
       await load();
+      showToast(`${files.length} file${files.length !== 1 ? 's' : ''} uploaded successfully`, 'success');
     } catch (err) {
-      setError((err as Error).message);
+      const errorMsg = (err as Error).message;
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -61,15 +66,23 @@ export default function MediaPage() {
       const updated = res.data;
       setItems(prev => prev.map(i => i._id === selected._id ? updated : i));
       setSelected(updated);
+      showToast('Media updated successfully', 'success');
+    } else if (res.error) {
+      showToast(res.error, 'error');
     }
     setSaving(false);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this file permanently?')) return;
-    await deleteMedia(id);
-    if (selected?._id === id) { setSelected(null); setEditDraft(null); }
-    load();
+    const res = await deleteMedia(id);
+    if (res.error) {
+      showToast(res.error, 'error');
+    } else {
+      showToast('File deleted successfully', 'success');
+      if (selected?._id === id) { setSelected(null); setEditDraft(null); }
+      load();
+    }
   };
 
   return (

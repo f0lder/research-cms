@@ -7,6 +7,7 @@ import { getLogs, getLogTags, clearLogs } from '@/app/actions';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { Button, TextField, Heading, Text, Badge } from '@/components/ui';
 import { ListSkeleton } from '@/components/skeletons';
+import { useToast } from '@/contexts/ToastContext';
 
 
 const PAGE_SIZE = 50;
@@ -14,6 +15,7 @@ const PAGE_SIZE = 50;
 type Option = { value: string; label: string };
 
 export default function LogsPage() {
+  const { showToast } = useToast();
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [allTags, setAllTags] = useState<string[]>([]);
@@ -62,8 +64,13 @@ export default function LogsPage() {
 
   const handleClear = async () => {
     if (!confirm('Delete all log entries? This cannot be undone.')) return;
-    await clearLogs();
-    load();
+    const result = await clearLogs();
+    if (result.error) {
+      showToast(result.error, 'error');
+    } else {
+      showToast('All logs cleared successfully', 'success');
+      load();
+    }
   };
 
   const tagOptions: Option[] = allTags.sort().map(t => ({ value: t, label: t }));

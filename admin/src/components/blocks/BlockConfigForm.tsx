@@ -2,7 +2,7 @@
 
 import { Block, blockRegistry } from '@research-cms/shared-types';
 import { SchemaFieldInput } from './SchemaFieldInput';
-import { Text } from '@/components/ui';
+import { Text, Toggle } from '@/components/ui';
 
 const compactInput = 'w-full border-2 border-on-surface bg-surface px-2 py-1 font-code text-caption text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent';
 
@@ -70,15 +70,11 @@ function BaseBlockConfig({
 
       <div className="flex flex-col gap-1.5">
         {/* Visibility toggle */}
-        <label className="flex items-center gap-2 cursor-pointer py-0.5">
-          <input
-            type="checkbox"
-            checked={block.visible ?? true}
-            onChange={e => onChange({ ...block, visible: e.target.checked })}
-            className="w-3 h-3 accent-primary"
-          />
-          <Text variant="caption" color="secondary" as="span" className="font-code">Visible</Text>
-        </label>
+        <Toggle
+          checked={block.visible ?? true}
+          onChange={checked => onChange({ ...block, visible: checked })}
+          label="Visible"
+        />
 
         {/* Order (for drag/drop context) */}
         <div>
@@ -168,32 +164,27 @@ function BaseBlockConfig({
           <Text variant="caption" color="secondary" className="uppercase tracking-wider font-bold">
             Responsive
           </Text>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-3 flex-wrap">
             {(['mobile', 'tablet', 'desktop'] as const).map(device => (
-              <label key={device} className="flex items-center gap-1 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={(block.hideOn ?? []).includes(device)}
-                  onChange={e => {
-                    const hideOn = block.hideOn ?? [];
-                    if (e.target.checked) {
-                      onChange({
-                        ...block,
-                        hideOn: [...hideOn, device],
-                      });
-                    } else {
-                      onChange({
-                        ...block,
-                        hideOn: hideOn.filter(d => d !== device),
-                      });
-                    }
-                  }}
-                  className="w-3 h-3 accent-primary"
-                />
-                <Text variant="caption" color="secondary" as="span" className="font-code capitalize">
-                  {device}
-                </Text>
-              </label>
+              <Toggle
+                key={device}
+                checked={(block.hideOn ?? []).includes(device)}
+                onChange={checked => {
+                  const hideOn = block.hideOn ?? [];
+                  if (checked) {
+                    onChange({
+                      ...block,
+                      hideOn: [...hideOn, device],
+                    });
+                  } else {
+                    onChange({
+                      ...block,
+                      hideOn: hideOn.filter(d => d !== device),
+                    });
+                  }
+                }}
+                label={device.charAt(0).toUpperCase() + device.slice(1)}
+              />
             ))}
           </div>
         </div>

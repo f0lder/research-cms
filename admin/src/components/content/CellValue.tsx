@@ -2,13 +2,12 @@ import Link from 'next/link';
 import { ContentEntry, FieldDefinition, FieldValue } from '@research-cms/shared-types';
 import { adminRoutes, formatDate, formatDateTime, getEntryTitle, truncateString } from '@/lib/utils';
 
-interface CellValueProps {
+
+export function CellValue({ value, field, refCache }: {
   value: FieldValue | undefined;
   field: FieldDefinition;
   refCache: Record<string, ContentEntry>;
-}
-
-export function CellValue({ value, field, refCache }: CellValueProps) {
+}) {
   if (value === undefined || value === null || value === '') {
     return <span className="text-zinc-300">—</span>;
   }

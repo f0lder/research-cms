@@ -6,9 +6,11 @@ import { createClient, deleteClient, getAllClients } from '@/app/actions';
 import { formatDateTime, adminRoutes } from '@/lib/utils';
 import { ListSkeleton } from '@/components/skeletons';
 import { Button } from '@/components/ui';
+import { useToast } from '@/contexts/ToastContext';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ClientsPage() {
+  const { showToast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -33,11 +35,16 @@ export default function ClientsPage() {
     setCreating(true);
     const { data, error: err } = await createClient(newName.trim());
     setCreating(false);
-    if (err) { setError(err); return; }
+    if (err) { 
+      showToast(err, 'error');
+      setError(err); 
+      return; 
+    }
     if (data) {
       setClients(prev => [data, ...prev]);
       setNewName('');
       setRevealedId(data._id ?? null);
+      showToast(`Client "${data.name}" created successfully`, 'success');
     }
   };
 
@@ -45,17 +52,26 @@ export default function ClientsPage() {
     if (!confirm(`Delete client "${name}"? Any apps using its key will lose access immediately.`)) return;
     setDeletingId(id);
     const { error: err } = await deleteClient(id);
-    if (err) { setError(err); setDeletingId(null); return; }
+    if (err) { 
+      showToast(err, 'error');
+      setError(err); 
+      setDeletingId(null); 
+      return; 
+    }
     setClients(prev => prev.filter(c => c._id !== id));
     setDeletingId(null);
+    showToast(`Client "${name}" deleted successfully`, 'success');
   };
 
   const copyKey = async (client: Client) => {
     try {
       await navigator.clipboard.writeText(client.key);
       setCopiedId(client._id ?? null);
+      showToast('API key copied to clipboard', 'success');
       setTimeout(() => setCopiedId(null), 2000);
-    } catch { /* ignore */ }
+    } catch { 
+      showToast('Failed to copy API key', 'error');
+    }
   };
 
   const maskKey = (key: string) => `${key.slice(0, 12)}${'·'.repeat(16)}${key.slice(-4)}`;

@@ -6,7 +6,7 @@ import { BlockSchemaField, Block, ColumnBlock } from '@research-cms/shared-types
 import { getAllSchemas, getAllEntries } from '@/app/actions';
 import { NestedBlocksEditor } from './NestedBlocksEditor';
 import { ColumnsEditor } from './ColumnsEditor';
-import { Text } from '@/components/ui';
+import { Text, Toggle } from '@/components/ui';
 
 interface SelectOption {
   value: string;
@@ -104,16 +104,15 @@ export function SchemaFieldInput({
 
     case 'boolean':
       return (
-        <label className="flex items-center gap-2 cursor-pointer py-0.5">
-          <input
-            type="checkbox"
+        <div className="py-0.5">
+          <Toggle
             checked={Boolean(value)}
-            onChange={e => onChange(e.target.checked)}
+            onChange={e => onChange(e)}
             disabled={disabled}
-            className="w-3 h-3 accent-primary"
+            label={field.label}
+            ariaLabel={field.label}
           />
-          <Text variant="caption" color="secondary" as="span" className="font-code">{field.label}</Text>
-        </label>
+        </div>
       );
 
     case 'select':

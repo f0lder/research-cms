@@ -10,6 +10,8 @@ import {
 import { getClient, getAllSchemas, getAllEntries, deleteEntry, updateClientSchemas, deleteClient, getSettings, updateSetting, type SettingItem } from '@/app/actions';
 import { SectionsSkeleton } from '@/components/skeletons';
 import { Button, Container, Heading, Text, TextField } from '@/components/ui';
+import { useToast } from '@/contexts/ToastContext';
+import { SettingField } from '@/components/settings/SettingField';
 
 type Option = { value: string; label: string };
 
@@ -27,6 +29,7 @@ export default function ClientDetailPage() {
   const params = useParams();
   const id = extractParam(params, 'id');
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [client, setClient] = useState<Client | null>(null);
   const [schemas, setSchemas] = useState<ContentTypeDefinition[]>([]);
@@ -89,8 +92,18 @@ export default function ClientDetailPage() {
     setSavingSchemas(true);
     const { data, error: err } = await updateClientSchemas(client._id, currentSchemas);
     setSavingSchemas(false);
-    if (err) { setError(err); return; }
-    if (data) { setClient(data); setPendingSchemas(null); setSavedSchemas(true); setTimeout(() => setSavedSchemas(false), 2000); }
+    if (err) { 
+      showToast(err, 'error');
+      setError(err); 
+      return; 
+    }
+    if (data) { 
+      setClient(data); 
+      setPendingSchemas(null); 
+      setSavedSchemas(true); 
+      showToast('Schemas updated', 'success');
+      setTimeout(() => setSavedSchemas(false), 2000); 
+    }
   };
 
   const handleDeleteClient = async () => {
@@ -98,7 +111,13 @@ export default function ClientDetailPage() {
     if (!confirm(`Delete client "${client.name}"? Apps using this key will lose access.`)) return;
     setDeletingClient(true);
     const { error: err } = await deleteClient(client._id);
-    if (err) { setError(err); setDeletingClient(false); return; }
+    if (err) { 
+      showToast(err, 'error');
+      setError(err); 
+      setDeletingClient(false); 
+      return; 
+    }
+    showToast(`Client "${client.name}" deleted`, 'success');
     router.push(adminRoutes.clients);
   };
 
@@ -106,9 +125,15 @@ export default function ClientDetailPage() {
     if (!confirm(`Delete page "${title}"?`)) return;
     setDeletingPageId(pageId);
     const { error: err } = await deleteEntry(PAGE_SCHEMA_SLUG, pageId);
-    if (err) { setError(err); setDeletingPageId(null); return; }
+    if (err) { 
+      showToast(err, 'error');
+      setError(err); 
+      setDeletingPageId(null); 
+      return; 
+    }
     setPages(prev => prev.filter(p => p._id !== pageId));
     setDeletingPageId(null);
+    showToast(`Page deleted`, 'success');
     // If deleted page was home, clear the setting
     if (homePageId === pageId) setSettingValue('client.homePage', null);
   };
@@ -394,258 +419,5 @@ export default function ClientDetailPage() {
         )}
       </section>
     </Container>
-  );
-}
-
-/**
- * Renders a single client-scoped setting based on its registered type.
- * Special-cases `client.homePage` with a page picker since the registry
- * has no dynamic-options type yet.
- */
-function SettingField({
-  definition,
-  value,
-  saving,
-  pages,
-  onChange,
-}: {
-  definition: SettingDefinition;
-  value: unknown;
-  saving: boolean;
-  pages: ContentEntry[];
-  onChange: (value: unknown) => void;
-}) {
-  const label = (
-    <div className="flex items-center justify-between mb-1">
-      <Text variant="caption" color="secondary" as="label" className="uppercase tracking-widest font-bold">
-        {definition.label}
-      </Text>
-      {saving && <Text variant="caption" color="secondary">Saving…</Text>}
-    </div>
-  );
-
-  // Page picker — special case for the home page setting
-  if (definition.key === 'client.homePage') {
-    const opts = pages.map(p => ({
-      value: p._id ?? '',
-      label: (p.data?.title as string) ?? p._id ?? '',
-    }));
-    return (
-      <div>
-        {label}
-        {definition.description && (
-          <Text variant="caption" color="secondary" className="mb-2">{definition.description}</Text>
-        )}
-        <Select<Option>
-          isClearable
-          options={opts}
-          value={opts.find(o => o.value === value) ?? null}
-          onChange={opt => onChange(opt?.value ?? null)}
-          isDisabled={saving || opts.length === 0}
-          placeholder={opts.length === 0 ? 'No pages available' : 'No home page set'}
-          classNamePrefix="rs"
-          styles={{
-            control: base => ({ ...base, minHeight: 40, fontSize: 13, fontFamily: 'Inter', fontWeight: 600, borderColor: '#000000', borderWidth: 2, borderRadius: 0, boxShadow: 'none', '&:hover': { borderColor: '#000000' } }),
-            menu: base => ({ ...base, fontSize: 13, fontFamily: 'Inter', fontWeight: 600, borderRadius: 0, zIndex: 30, border: '2px solid #000', boxShadow: '4px 4px 0 #000' }),
-            option: (base, s) => ({ ...base, backgroundColor: s.isFocused ? '#F5F5F5' : '#FFFFFF', color: '#000000' }),
-            placeholder: base => ({ ...base, color: '#5a4136' }),
-          }}
-        />
-      </div>
-    );
-  }
-
-  switch (definition.type) {
-    case 'text':
-      return (
-        <TextInputSetting
-          definition={definition}
-          value={value}
-          saving={saving}
-          onCommit={onChange}
-        />
-      );
-
-    case 'textarea':
-      return (
-        <TextAreaSetting
-          definition={definition}
-          value={value}
-          saving={saving}
-          label={label}
-          onCommit={onChange}
-        />
-      );
-
-    case 'number':
-      return (
-        <NumberInputSetting
-          definition={definition}
-          value={value}
-          saving={saving}
-          onCommit={onChange}
-        />
-      );
-
-    case 'boolean':
-      return (
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={e => onChange(e.target.checked)}
-            disabled={saving}
-            className="w-4 h-4 accent-primary"
-          />
-          <div>
-            <Text variant="body-sm" className="font-bold uppercase">{definition.label}</Text>
-            {definition.description && (
-              <Text variant="caption" color="secondary">{definition.description}</Text>
-            )}
-          </div>
-        </label>
-      );
-
-    case 'color':
-      return (
-        <div>
-          {label}
-          {definition.description && (
-            <Text variant="caption" color="secondary" className="mb-2">{definition.description}</Text>
-          )}
-          <div className="flex gap-2">
-            <input
-              type="color"
-              className="h-10 w-16 border-2 border-on-surface bg-surface cursor-pointer p-0"
-              value={String(value ?? '#000000')}
-              onChange={e => onChange(e.target.value)}
-              disabled={saving}
-            />
-            <input
-              type="text"
-              className="flex-1 border-2 border-on-surface bg-surface px-4 py-2 font-code text-code text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              value={String(value ?? '')}
-              onChange={e => onChange(e.target.value || null)}
-              disabled={saving}
-              placeholder="#000000"
-            />
-          </div>
-        </div>
-      );
-
-    case 'select': {
-      const opts = (definition.options ?? []).map(o => ({ value: o, label: o }));
-      return (
-        <div>
-          {label}
-          {definition.description && (
-            <Text variant="caption" color="secondary" className="mb-2">{definition.description}</Text>
-          )}
-          <Select<Option>
-            isClearable
-            options={opts}
-            value={opts.find(o => o.value === value) ?? null}
-            onChange={opt => onChange(opt?.value ?? null)}
-            isDisabled={saving}
-            classNamePrefix="rs"
-            styles={{
-              control: base => ({ ...base, minHeight: 40, fontSize: 13, borderColor: '#000', borderWidth: 2, borderRadius: 0, boxShadow: 'none', '&:hover': { borderColor: '#000' } }),
-              menu: base => ({ ...base, fontSize: 13, borderRadius: 0, zIndex: 30, border: '2px solid #000', boxShadow: '4px 4px 0 #000' }),
-              option: (base, s) => ({ ...base, backgroundColor: s.isFocused ? '#F5F5F5' : '#FFFFFF', color: '#000' }),
-            }}
-          />
-        </div>
-      );
-    }
-
-    default:
-      return (
-        <div>
-          {label}
-          <Text variant="caption" color="secondary">
-            Unsupported setting type: {definition.type}
-          </Text>
-        </div>
-      );
-  }
-}
-
-/** Text input that only commits on blur (avoids saving on every keystroke). */
-function TextInputSetting({
-  definition, value, saving, onCommit,
-}: {
-  definition: SettingDefinition;
-  value: unknown;
-  saving: boolean;
-  onCommit: (value: unknown) => void;
-}) {
-  const [local, setLocal] = useState(String(value ?? ''));
-  useEffect(() => { setLocal(String(value ?? '')); }, [value]);
-  return (
-    <TextField
-      label={definition.label}
-      helperText={definition.description}
-      value={local}
-      onChange={e => setLocal(e.target.value)}
-      onBlur={() => { if (local !== String(value ?? '')) onCommit(local || null); }}
-      disabled={saving}
-    />
-  );
-}
-
-/** Number input that only commits on blur. */
-function NumberInputSetting({
-  definition, value, saving, onCommit,
-}: {
-  definition: SettingDefinition;
-  value: unknown;
-  saving: boolean;
-  onCommit: (value: unknown) => void;
-}) {
-  const [local, setLocal] = useState(typeof value === 'number' ? String(value) : '');
-  useEffect(() => { setLocal(typeof value === 'number' ? String(value) : ''); }, [value]);
-  return (
-    <TextField
-      label={definition.label}
-      helperText={definition.description}
-      type="number"
-      value={local}
-      onChange={e => setLocal(e.target.value)}
-      onBlur={() => {
-        const next = local === '' ? null : Number(local);
-        if (next !== value) onCommit(next);
-      }}
-      disabled={saving}
-    />
-  );
-}
-
-/** Textarea that only commits on blur. */
-function TextAreaSetting({
-  definition, value, saving, label, onCommit,
-}: {
-  definition: SettingDefinition;
-  value: unknown;
-  saving: boolean;
-  label: ReactNode;
-  onCommit: (value: unknown) => void;
-}) {
-  const [local, setLocal] = useState(String(value ?? ''));
-  useEffect(() => { setLocal(String(value ?? '')); }, [value]);
-  return (
-    <div>
-      {label}
-      {definition.description && (
-        <Text variant="caption" color="secondary" className="mb-2">{definition.description}</Text>
-      )}
-      <textarea
-        className="w-full border-2 border-on-surface bg-surface px-4 py-2 font-code text-code text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-y"
-        rows={3}
-        value={local}
-        onChange={e => setLocal(e.target.value)}
-        onBlur={() => { if (local !== String(value ?? '')) onCommit(local || null); }}
-        disabled={saving}
-      />
-    </div>
   );
 }

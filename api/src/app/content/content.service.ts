@@ -64,7 +64,7 @@ export class ContentService {
 
 		// Validate status is one of the allowed values
 		if (data.status && !['draft', 'published'].includes(String(data.status))) {
-			errors.push(`Status must be one of: draft, published`);
+			errors.push(`Status must be either 'draft' or 'published'`);
 		}
 
 		// Validate status against schema features

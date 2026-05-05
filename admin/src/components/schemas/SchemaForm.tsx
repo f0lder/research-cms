@@ -10,12 +10,7 @@ import { SchemaMetadata } from './SchemaMetadata';
 import { SchemaFieldsList } from './SchemaFieldsList';
 import { SchemaSaveActions } from './SchemaSaveActions';
 import { useToast } from '@/contexts/ToastContext';
-
-const DEFAULT_FIELDS: FieldDefinition[] = [
-  { name: 'title', label: 'Title', type: 'text', required: true },
-  { name: 'status', label: 'Status', type: 'select', required: true, config: { type: 'select', options: ['draft', 'published', 'private'] } },
-  { name: 'excerpt', label: 'Excerpt', type: 'textarea', required: false },
-];
+import { useSchemas } from '@/contexts/SchemaContext';
 
 interface SchemaFormProps {
   mode: 'create' | 'edit';
@@ -26,6 +21,7 @@ interface SchemaFormProps {
 export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormProps) {
   const router = useRouter();
   const { showToast } = useToast();
+  const { refetch, updateSchema: updateSchemaCache, addSchema: addSchemaCache } = useSchemas();
 
   const [name, setName] = useState(initialData?.name || '');
   const [singularName, setSingularName] = useState(initialData?.singularName || '');
@@ -33,7 +29,7 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
   const [description, setDescription] = useState(initialData?.description || '');
   const [slug, setSlug] = useState(initialData?.slug || '');
   const [fields, setFields] = useState<FieldDefinition[]>(
-    initialData?.fields ?? (mode === 'create' ? DEFAULT_FIELDS : [])
+    initialData?.fields ?? []
   );
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -127,31 +123,64 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
     }
 
     setIsSubmitting(true);
+    
+    // Construct the schema object for optimistic update
+    const schemaData = {
+      name,
+      slug,
+      singularName,
+      pluralName,
+      description,
+      fields,
+      features,
+    };
+
     try {
       if (mode === 'create') {
-        const { error: err } = await createSchema({ name, slug, singularName, pluralName, description, fields, features });
+        // Optimistic add to cache
+        const optimisticSchema: ContentTypeDefinition = {
+          _id: 'temp-' + Date.now(),
+          ...schemaData,
+        };
+        addSchemaCache(optimisticSchema);
+        
+        const { error: err } = await createSchema(schemaData);
         if (err) { 
           setError(err); 
           showToast(`Failed to create schema: ${err}`, 'error');
+          // Revert optimistic update
+          await refetch();
           setIsSubmitting(false); 
           return; 
         }
         showToast(`Schema "${name}" created successfully`, 'success');
+        // Refetch to get the real ID and ensure sync
+        await refetch();
       } else {
-        const { error: err } = await updateSchema(initialData?.slug || slug, { name, slug, singularName, pluralName, description, fields, features });
+        // Optimistic update in cache
+        updateSchemaCache(initialData?.slug || slug, schemaData);
+        
+        const { error: err } = await updateSchema(initialData?.slug || slug, schemaData);
         if (err) { 
           setError(err); 
           showToast(`Failed to update schema: ${err}`, 'error');
+          // Revert optimistic update
+          await refetch();
           setIsSubmitting(false); 
           return; 
         }
         showToast(`Schema "${name}" updated successfully`, 'success');
+        // Refetch to ensure sync
+        await refetch();
       }
-      if (onSuccess) onSuccess(); else router.push('/schemas');
+      setIsSubmitting(false);
+      if (onSuccess) onSuccess();
     } catch (err) {
       const errMsg = getErrorMessage(err);
       setError(errMsg);
       showToast(`Error: ${errMsg}`, 'error');
+      // Revert optimistic update on error
+      await refetch();
       setIsSubmitting(false);
     }
   };

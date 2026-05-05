@@ -7,6 +7,7 @@ import { FieldDefinition, FieldType, FieldValue, MediaEntry } from '@research-cm
 // MediaEntry used below for MEDIA field state typing
 import { getAllEntries, getMediaLibrary } from '@/app/actions';
 import { getEntryTitle } from '@/lib/utils';
+import { Toggle } from '../ui';
 
 const MediaPickerModal = dynamic(() => import('./MediaPickerModal'), { ssr: false });
 const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
@@ -105,15 +106,12 @@ export default function DynamicFieldInput({
 
     case 'boolean':
       return (
-        <label className={`flex items-center gap-2 text-sm text-zinc-700 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
-          <input
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={e => onChange(field.name, e.target.checked)}
-            disabled={disabled}
-          />
-          {field.label}
-        </label>
+        <Toggle
+          checked={Boolean(value)}
+          onChange={checked => onChange(field.name, checked)}
+          disabled={disabled}
+          label={field.label}
+        />
       );
 
     case 'date':

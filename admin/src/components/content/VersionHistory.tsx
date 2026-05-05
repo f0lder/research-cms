@@ -6,6 +6,7 @@ import { formatDate, formatTime } from '@/lib/utils';
 import { ListSkeleton } from '@/components/skeletons';
 import { Button, Heading } from '@/components/ui';
 import { Card,Container } from '@/components/ui';
+import { useToast } from '@/contexts/ToastContext';
 
 interface Version {
   entryId: string;
@@ -28,6 +29,7 @@ export function VersionHistory({
   currentVersion,
   onRestore,
 }: VersionHistoryProps) {
+  const { showToast } = useToast();
   const [versions, setVersions] = useState<Version[]>([]);
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState<number | null>(null);
@@ -56,6 +58,7 @@ export function VersionHistory({
     
     if (err) {
       setError(err);
+      showToast(err, 'error');
       return;
     }
     
@@ -63,6 +66,7 @@ export function VersionHistory({
     const { data } = await getVersions(schemaSlug, entryId);
     setVersions(data ?? []);
     
+    showToast(`Version ${version} restored`, 'success');
     if (onRestore) onRestore();
   };
 

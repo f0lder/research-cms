@@ -69,10 +69,10 @@ function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
 
 function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) => void }) {
   const colors = {
-    success: 'bg-green-100 border-green-400 text-green-900',
-    error: 'bg-red-100 border-red-400 text-red-900',
-    info: 'bg-blue-100 border-blue-400 text-blue-900',
-    warning: 'bg-yellow-100 border-yellow-400 text-yellow-900',
+    success: 'bg-surface border-2 border-primary text-on-surface',
+    error: 'bg-surface border-2 border-error text-on-surface',
+    info: 'bg-surface border-2 border-primary text-on-surface',
+    warning: 'bg-surface border-2 border-warning text-on-surface',
   };
 
   const icon = {
@@ -83,13 +83,13 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
   };
 
   return (
-    <div className={`${colors[toast.type]} border-l-4 p-3 rounded shadow-lg max-w-sm animate-in fade-in slide-in-from-right-5`}>
-      <div className="flex items-center gap-2">
-        <span className="font-bold text-lg">{icon[toast.type]}</span>
-        <p className="flex-1 text-sm">{toast.message}</p>
+    <div className={`${colors[toast.type]} border-l-4 p-4 rounded shadow-lg min-w-80 animate-in fade-in slide-in-from-right-5`}>
+      <div className="flex items-start gap-3">
+        <span className="font-bold text-xl flex-shrink-0">{icon[toast.type]}</span>
+        <p className="flex-1 text-sm font-semibold">{toast.message}</p>
         <button
           onClick={() => onRemove(toast.id)}
-          className="text-lg font-bold opacity-60 hover:opacity-100"
+          className="text-xl font-bold opacity-60 hover:opacity-100 flex-shrink-0"
         >
           ×
         </button>

@@ -3,11 +3,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { Button, TextField, Heading, Text, Container } from '@/components/ui';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
+  const { showToast } = useToast();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -23,9 +25,12 @@ export default function RegisterPage() {
       await register(email, password, name);
       // Middleware now handles auth check before rendering /schemas
       // No delay needed since we've already ensured the auth cookie is set
+      showToast('Account created successfully', 'success');
       router.push('/schemas');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      const errorMsg = err instanceof Error ? err.message : 'Registration failed';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setIsLoading(false);
     }

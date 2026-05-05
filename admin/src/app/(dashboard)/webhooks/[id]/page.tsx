@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { Webhook } from '@research-cms/shared-types';
 import { extractParam } from '@/lib/utils';
 import { getWebhook, createWebhook, updateWebhook } from '@/app/actions';
+import { useToast } from '@/contexts/ToastContext';
+import { Toggle } from '@/components/ui';
 
 const ALL_EVENTS = [
   'content.created',
@@ -22,6 +24,7 @@ const IS_NEW = 'new';
 export default function WebhookEditorPage() {
   const params = useParams();
   const router = useRouter();
+  const { showToast } = useToast();
   const id = extractParam(params as Record<string, string | string[]>, 'id');
   const isNew = id === IS_NEW;
 
@@ -59,9 +62,21 @@ export default function WebhookEditorPage() {
   };
 
   const handleSave = async () => {
-    if (!name.trim()) { setError('Name is required.'); return; }
-    if (!url.trim())  { setError('URL is required.'); return; }
-    try { new URL(url.trim()); } catch { setError('URL must be a valid URL.'); return; }
+    if (!name.trim()) { 
+      showToast('Name is required', 'error');
+      setError('Name is required.'); 
+      return; 
+    }
+    if (!url.trim())  { 
+      showToast('URL is required', 'error');
+      setError('URL is required.'); 
+      return; 
+    }
+    try { new URL(url.trim()); } catch { 
+      showToast('URL must be a valid URL', 'error');
+      setError('URL must be a valid URL.'); 
+      return; 
+    }
 
     setSaving(true);
     setError('');
@@ -83,12 +98,22 @@ export default function WebhookEditorPage() {
     if (isNew) {
       const { data, error: err } = await createWebhook(payload);
       setSaving(false);
-      if (err) { setError(err); return; }
+      if (err) { 
+        showToast(err, 'error');
+        setError(err); 
+        return; 
+      }
+      showToast('Webhook created successfully', 'success');
       router.replace(`/webhooks/${data!._id}`);
     } else {
       const { error: err } = await updateWebhook(id, payload);
       setSaving(false);
-      if (err) { setError(err); return; }
+      if (err) { 
+        showToast(err, 'error');
+        setError(err); 
+        return; 
+      }
+      showToast('Webhook updated successfully', 'success');
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     }
@@ -139,17 +164,15 @@ export default function WebhookEditorPage() {
           <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
             Events <span className="font-normal normal-case text-zinc-400">(empty = all)</span>
           </label>
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
             {ALL_EVENTS.map(event => (
-              <label key={event} className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="checkbox"
+              <div key={event} className="flex items-center gap-2 group">
+                <Toggle
                   checked={selectedEvents.includes(event)}
                   onChange={() => toggleEvent(event)}
-                  className="accent-zinc-800"
                 />
                 <span className="text-xs font-mono text-zinc-600 group-hover:text-zinc-800">{event}</span>
-              </label>
+              </div>
             ))}
           </div>
         </div>
@@ -182,15 +205,11 @@ export default function WebhookEditorPage() {
         </div>
 
         {/* Active */}
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={active}
-            onChange={e => setActive(e.target.checked)}
-            className="accent-zinc-800"
-          />
-          <span className="text-sm text-zinc-700">Active</span>
-        </label>
+        <Toggle
+          checked={active}
+          onChange={checked => setActive(checked)}
+          label="Active"
+        />
 
         {/* Save */}
         <div className="flex items-center gap-3 pt-2">

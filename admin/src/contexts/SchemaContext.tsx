@@ -10,6 +10,8 @@ interface SchemaContextType {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  updateSchema: (slug: string, schema: Partial<ContentTypeDefinition>) => void;
+  addSchema: (schema: ContentTypeDefinition) => void;
 }
 
 const SchemaContext = createContext<SchemaContextType | undefined>(undefined);
@@ -69,8 +71,28 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
     fetchSchemas();
   }, [user, authLoading]);
 
+  // Optimistic cache update: Update existing schema in cache
+  const updateSchemaOptimistic = (slug: string, updates: Partial<ContentTypeDefinition>) => {
+    setSchemas(prev => 
+      prev.map(s => s.slug === slug ? { ...s, ...updates } : s)
+    );
+  };
+
+  // Optimistic cache update: Add new schema to cache
+  const addSchemaOptimistic = (schema: ContentTypeDefinition) => {
+    setSchemas(prev => [...prev, schema]);
+  };
+
   return (
-    <SchemaContext.Provider value={{ schemas, systemSchemas, loading, error, refetch: fetchSchemas }}>
+    <SchemaContext.Provider value={{ 
+      schemas, 
+      systemSchemas, 
+      loading, 
+      error, 
+      refetch: fetchSchemas,
+      updateSchema: updateSchemaOptimistic,
+      addSchema: addSchemaOptimistic,
+    }}>
       {children}
     </SchemaContext.Provider>
   );

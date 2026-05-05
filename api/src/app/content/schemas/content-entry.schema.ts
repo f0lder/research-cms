@@ -13,16 +13,10 @@ export class ContentEntryModel {
 	data!: Record<string, FieldValue>;
 
 	@Prop({ default: 'draft', index: true })
-	status?: 'draft' | 'published' | 'scheduled' | 'archived';
+	status?: 'draft' | 'published';
 
 	@Prop({ index: true, sparse: true })
 	deletedAt?: Date;
-
-	@Prop({ index: true, sparse: true })
-	publishAt?: Date;
-
-	@Prop({ index: true, sparse: true })
-	unpublishAt?: Date;
 
 	@Prop({ default: 1 })
 	version?: number;

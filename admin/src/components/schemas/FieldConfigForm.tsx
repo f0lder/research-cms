@@ -1,6 +1,6 @@
 'use client';
 import { FieldType, FieldDefinition } from '@research-cms/shared-types';
-import { Text } from './ui';
+import { Text, Toggle } from '@/components/ui';
 
 interface FieldConfigFormProps {
   type: FieldType;
@@ -62,15 +62,12 @@ export function FieldConfigForm({ type, field, onChange, mode }: FieldConfigForm
         </div>
       </div>
 
-      {/* Required checkbox */}
-      <label className="flex items-center gap-2 text-xs cursor-pointer">
-        <input
-          type="checkbox"
-          checked={field.required || false}
-          onChange={e => handleRequiredChange(e.target.checked)}
-        />
-        <span className="font-bold uppercase text-on-surface">Required</span>
-      </label>
+      {/* Required toggle */}
+      <Toggle
+        checked={field.required || false}
+        onChange={value => handleRequiredChange(value)}
+        label="Required"
+      />
 
       {/* Type-specific config */}
       {type === 'select' && (

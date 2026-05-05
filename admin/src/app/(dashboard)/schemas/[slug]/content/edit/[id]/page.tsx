@@ -8,10 +8,12 @@ import { getSchema, getEntry } from '@/app/actions';
 import ContentForm from '@/components/content/ContentForm';
 import { VersionHistory } from '@/components/content/VersionHistory';
 import { FormSkeleton } from '@/components/skeletons';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function ContentEditPage() {
   const params = useParams();
   const router = useRouter();
+  const { showToast } = useToast();
   const slug = extractParam(params, 'slug');
   const id   = extractParam(params, 'id');
 
@@ -71,7 +73,12 @@ export default function ContentEditPage() {
         mode="edit"
         schema={schema}
         initialData={entry}
-        onSuccess={() => router.push(adminRoutes.schemaDetail(slug))}
+        onSuccess={(updatedEntry) => {
+          // Update local state with the saved entry instead of navigating
+          if (updatedEntry) {
+            setEntry(updatedEntry);
+          }
+        }}
       />
 
       {schema.features?.revisions && (
@@ -79,9 +86,15 @@ export default function ContentEditPage() {
           schemaSlug={slug}
           entryId={entry._id ?? ''}
           currentVersion={entry.version ?? 1}
-          onRestore={() => {
-            // Refresh the page data
-            window.location.reload();
+          onRestore={async () => {
+            // Fetch the restored entry without reloading the page
+            const { data, error } = await getEntry(slug, id);
+            if (error) {
+              showToast('Failed to load restored version', 'error');
+            } else if (data) {
+              setEntry(data);
+              showToast('Version restored', 'success');
+            }
           }}
         />
       )}

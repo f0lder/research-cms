@@ -12,7 +12,7 @@ interface ContentFormProps {
   mode: 'create' | 'edit';
   schema: ContentTypeDefinition;
   initialData?: ContentEntry;
-  onSuccess?: () => void;
+  onSuccess?: (updatedEntry?: ContentEntry) => void;
 }
 
 function buildDefaults(schema: ContentTypeDefinition, initial?: ContentEntry): Record<string, FieldValue> {
@@ -67,7 +67,7 @@ export default function ContentForm({ mode, schema, initialData, onSuccess }: Co
       return; 
     }
     showToast(`Draft ${mode === 'create' ? 'created' : 'updated'} successfully`, 'success');
-    onSuccess?.();
+    onSuccess?.(result.data);
   };
 
   const handlePublish = async (e: React.FormEvent) => {
@@ -93,7 +93,7 @@ export default function ContentForm({ mode, schema, initialData, onSuccess }: Co
       return; 
     }
     showToast(`Entry ${mode === 'create' ? 'published' : 'updated'} successfully`, 'success');
-    onSuccess?.();
+    onSuccess?.(result.data);
   };
 
   return (
