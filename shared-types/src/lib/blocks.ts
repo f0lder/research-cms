@@ -6,7 +6,6 @@
 import {
   BaseBlock,
   BlockDefinition,
-  BlockResolveContext,
   HeadingBlock,
   TextBlock,
   DividerBlock,

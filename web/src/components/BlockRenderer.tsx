@@ -1,4 +1,4 @@
-import { useEffect, useState, CSSProperties } from 'react';
+import { useEffect, useState, CSSProperties, useCallback } from 'react';
 import {
   Block,
   HeadingBlock,
@@ -13,8 +13,9 @@ import {
   FieldBlock,
   ButtonAction,
   Spacing,
+  ArchiveBlock,
 } from '@research-cms/shared-types';
-import { getMedia } from '@/lib/api';
+import { getMedia, listEntries } from '@/lib/api';
 
 function spacing(prefix: 'padding' | 'margin', s?: Spacing): CSSProperties {
   if (!s) return {};
