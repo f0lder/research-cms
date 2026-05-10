@@ -18,6 +18,12 @@ export class ContentEntryModel {
 	@Prop({ index: true, sparse: true })
 	deletedAt?: Date;
 
+	@Prop({ index: true, sparse: true })
+	metaTitle?: string;
+
+	@Prop({ index: true, sparse: true })
+	metaDescription?: string;
+
 	@Prop({ default: 1 })
 	version?: number;
 

@@ -1,0 +1,200 @@
+/* Theme tokens — overridden at runtime from /public/settings via applyTheme() */
+:root {
+  --color-primary: #3B82F6;
+  --color-secondary: #6366F1;
+  --color-accent: #EC4899;
+  --color-bg: #FFFFFF;
+  --color-card-bg: #FFFFFF;
+  --color-text: #1F2937;
+  --color-sub-text: rgba(31, 41, 55, 0.6);
+  --color-meta-text: rgba(31, 41, 55, 0.4);
+  --color-border: #E5E7EB;
+  --border-width: 1px;
+  --border-radius: 8px;
+}
+
+/* Page chrome */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+}
+
+main.cms-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+a { color: var(--color-primary); }
+
+/* Top brand bar — gradient using all three brand colors */
+.cms-brand-bar {
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 50%, var(--color-accent) 100%);
+}
+
+/* Headings — themed by level so primary/secondary show on every page */
+.cms-heading-1 { color: var(--color-primary); }
+.cms-heading-2 { color: var(--color-primary); }
+.cms-heading-3 { color: var(--color-secondary); }
+.cms-heading-4 { color: var(--color-text); }
+
+/* Nav */
+.cms-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: var(--border-width) solid var(--color-border);
+  align-items: center;
+}
+.cms-nav-link {
+  color: var(--color-sub-text);
+  text-decoration: none;
+  font-size: 14px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.cms-nav-link:hover { color: var(--color-primary); }
+.cms-nav-link.is-active {
+  color: var(--color-primary);
+  font-weight: 600;
+  border-bottom-color: var(--color-primary);
+}
+.cms-nav-sep { color: var(--color-meta-text); font-size: 14px; }
+
+/* Cards */
+.cms-card {
+  background: var(--color-card-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-top: 3px solid var(--color-primary);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  overflow: hidden;
+}
+.cms-card.is-clickable { cursor: pointer; }
+.cms-card.is-clickable:hover { border-color: var(--color-primary); }
+
+/* Archive list cards */
+.cms-archive-card {
+  display: block;
+  background: var(--color-card-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-left: 4px solid var(--color-secondary);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: 12px;
+  transition: border-color 0.15s;
+}
+.cms-archive-card:hover { border-left-color: var(--color-primary); }
+.cms-archive-card-title { font-size: 15px; font-weight: 600; color: var(--color-text); margin-bottom: 4px; }
+.cms-archive-card-sub { font-size: 13px; color: var(--color-sub-text); line-height: 1.4; }
+.cms-archive-card-meta {
+  font-size: 11px;
+  color: var(--color-accent);
+  font-family: monospace;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+/* Dividers */
+.cms-divider {
+  border: 0;
+  border-top: 2px solid var(--color-primary);
+}
+
+/* Buttons */
+.cms-button {
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 16px;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.cms-button:hover { opacity: 0.85; }
+.cms-button-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+}
+.cms-button-secondary {
+  background: var(--color-bg);
+  color: var(--color-primary);
+  border: var(--border-width) solid var(--color-primary);
+}
+.cms-button-outline {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+}
+.cms-button-ghost {
+  background: transparent;
+  color: var(--color-primary);
+  border: none;
+}
+
+/* Field labels */
+.cms-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-primary);
+  font-family: monospace;
+  display: block;
+  margin-bottom: 4px;
+}
+.cms-field-label.is-inline { display: inline-block; margin-right: 8px; margin-bottom: 0; }
+
+/* Pills (tags, select, references) */
+.cms-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.cms-pill-secondary { background: var(--color-secondary); color: #fff; }
+.cms-pill-accent { background: var(--color-accent); color: #fff; }
+.cms-pill-outline {
+  background: transparent;
+  border: var(--border-width) solid var(--color-primary);
+  color: var(--color-primary);
+}
+.cms-pill-yes { background: #dcfce7; color: #166534; }
+.cms-pill-no { background: var(--color-border); color: var(--color-sub-text); }
+
+/* Misc text helpers */
+.cms-text-sub { color: var(--color-sub-text); }
+.cms-text-meta { color: var(--color-meta-text); }
+.cms-text-error { color: #dc2626; }
+.cms-mono { font-family: monospace; }
+.cms-loading { color: var(--color-sub-text); }
+.cms-load-more {
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-family: monospace;
+  cursor: pointer;
+  padding: 16px 0;
+}
+
+/* Centered layout for full-page states (loading, errors) */
+.cms-centered {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  color: var(--color-sub-text);
+}

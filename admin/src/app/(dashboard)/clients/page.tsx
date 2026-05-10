@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Client } from '@research-cms/shared-types';
-import { createClient, deleteClient, getAllClients } from '@/app/actions';
+import { createClientWithTemplate, ClientTemplate, deleteClient, getAllClients } from '@/app/actions';
 import { formatDateTime, adminRoutes } from '@/lib/utils';
 import { ListSkeleton } from '@/components/skeletons';
-import { Button } from '@/components/ui';
+import { Button, Modal, TextField, Card, Grid, Text } from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -16,6 +16,8 @@ export default function ClientsPage() {
   const [error, setError] = useState('');
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [template, setTemplate] = useState<ClientTemplate>('none');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [revealedId, setRevealedId] = useState<string | null>(null);
@@ -29,11 +31,11 @@ export default function ClientsPage() {
     })();
   }, []);
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreate = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!newName.trim()) return;
     setCreating(true);
-    const { data, error: err } = await createClient(newName.trim());
+    const { data, error: err } = await createClientWithTemplate(newName.trim(), template);
     setCreating(false);
     if (err) { 
       showToast(err, 'error');
@@ -43,6 +45,8 @@ export default function ClientsPage() {
     if (data) {
       setClients(prev => [data, ...prev]);
       setNewName('');
+      setTemplate('none');
+      setIsModalOpen(false);
       setRevealedId(data._id ?? null);
       showToast(`Client "${data.name}" created successfully`, 'success');
     }
@@ -91,7 +95,12 @@ export default function ClientsPage() {
 
   return (
     <div className="page">
-      <h1 className="page-heading mb-1">Clients</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-1">
+        <h1 className="page-heading">Clients</h1>
+        <Button onClick={() => setIsModalOpen(true)} variant="primary" size="sm">
+          + Create Client
+        </Button>
+      </div>
       <p className="page-sub mb-6">
         Each client authenticates via <code className="font-mono">X-API-Key</code> and can have
         its own pages and block layouts per content type.
@@ -99,19 +108,63 @@ export default function ClientsPage() {
 
       {error && <div className="alert-error mb-4">{error}</div>}
 
-      {/* Create form */}
-      <form onSubmit={handleCreate} className="flex flex-col md:flex-row gap-2 mb-8">
-        <input
-          type="text"
-          placeholder="Client name (e.g. iOS App, Website)"
-          value={newName}
-          onChange={e => setNewName(e.target.value)}
-          className="field-input flex-1 uppercase text-xs"
-        />
-        <Button type="submit" disabled={creating || !newName.trim()} variant="primary" size="sm">
-          {creating ? 'Creating…' : 'Create client'}
-        </Button>
-      </form>
+      {/* Create Client Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => !creating && setIsModalOpen(false)}
+        title="Create New Client"
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)} disabled={creating}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleCreate} disabled={creating || !newName.trim()}>
+              {creating ? 'Creating…' : 'Create client'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-6">
+          <TextField
+            label="Client Name"
+            placeholder="e.g. iOS App, Website"
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            disabled={creating}
+            autoFocus
+          />
+
+          <div>
+            <Text variant="caption" color="secondary" className="uppercase tracking-widest font-bold mb-2">
+              Starter Template
+            </Text>
+            <Grid columns={3} gap="md">
+              <Card
+                className={`cursor-pointer transition-colors border-2 ${template === 'none' ? 'border-primary bg-primary/5' : 'border-on-surface hover:bg-surface-container'}`}
+                onClick={() => !creating && setTemplate('none')}
+              >
+                <Text variant="body-md" className="font-bold mb-1">Empty</Text>
+                <Text variant="body-sm" color="secondary">Start from scratch with no pre-configured pages or theme.</Text>
+              </Card>
+              <Card
+                className={`cursor-pointer transition-colors border-2 ${template === 'mobile' ? 'border-primary bg-primary/5' : 'border-on-surface hover:bg-surface-container'}`}
+                onClick={() => !creating && setTemplate('mobile')}
+              >
+                <Text variant="body-md" className="font-bold mb-1">Mobile App</Text>
+                <Text variant="body-sm" color="secondary">Includes a mobile-first home page and tailored vibrant theme colors.</Text>
+              </Card>
+              <Card
+                className={`cursor-pointer transition-colors border-2 ${template === 'web' ? 'border-primary bg-primary/5' : 'border-on-surface hover:bg-surface-container'}`}
+                onClick={() => !creating && setTemplate('web')}
+              >
+                <Text variant="body-md" className="font-bold mb-1">Web App</Text>
+                <Text variant="body-sm" color="secondary">Includes a responsive web layout home page and professional theme.</Text>
+              </Card>
+            </Grid>
+          </div>
+        </div>
+      </Modal>
 
       {/* Clients list */}
       {clients.length === 0 ? (

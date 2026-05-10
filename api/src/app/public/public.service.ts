@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { SchemaService } from '../schema/schema.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { PAGE_SCHEMA_SLUG } from '@research-cms/shared-types';
 import { ContentEntryModel, ContentEntryDocument } from '../content/schemas/content-entry.schema';
 
 const PUBLISHED_FILTER = {
@@ -43,15 +44,21 @@ export class PublicService {
     schemaSlug: string,
     page = 1,
     limit = 50,
+    clientId?: string,
   ): Promise<{ items: PublicEntry[]; total: number; page: number; limit: number }> {
+    const filter: Record<string, unknown> = { schemaSlug, ...PUBLISHED_FILTER };
+    if (schemaSlug === PAGE_SCHEMA_SLUG && clientId) {
+      filter['data.clientId'] = clientId;
+    }
+
     const [entries, total] = await Promise.all([
       this.entryModel
-        .find({ schemaSlug, ...PUBLISHED_FILTER })
+        .find(filter)
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
         .exec(),
-      this.entryModel.countDocuments({ schemaSlug, ...PUBLISHED_FILTER }),
+      this.entryModel.countDocuments(filter),
     ]);
 
     return { items: entries.map(e => this.toPublicEntry(e)), total, page, limit };
@@ -61,16 +68,35 @@ export class PublicService {
     schemaSlug: string,
     id: string,
     allowedSchemas: string[] = [],
+    clientId?: string,
   ): Promise<PublicEntry> {
     if (allowedSchemas.length > 0 && !allowedSchemas.includes(schemaSlug)) {
       throw new NotFoundException('Entry not found');
     }
 
-    const entry = await this.entryModel
-      .findOne({ _id: id, schemaSlug, ...PUBLISHED_FILTER })
-      .exec();
+    const filter: Record<string, unknown> = { _id: id, schemaSlug, ...PUBLISHED_FILTER };
+    if (schemaSlug === PAGE_SCHEMA_SLUG && clientId) {
+      filter['data.clientId'] = clientId;
+    }
+
+    const entry = await this.entryModel.findOne(filter).exec();
 
     if (!entry) throw new NotFoundException('Entry not found');
+
+    return this.toPublicEntry(entry);
+  }
+
+  async findPageBySlug(slug: string, clientId: string): Promise<PublicEntry> {
+    const entry = await this.entryModel
+      .findOne({
+        schemaSlug: PAGE_SCHEMA_SLUG,
+        'data.slug': slug,
+        'data.clientId': clientId,
+        ...PUBLISHED_FILTER,
+      })
+      .exec();
+
+    if (!entry) throw new NotFoundException('Page not found');
 
     return this.toPublicEntry(entry);
   }

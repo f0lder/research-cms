@@ -141,6 +141,282 @@ export async function createClient(name: string) {
   return serverApi.post<Client>(`/clients`, { name });
 }
 
+export type ClientTemplate = 'none' | 'mobile' | 'web';
+
+export async function createClientWithTemplate(name: string, template: ClientTemplate) {
+  const { data: client, error } = await createClient(name);
+  if (error || !client?._id) return { error };
+
+  if (template === 'none') {
+    return { data: client };
+  }
+
+  const clientId = client._id;
+
+  let pagesToCreate: any[] = [];
+  let theme: Record<string, string | number> = {};
+
+  if (template === 'mobile') {
+    pagesToCreate = [
+      {
+        title: 'Home',
+        slug: 'home',
+        isHome: true,
+        blocks: [
+          { id: crypto.randomUUID(), type: 'heading', level: 1, align: 'center', text: 'Welcome to your App', visible: true, order: 0 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 20, visible: true, order: 1 },
+          { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 2, pressAction: { type: 'navigate', pageSlug: 'profile' }, blocks: [
+            { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Getting Started', visible: true, order: 0 },
+            { id: crypto.randomUUID(), type: 'text', content: 'Configure this app in your dashboard.', visible: true, order: 1 }
+          ]},
+          { id: crypto.randomUUID(), type: 'spacer', height: 20, visible: true, order: 3 },
+          { id: crypto.randomUUID(), type: 'button', label: 'View Profile', align: 'center', variant: 'primary', action: { type: 'navigate', pageSlug: 'profile' }, visible: true, order: 4 },
+          { id: crypto.randomUUID(), type: 'divider', visible: true, order: 5 }
+        ]
+      },
+      {
+        title: 'Profile',
+        slug: 'profile',
+        isHome: false,
+        blocks: [
+          { id: crypto.randomUUID(), type: 'heading', level: 2, align: 'left', text: 'User Profile', visible: true, order: 0 },
+          { id: crypto.randomUUID(), type: 'text', align: 'left', content: 'Manage your settings and preferences.', visible: true, order: 1 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 32, visible: true, order: 2 },
+          { id: crypto.randomUUID(), type: 'button', label: 'Back to Home', align: 'left', variant: 'ghost', action: { type: 'navigate', pageSlug: 'home' }, visible: true, order: 3 }
+        ]
+      },
+      {
+        title: 'Settings',
+        slug: 'settings',
+        isHome: false,
+        blocks: [
+          { id: crypto.randomUUID(), type: 'heading', level: 2, align: 'left', text: 'Settings', visible: true, order: 0 },
+          { id: crypto.randomUUID(), type: 'text', align: 'left', content: 'Configure your experience and preferences.', visible: true, order: 1 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 24, visible: true, order: 2 },
+          { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 3, blocks: [
+            { id: crypto.randomUUID(), type: 'heading', level: 4, text: 'Notifications', visible: true, order: 0 },
+            { id: crypto.randomUUID(), type: 'text', content: 'Push notifications, email alerts, and in-app reminders are managed in your device settings.', visible: true, order: 1 }
+          ]},
+          { id: crypto.randomUUID(), type: 'spacer', height: 12, visible: true, order: 4 },
+          { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 5, blocks: [
+            { id: crypto.randomUUID(), type: 'heading', level: 4, text: 'Appearance', visible: true, order: 0 },
+            { id: crypto.randomUUID(), type: 'text', content: 'The app follows your system theme by default. Light and dark modes adapt automatically as your device switches.', visible: true, order: 1 }
+          ]},
+          { id: crypto.randomUUID(), type: 'spacer', height: 12, visible: true, order: 6 },
+          { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 7, blocks: [
+            { id: crypto.randomUUID(), type: 'heading', level: 4, text: 'Privacy', visible: true, order: 0 },
+            { id: crypto.randomUUID(), type: 'text', content: 'Your data is yours. We never share personal information with third parties without your explicit consent.', visible: true, order: 1 }
+          ]},
+          { id: crypto.randomUUID(), type: 'spacer', height: 12, visible: true, order: 8 },
+          { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 9, blocks: [
+            { id: crypto.randomUUID(), type: 'heading', level: 4, text: 'About', visible: true, order: 0 },
+            { id: crypto.randomUUID(), type: 'text', content: 'Version 1.0.0 — Built on a flexible content management system that adapts to whatever you need to ship.', visible: true, order: 1 }
+          ]},
+          { id: crypto.randomUUID(), type: 'spacer', height: 32, visible: true, order: 10 },
+          { id: crypto.randomUUID(), type: 'button', label: 'Back to Home', align: 'left', variant: 'ghost', action: { type: 'navigate', pageSlug: 'home' }, visible: true, order: 11 }
+        ]
+      },
+      {
+        title: 'Notifications',
+        slug: 'notifications',
+        isHome: false,
+        blocks: [
+          { id: crypto.randomUUID(), type: 'heading', level: 2, align: 'left', text: 'Notifications', visible: true, order: 0 },
+          { id: crypto.randomUUID(), type: 'text', align: 'left', content: 'Stay updated with the latest activity and announcements.', visible: true, order: 1 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 24, visible: true, order: 2 },
+          { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 3, blocks: [
+            { id: crypto.randomUUID(), type: 'heading', level: 4, text: 'Welcome aboard', visible: true, order: 0 },
+            { id: crypto.randomUUID(), type: 'text', content: 'Thanks for installing the app. Take a moment to explore your profile and customize your settings to fit how you work.', visible: true, order: 1 }
+          ]},
+          { id: crypto.randomUUID(), type: 'spacer', height: 12, visible: true, order: 4 },
+          { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 5, blocks: [
+            { id: crypto.randomUUID(), type: 'heading', level: 4, text: 'New feature available', visible: true, order: 0 },
+            { id: crypto.randomUUID(), type: 'text', content: 'Pages and content are now powered by a flexible block system. Compose rich layouts without writing a single line of code.', visible: true, order: 1 }
+          ]},
+          { id: crypto.randomUUID(), type: 'spacer', height: 12, visible: true, order: 6 },
+          { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 7, blocks: [
+            { id: crypto.randomUUID(), type: 'heading', level: 4, text: 'Tip of the day', visible: true, order: 0 },
+            { id: crypto.randomUUID(), type: 'text', content: 'Visit the dashboard to manage your content, customize the theme, and publish new pages on the fly.', visible: true, order: 1 }
+          ]},
+          { id: crypto.randomUUID(), type: 'spacer', height: 32, visible: true, order: 8 },
+          { id: crypto.randomUUID(), type: 'button', label: 'Back to Home', align: 'left', variant: 'ghost', action: { type: 'navigate', pageSlug: 'home' }, visible: true, order: 9 }
+        ]
+      }
+    ];
+    theme = {
+      'client.theme.primaryColor': '#8B5CF6',
+      'client.theme.secondaryColor': '#EC4899',
+      'client.theme.backgroundColor': '#F8FAFC',
+      'client.theme.textColor': '#0F172A',
+      'client.theme.borderRadius': 16,
+    };
+  } else if (template === 'web') {
+    pagesToCreate = [
+      {
+        title: 'Home',
+        slug: 'home',
+        isHome: true,
+        blocks: [
+          { id: crypto.randomUUID(), type: 'heading', level: 1, align: 'center', text: 'Welcome to Your Web App', visible: true, order: 0 },
+          { id: crypto.randomUUID(), type: 'text', align: 'center', content: 'Build powerful digital experiences.', visible: true, order: 1 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 40, visible: true, order: 2 },
+          { id: crypto.randomUUID(), type: 'row', visible: true, order: 3, columns: [
+            { id: crypto.randomUUID(), type: 'column', visible: true, order: 0, width: 'auto', blocks: [
+              { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 0, blocks: [
+                { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Fast', visible: true, order: 0 },
+                { id: crypto.randomUUID(), type: 'text', content: 'Blazing fast load times.', visible: true, order: 1 }
+              ]}
+            ]},
+            { id: crypto.randomUUID(), type: 'column', visible: true, order: 1, width: 'auto', blocks: [
+              { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 0, blocks: [
+                { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Secure', visible: true, order: 0 },
+                { id: crypto.randomUUID(), type: 'text', content: 'Enterprise grade security.', visible: true, order: 1 }
+              ]}
+            ]},
+            { id: crypto.randomUUID(), type: 'column', visible: true, order: 2, width: 'auto', blocks: [
+              { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 0, blocks: [
+                { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Scalable', visible: true, order: 0 },
+                { id: crypto.randomUUID(), type: 'text', content: 'Grows with your business.', visible: true, order: 1 }
+              ]}
+            ]}
+          ]},
+          { id: crypto.randomUUID(), type: 'spacer', height: 40, visible: true, order: 4 },
+          { id: crypto.randomUUID(), type: 'button', label: 'Learn More', align: 'center', variant: 'primary', action: { type: 'navigate', pageSlug: 'about' }, visible: true, order: 5 }
+        ]
+      },
+      {
+        title: 'About Us',
+        slug: 'about',
+        isHome: false,
+        blocks: [
+          { id: crypto.randomUUID(), type: 'heading', level: 1, align: 'left', text: 'Our Story', visible: true, order: 0 },
+          { id: crypto.randomUUID(), type: 'divider', visible: true, order: 1 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 20, visible: true, order: 2 },
+          { id: crypto.randomUUID(), type: 'row', visible: true, order: 3, columns: [
+            { id: crypto.randomUUID(), type: 'column', visible: true, order: 0, width: 'auto', blocks: [
+              { id: crypto.randomUUID(), type: 'text', align: 'left', content: 'We are dedicated to building the best web applications. Our team of experts works tirelessly to deliver top-notch solutions.', visible: true, order: 0 }
+            ]},
+            { id: crypto.randomUUID(), type: 'column', visible: true, order: 1, width: 'auto', blocks: [
+              { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 0, pressAction: { type: 'url', url: 'mailto:contact@example.com' }, blocks: [
+                { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Contact', visible: true, order: 0 },
+                { id: crypto.randomUUID(), type: 'text', content: 'Reach us at contact@example.com', visible: true, order: 1 }
+              ]}
+            ]}
+          ]}
+        ]
+      },
+      {
+        title: 'Services',
+        slug: 'services',
+        isHome: false,
+        blocks: [
+          { id: crypto.randomUUID(), type: 'heading', level: 1, align: 'center', text: 'Our Services', visible: true, order: 0 },
+          { id: crypto.randomUUID(), type: 'text', align: 'center', content: 'Comprehensive solutions designed to help your business thrive in a digital-first world.', visible: true, order: 1 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 40, visible: true, order: 2 },
+          { id: crypto.randomUUID(), type: 'row', visible: true, order: 3, columns: [
+            { id: crypto.randomUUID(), type: 'column', visible: true, order: 0, width: 'auto', blocks: [
+              { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 0, blocks: [
+                { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Strategy', visible: true, order: 0 },
+                { id: crypto.randomUUID(), type: 'text', content: 'We work with you to define a clear roadmap, identify priorities, and align technology with business goals. Every engagement starts with understanding what success looks like.', visible: true, order: 1 }
+              ]}
+            ]},
+            { id: crypto.randomUUID(), type: 'column', visible: true, order: 1, width: 'auto', blocks: [
+              { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 0, blocks: [
+                { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Development', visible: true, order: 0 },
+                { id: crypto.randomUUID(), type: 'text', content: 'From idea to launch, we build performant, accessible, and maintainable products. Our process is iterative and transparent so you always know where things stand.', visible: true, order: 1 }
+              ]}
+            ]},
+            { id: crypto.randomUUID(), type: 'column', visible: true, order: 2, width: 'auto', blocks: [
+              { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 0, blocks: [
+                { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Support', visible: true, order: 0 },
+                { id: crypto.randomUUID(), type: 'text', content: 'Software is never finished. Our ongoing support keeps your product secure, up to date, and evolving alongside your users and your industry.', visible: true, order: 1 }
+              ]}
+            ]}
+          ]},
+          { id: crypto.randomUUID(), type: 'spacer', height: 40, visible: true, order: 4 },
+          { id: crypto.randomUUID(), type: 'divider', visible: true, order: 5 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 32, visible: true, order: 6 },
+          { id: crypto.randomUUID(), type: 'heading', level: 2, align: 'left', text: 'How we work', visible: true, order: 7 },
+          { id: crypto.randomUUID(), type: 'text', align: 'left', content: 'Every project follows a simple, repeatable process refined over years of practice. We start with discovery — listening to your team, mapping the problem, and agreeing on the outcomes that matter. We move into design and build in short cycles, releasing real, working software every couple of weeks. We finish with handoff and care: training, documentation, and the long tail of support that keeps a product alive.', visible: true, order: 8 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 32, visible: true, order: 9 },
+          { id: crypto.randomUUID(), type: 'button', label: 'Back to Home', align: 'left', variant: 'ghost', action: { type: 'navigate', pageSlug: 'home' }, visible: true, order: 10 }
+        ]
+      },
+      {
+        title: 'Contact',
+        slug: 'contact',
+        isHome: false,
+        blocks: [
+          { id: crypto.randomUUID(), type: 'heading', level: 1, align: 'center', text: 'Get in Touch', visible: true, order: 0 },
+          { id: crypto.randomUUID(), type: 'text', align: 'center', content: 'We respond to every message within one business day.', visible: true, order: 1 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 40, visible: true, order: 2 },
+          { id: crypto.randomUUID(), type: 'row', visible: true, order: 3, columns: [
+            { id: crypto.randomUUID(), type: 'column', visible: true, order: 0, width: 'auto', blocks: [
+              { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 0, blocks: [
+                { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Email', visible: true, order: 0 },
+                { id: crypto.randomUUID(), type: 'text', content: 'For general inquiries, write to hello@example.com. For support, support@example.com is monitored on weekdays.', visible: true, order: 1 }
+              ]},
+              { id: crypto.randomUUID(), type: 'spacer', height: 16, visible: true, order: 1 },
+              { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 2, blocks: [
+                { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Phone', visible: true, order: 0 },
+                { id: crypto.randomUUID(), type: 'text', content: 'Call +1 (555) 123-4567 between 9am and 6pm in your local time zone.', visible: true, order: 1 }
+              ]}
+            ]},
+            { id: crypto.randomUUID(), type: 'column', visible: true, order: 1, width: 'auto', blocks: [
+              { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 0, blocks: [
+                { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Office', visible: true, order: 0 },
+                { id: crypto.randomUUID(), type: 'text', content: '123 Example Avenue, Suite 400\nAnytown, ST 12345\nUnited States', visible: true, order: 1 }
+              ]},
+              { id: crypto.randomUUID(), type: 'spacer', height: 16, visible: true, order: 1 },
+              { id: crypto.randomUUID(), type: 'card', elevation: 1, visible: true, order: 2, blocks: [
+                { id: crypto.randomUUID(), type: 'heading', level: 3, text: 'Hours', visible: true, order: 0 },
+                { id: crypto.randomUUID(), type: 'text', content: 'Monday through Friday\n9:00am — 6:00pm\nClosed on weekends and public holidays', visible: true, order: 1 }
+              ]}
+            ]}
+          ]},
+          { id: crypto.randomUUID(), type: 'spacer', height: 40, visible: true, order: 4 },
+          { id: crypto.randomUUID(), type: 'divider', visible: true, order: 5 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 24, visible: true, order: 6 },
+          { id: crypto.randomUUID(), type: 'text', align: 'center', content: 'Prefer to write to us? Use any of the channels above. We read every message.', visible: true, order: 7 },
+          { id: crypto.randomUUID(), type: 'spacer', height: 32, visible: true, order: 8 },
+          { id: crypto.randomUUID(), type: 'button', label: 'Back to Home', align: 'center', variant: 'ghost', action: { type: 'navigate', pageSlug: 'home' }, visible: true, order: 9 }
+        ]
+      }
+    ];
+    theme = {
+      'client.theme.primaryColor': '#2563EB',
+      'client.theme.secondaryColor': '#475569',
+      'client.theme.backgroundColor': '#FFFFFF',
+      'client.theme.textColor': '#1E293B',
+      'client.theme.borderRadius': 4,
+    };
+  }
+
+  // Create the page entries
+  for (const pageConfig of pagesToCreate) {
+    const { data: page } = await createEntry(PAGE_SCHEMA_SLUG, {
+      clientId,
+      title: pageConfig.title,
+      slug: pageConfig.slug,
+      blocks: pageConfig.blocks
+    });
+
+    if (page?._id) {
+      await bulkUpdateStatus(PAGE_SCHEMA_SLUG, [page._id], 'published');
+      if (pageConfig.isHome) {
+        await updateSetting({ scope: 'client', scopeId: clientId }, 'client.homePage', page._id);
+      }
+    }
+  }
+
+  // Set the theme settings
+  for (const [key, value] of Object.entries(theme)) {
+    await updateSetting({ scope: 'client', scopeId: clientId }, key, value);
+  }
+
+  return { data: client };
+}
+
 export async function updateClient(id: string, data: Partial<Client>) {
   return serverApi.put<Client>(`/clients/${id}`, data);
 }

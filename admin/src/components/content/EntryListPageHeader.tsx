@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 import { rebuildIndex } from '@/app/actions';
 import { API_URL } from '@/config';
-import { Button, Heading, Text } from '@/components/ui';
+import { Button, Heading, Text, Badge } from '@/components/ui';
 
 interface PageHeaderProps {
   schema: ContentTypeDefinition;
@@ -96,11 +96,11 @@ export function EntryListPageHeader({ schema, slug, isAdmin }: PageHeaderProps) 
             <Text className="text-sm text-zinc-600 mt-1">{schema.description}</Text>
           )}
           {schema.features && (
-            <div className="flex gap-2 mt-2 text-xs">
-              {schema.features.drafts && <span className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded">Drafts</span>}
-              {schema.features.revisions && <span className="px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded">Revisions</span>}
-              {schema.features.search && <span className="px-2 py-1 bg-green-50 text-green-700 border border-green-200 rounded">Search</span>}
-              {schema.features.seo && <span className="px-2 py-1 bg-orange-50 text-orange-700 border border-orange-200 rounded">SEO</span>}
+            <div className="flex gap-2 mt-2">
+              {schema.features.drafts && <Badge status="draft" size="xs" />}
+              {schema.features.revisions && <Badge status="revisions" size="xs" />}
+              {schema.features.search && <Badge status="search" size="xs" />}
+              {schema.features.seo && <Badge status="seo" size="xs" />}
             </div>
           )}
         </div>

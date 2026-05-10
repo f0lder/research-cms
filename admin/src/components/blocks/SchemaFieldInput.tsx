@@ -1,17 +1,10 @@
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
-import Select from 'react-select';
+import { ReactNode } from 'react';
 import { BlockSchemaField, Block, ColumnBlock } from '@research-cms/shared-types';
-import { getAllSchemas, getAllEntries } from '@/app/actions';
 import { NestedBlocksEditor } from './NestedBlocksEditor';
 import { ColumnsEditor } from './ColumnsEditor';
-import { Text, Toggle } from '@/components/ui';
-
-interface SelectOption {
-  value: string;
-  label: string;
-}
+import { Text, Toggle, PagePickerSelect, SchemaPickerSelect, EntryPickerSelect, FieldPickerSelect, FieldPickerMultiSelect } from '@/components/ui';
 
 const compactInput = 'w-full border-2 border-on-surface bg-surface px-2 py-1 font-code text-caption text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent';
 
@@ -45,6 +38,7 @@ export function SchemaFieldInput({
   disabled = false,
   block,
   contextSchemaSlug,
+  clientId,
 }: {
   field: BlockSchemaField;
   value: unknown;
@@ -53,6 +47,7 @@ export function SchemaFieldInput({
   options?: { label: string; value: string }[];
   block?: Block;
   contextSchemaSlug?: string;
+  clientId?: string;
 }): ReactNode {
   const label = <FieldLabel field={field} />;
 
@@ -239,7 +234,7 @@ export function SchemaFieldInput({
       return (
         <div>
           {label}
-          <ActionPickerInput value={value} onChange={onChange} disabled={disabled} />
+          <ActionPickerInput value={value} onChange={onChange} disabled={disabled} clientId={clientId} />
         </div>
       );
 
@@ -307,10 +302,12 @@ function ActionPickerInput({
   value,
   onChange,
   disabled,
+  clientId,
 }: {
   value: unknown;
   onChange: (value: unknown) => void;
   disabled?: boolean;
+  clientId?: string;
 }) {
   const current = (value as any) ?? { type: 'url', url: '' };
 
@@ -346,277 +343,43 @@ function ActionPickerInput({
         />
       )}
       {current.type === 'navigate' && (
-        <input
-          type="text"
-          className={compactInput}
-          placeholder="page-slug"
-          value={current.pageSlug ?? ''}
-          onChange={e => onChange({ ...current, pageSlug: e.target.value })}
+        <PagePickerSelect
+          label={null}
+          value={current.pageSlug}
+          onChange={val => onChange({ ...current, pageSlug: val })}
           disabled={disabled}
+          clientId={clientId}
         />
       )}
       {current.type === 'schema' && (
-        <input
-          type="text"
-          className={compactInput}
-          placeholder="schema-slug"
-          value={current.schemaSlug ?? ''}
-          onChange={e => onChange({ ...current, schemaSlug: e.target.value })}
+        <SchemaPickerSelect
+          label={null}
+          value={current.schemaSlug}
+          onChange={val => onChange({ ...current, schemaSlug: val })}
           disabled={disabled}
         />
       )}
       {current.type === 'entry' && (
-        <>
-          <input
-            type="text"
-            className={compactInput}
-            placeholder="schema-slug"
-            value={current.schemaSlug ?? ''}
-            onChange={e => onChange({ ...current, schemaSlug: e.target.value })}
+        <div className="flex flex-col gap-1">
+          <SchemaPickerSelect
+            label={null}
+            value={current.schemaSlug}
+            onChange={val => onChange({ ...current, schemaSlug: val, entryId: '' })}
             disabled={disabled}
           />
-          <input
-            type="text"
-            className={compactInput}
-            placeholder="entry-id"
-            value={current.entryId ?? ''}
-            onChange={e => onChange({ ...current, entryId: e.target.value })}
-            disabled={disabled}
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-// ── Schema Picker ────────────────────────────────────────────────────────
-
-function SchemaPickerSelect({
-  label,
-  value,
-  onChange,
-  disabled,
-}: {
-  label: ReactNode;
-  value: unknown;
-  onChange: (value: unknown) => void;
-  disabled?: boolean;
-}) {
-  const [schemas, setSchemas] = useState<SelectOption[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setLoading(true);
-    getAllSchemas()
-      .then(res => {
-        if (res.data) {
-          setSchemas(res.data.map(s => ({ value: s.slug, label: s.name })));
-        }
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  return (
-    <div>
-      {label}
-      <Select<SelectOption>
-        options={schemas}
-        value={schemas.find(s => s.value === value) ?? null}
-        onChange={opt => onChange(opt?.value ?? undefined)}
-        isLoading={loading}
-        isDisabled={disabled}
-        placeholder="Select schema…"
-        classNamePrefix="rs"
-        styles={compactSelectStyles}
-      />
-    </div>
-  );
-}
-
-// ── Field Picker ────────────────────────────────────────────────────────
-
-function FieldPickerSelect({
-  label,
-  value,
-  onChange,
-  disabled,
-  schemaSlug,
-}: {
-  label: ReactNode;
-  value: unknown;
-  onChange: (value: unknown) => void;
-  disabled?: boolean;
-  schemaSlug?: string;
-}) {
-  const [fields, setFields] = useState<SelectOption[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!schemaSlug) {
-      setFields([]);
-      return;
-    }
-
-    setLoading(true);
-    getAllSchemas()
-      .then(res => {
-        if (res.data) {
-          const schema = res.data.find(s => s.slug === schemaSlug);
-          if (schema) {
-            setFields(schema.fields.map(f => ({ value: f.name, label: f.label })));
-          }
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [schemaSlug]);
-
-  return (
-    <div>
-      {label}
-      {!schemaSlug ? (
-        <div className="p-2 bg-surface-container border-2 border-on-surface">
-          <Text variant="caption" color="secondary">Select a schema first</Text>
+          {current.schemaSlug && (
+            <EntryPickerSelect
+              label={null}
+              value={current.entryId}
+              onChange={val => onChange({ ...current, entryId: val })}
+              schemaSlug={current.schemaSlug}
+              disabled={disabled}
+            />
+          )}
         </div>
-      ) : (
-        <Select<SelectOption>
-          options={fields}
-          value={fields.find(f => f.value === value) ?? null}
-          onChange={opt => onChange(opt?.value ?? undefined)}
-          isLoading={loading}
-          isDisabled={disabled || !schemaSlug}
-          placeholder="Select field…"
-          classNamePrefix="rs"
-          styles={compactSelectStyles}
-        />
       )}
     </div>
   );
 }
 
-// ── Entry Picker ────────────────────────────────────────────────────────
 
-function EntryPickerSelect({
-  label,
-  value,
-  onChange,
-  disabled,
-  schemaSlug,
-}: {
-  label: ReactNode;
-  value: unknown;
-  onChange: (value: unknown) => void;
-  disabled?: boolean;
-  schemaSlug?: string;
-}) {
-  const [entries, setEntries] = useState<SelectOption[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!schemaSlug) {
-      setEntries([]);
-      return;
-    }
-
-    setLoading(true);
-    getAllEntries(schemaSlug)
-      .then(res => {
-        if (res.data?.items) {
-          setEntries(
-            res.data.items.map(e => ({
-              value: e._id ?? '',
-              label: (e.data?.title as string) || e._id || 'Untitled',
-            }))
-          );
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [schemaSlug]);
-
-  return (
-    <div>
-      {label}
-      {!schemaSlug ? (
-        <div className="p-2 bg-surface-container border-2 border-on-surface">
-          <Text variant="caption" color="secondary">Select a schema first</Text>
-        </div>
-      ) : (
-        <Select<SelectOption>
-          options={entries}
-          value={entries.find(e => e.value === value) ?? null}
-          onChange={opt => onChange(opt?.value ?? undefined)}
-          isLoading={loading}
-          isDisabled={disabled || !schemaSlug}
-          placeholder="Select entry…"
-          classNamePrefix="rs"
-          styles={compactSelectStyles}
-        />
-      )}
-    </div>
-  );
-}
-
-// ── Field Picker Multi (Multi-Select) ─────────────────────────────────────
-
-function FieldPickerMultiSelect({
-  label,
-  value,
-  onChange,
-  disabled,
-  schemaSlug,
-}: {
-  label: ReactNode;
-  value: unknown;
-  onChange: (value: unknown) => void;
-  disabled?: boolean;
-  schemaSlug?: string;
-}) {
-  const [fields, setFields] = useState<SelectOption[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!schemaSlug) {
-      setFields([]);
-      return;
-    }
-
-    setLoading(true);
-    getAllSchemas()
-      .then(res => {
-        if (res.data) {
-          const schema = res.data.find(s => s.slug === schemaSlug);
-          if (schema) {
-            setFields(schema.fields.map(f => ({ value: f.name, label: f.label })));
-          }
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [schemaSlug]);
-
-  const selectedValues = Array.isArray(value) ? value : [];
-  const selectedOptions = selectedValues
-    .map(v => fields.find(f => f.value === v))
-    .filter((f): f is SelectOption => f !== undefined);
-
-  return (
-    <div>
-      {label}
-      {!schemaSlug ? (
-        <div className="p-2 bg-surface-container border-2 border-on-surface">
-          <Text variant="caption" color="secondary">Select a schema first</Text>
-        </div>
-      ) : (
-        <Select<SelectOption, true>
-          isMulti
-          options={fields}
-          value={selectedOptions}
-          onChange={opts => onChange(opts ? opts.map(o => o.value) : [])}
-          isLoading={loading}
-          isDisabled={disabled || !schemaSlug}
-          placeholder="Select fields… (empty = all fields)"
-          classNamePrefix="rs"
-          styles={compactSelectStyles}
-        />
-      )}
-    </div>
-  );
-}

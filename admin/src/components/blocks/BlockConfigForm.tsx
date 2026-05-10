@@ -16,10 +16,12 @@ export function BlockConfigForm({
   block,
   onChange,
   schemaSlug,
+  clientId,
 }: {
   block: Block;
   onChange: (block: Block) => void;
   schemaSlug?: string;
+  clientId?: string;
 }) {
   const definition = blockRegistry.get(block.type);
 
@@ -42,6 +44,7 @@ export function BlockConfigForm({
           onChange={value => onChange({ ...block, [field.name]: value })}
           block={block}
           contextSchemaSlug={schemaSlug}
+          clientId={clientId}
         />
       ))}
 

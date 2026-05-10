@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 import { formatDate } from '@/lib/utils';
-import { Button, Heading, Text, Card } from '@/components/ui';
+import { Button, Heading, Text, Card, Badge } from '@/components/ui';
 
 interface SchemaRowProps {
   schema: ContentTypeDefinition;
@@ -20,9 +20,19 @@ export function SchemaRow({ schema, isAdmin }: SchemaRowProps) {
             </Heading>
           </Link>
           <Text variant="code" color="secondary" className="mb-1">/{schema.slug}</Text>
-          <Text variant="caption" color="secondary">
-            {schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}
-          </Text>
+          <div className="flex items-center gap-2 mb-1">
+            <Text variant="caption" color="secondary">
+              {schema.fields.length} field{schema.fields.length !== 1 ? 's' : ''}
+            </Text>
+            {schema.features && (
+              <div className="flex gap-1">
+                {schema.features.drafts && <Badge status="draft" size="xs" />}
+                {schema.features.revisions && <Badge status="revision" size="xs" />}
+                {schema.features.search && <Badge status="search" size="xs" />}
+                {schema.features.seo && <Badge status="seo" size="xs" />}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">

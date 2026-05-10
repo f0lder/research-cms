@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent,
 } from '@dnd-kit/core';
@@ -7,8 +8,9 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Block, blockRegistry } from '@research-cms/shared-types';
-import { MdDragIndicator, MdDelete } from 'react-icons/md';
+import { MdDragIndicator, MdDelete, MdExpandMore, MdChevronRight } from 'react-icons/md';
 import { AddBlockPanel } from './AddBlockPanel';
+import { ColumnsEditor } from './ColumnsEditor';
 import { Text } from '@/components/ui';
 
 /**
@@ -25,10 +27,14 @@ export function NestedBlocksEditor({
   blocks: Block[];
   onChange: (blocks: Block[]) => void;
   label?: string;
-  onSelectBlock?: (block: Block, index: number) => void;
+  onSelectBlock?: (block: Block) => void;
 }) {
-  // No local selection state - let parent handle it
+  const [expandedBlockIds, setExpandedBlockIds] = useState<string[]>([]);
   const sensors = useSensors(useSensor(PointerSensor));
+
+  const toggleExpand = (id: string) => {
+    setExpandedBlockIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -40,10 +46,19 @@ export function NestedBlocksEditor({
     onChange(blocks.filter((_, i) => i !== index));
   };
 
+  const updateBlock = (index: number, updatedBlock: Block) => {
+    const newBlocks = [...blocks];
+    newBlocks[index] = updatedBlock;
+    onChange(newBlocks);
+  };
+
   const addBlock = (type: string) => {
     const block = blockRegistry.getDefaultConfig(type);
     if (block) {
       onChange([...blocks, block]);
+      if (onSelectBlock) {
+        onSelectBlock(block);
+      }
     }
   };
 
@@ -67,18 +82,46 @@ export function NestedBlocksEditor({
               </Text>
             </div>
           )}
-          <div className="max-h-48 overflow-y-auto">
+          <div className="max-h-96 overflow-y-auto">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={blocks.map((_, i) => i)} strategy={verticalListSortingStrategy}>
                 <div className="divide-y-2 divide-on-surface">
                   {blocks.map((block, i) => (
-                    <NestedBlockItem
-                      key={i}
-                      block={block}
-                      index={i}
-                      onSelect={() => onSelectBlock?.(block, i)}
-                      onDelete={() => removeBlock(i)}
-                    />
+                    <div key={block.id || i}>
+                      <NestedBlockItem
+                        block={block}
+                        index={i}
+                        isExpanded={expandedBlockIds.includes(block.id)}
+                        onSelect={() => {
+                          onSelectBlock?.(block);
+                          if (['row', 'column', 'card'].includes(block.type) && !expandedBlockIds.includes(block.id)) {
+                             toggleExpand(block.id);
+                          }
+                        }}
+                        onToggleExpand={() => toggleExpand(block.id)}
+                        onDelete={() => removeBlock(i)}
+                      />
+                      {/* Inline nested editor for container blocks */}
+                      {expandedBlockIds.includes(block.id) && ['row', 'column', 'card'].includes(block.type) && (
+                        <div className="ml-6 mr-2 mt-2 mb-3 border-l-2 border-primary pl-3">
+                          {block.type === 'row' && (
+                            <ColumnsEditor
+                              columns={(block as any).columns ?? []}
+                              onChange={cols => updateBlock(i, { ...block, columns: cols })}
+                              onSelectNestedBlock={(blockId) => onSelectBlock?.({ id: blockId } as Block)}
+                            />
+                          )}
+                          {(block.type === 'column' || block.type === 'card') && (
+                            <NestedBlocksEditor
+                              blocks={(block as any).blocks ?? []}
+                              onChange={nestedBlocks => updateBlock(i, { ...block, blocks: nestedBlocks })}
+                              label={block.type === 'column' ? 'Column Content' : 'Card Content'}
+                              onSelectBlock={onSelectBlock}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </SortableContext>
@@ -103,23 +146,28 @@ export function NestedBlocksEditor({
 function NestedBlockItem({
   block,
   index,
+  isExpanded,
   onSelect,
+  onToggleExpand,
   onDelete,
 }: {
   block: Block;
   index: number;
+  isExpanded: boolean;
   onSelect: () => void;
+  onToggleExpand: () => void;
   onDelete: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: index });
   const def = blockRegistry.get(block.type);
   const typeLabel = def?.label ?? block.type;
+  const isContainer = ['row', 'column', 'card'].includes(block.type);
 
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
-      className="px-3 py-2 hover:bg-surface-container transition-colors group"
+      className={`px-3 py-2 hover:bg-surface-container transition-colors group ${isExpanded ? 'bg-surface-container shadow-hard' : ''}`}
     >
       <div className="flex items-center gap-2">
         <button
@@ -139,6 +187,13 @@ function NestedBlockItem({
             <Text variant="caption" color="secondary" as="span" className="block truncate">{(block as any).config.label}</Text>
           )}
         </button>
+        
+        {isContainer && (
+          <button onClick={(e) => { e.stopPropagation(); onToggleExpand(); }} className="text-on-surface-variant shrink-0 flex items-center hover:text-primary mr-2">
+            {isExpanded ? <MdExpandMore size={16} /> : <MdChevronRight size={16} />}
+          </button>
+        )}
+
         <button
           onClick={e => {
             e.stopPropagation();

@@ -3,7 +3,7 @@
 import React from 'react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'destructive';
+  variant?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   icon?: React.ReactNode;
   isLoading?: boolean;
@@ -22,18 +22,19 @@ const VARIANT_MAP: Record<string, string> = {
   secondary: 'btn-secondary',
   destructive: 'btn-danger',
   ghost: 'btn-ghost',
+  underline: 'btn-underline',
+  'underline-active': 'btn-underline-active',
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = 'primary', size = 'md', icon, isLoading, as: Component = 'button', children, className = '', ...props }, ref) => {
-    const baseStyles = 'btn';
     const variantStyles = VARIANT_MAP[variant] || VARIANT_MAP['primary'];
     const sizeStyles = SIZES[size] || SIZES['md'];
 
     return (
       <Component
         ref={ref}
-        className={`${baseStyles} ${variantStyles} ${sizeStyles} ${isLoading ? 'opacity-60 cursor-not-allowed' : ''} ${className}`}
+        className={`${variantStyles} ${sizeStyles} ${isLoading ? 'opacity-60 cursor-not-allowed' : ''} ${className}`}
         disabled={isLoading || props.disabled}
         {...props}
       >

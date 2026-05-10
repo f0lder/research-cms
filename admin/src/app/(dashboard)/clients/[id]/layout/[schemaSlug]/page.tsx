@@ -82,6 +82,7 @@ export default function EntryDetailLayoutPage() {
       blocks={blocks}
       onBlocksChange={setBlocks}
       schemaSlug={schema?.slug || schemaSlug}
+      clientId={clientId}
       onHeaderContent={
         <div>
           {/* Breadcrumb */}

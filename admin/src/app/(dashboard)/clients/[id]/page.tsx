@@ -412,6 +412,7 @@ export default function ClientDetailPage() {
                 value={item.value}
                 saving={savingKey === item.definition.key}
                 pages={pageTree.map(({ page }) => page)}
+                clientId={id}
                 onChange={value => setSettingValue(item.definition.key, value)}
               />
             ))}

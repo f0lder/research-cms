@@ -17,10 +17,8 @@ export function ColumnsEditor({
 }: {
   columns: ColumnBlock[];
   onChange: (columns: ColumnBlock[]) => void;
-  onSelectNestedBlock?: (blockId: string, columnIndex: number) => void;
+  onSelectNestedBlock?: (blockId: string) => void;
 }) {
-  const [selectedColumnIndex, setSelectedColumnIndex] = useState<number | null>(null);
-
   const addColumn = () => {
     const newColumn: ColumnBlock = {
       type: 'column',
@@ -31,7 +29,6 @@ export function ColumnsEditor({
       width: 'auto',
     };
     onChange([...columns, newColumn]);
-    setSelectedColumnIndex(columns.length);
   };
 
   const updateColumn = (index: number, updated: ColumnBlock) => {
@@ -40,12 +37,7 @@ export function ColumnsEditor({
 
   const removeColumn = (index: number) => {
     onChange(columns.filter((_, i) => i !== index));
-    if (selectedColumnIndex === index) {
-      setSelectedColumnIndex(null);
-    }
   };
-
-  const selectedColumn = selectedColumnIndex !== null ? columns[selectedColumnIndex] : null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -72,61 +64,42 @@ export function ColumnsEditor({
           </div>
         </div>
       ) : (
-        <>
-          {/* Visual columns grid */}
-          <div className="flex gap-2 border-2 border-on-surface p-3 bg-surface-container min-h-32">
-            {columns.map((col, i) => (
-              <div
-                key={i}
-                onClick={() => setSelectedColumnIndex(i)}
-                className={`flex-1 border-2 cursor-pointer transition-all min-h-32 p-2 flex flex-col items-center justify-center ${selectedColumnIndex === i
-                  ? 'border-primary bg-surface shadow-hard'
-                  : 'border-on-surface bg-surface hover:bg-surface-container'
-                  }`}
-              >
-                <Text variant="code" color="secondary" className="font-bold uppercase mb-1">Column {i + 1}</Text>
-                <Text variant="caption" color="secondary">
-                  ({col.blocks?.length ?? 0} block{(col.blocks?.length ?? 0) !== 1 ? 's' : ''})
-                </Text>
-              </div>
-            ))}
-          </div>
-
-          {/* Selected column editor */}
-          {selectedColumn && selectedColumnIndex !== null && (
-            <div className="border-2 border-primary p-3 bg-surface-container">
-              <div className="flex items-center justify-between mb-3">
-                <Text variant="body-sm" className="font-bold uppercase">
-                  Column {selectedColumnIndex + 1} Content
+        <div className="flex flex-col md:flex-row gap-3">
+          {columns.map((col, i) => (
+            <div key={col.id || i} className="flex-1 flex flex-col border-2 border-primary bg-surface-container overflow-hidden min-w-0">
+              <div className="flex items-center justify-between p-2 border-b-2 border-primary bg-surface shrink-0">
+                <Text variant="body-sm" className="font-bold uppercase truncate pr-2">
+                  Col {i + 1}
                 </Text>
                 <Button
-                  onClick={() => removeColumn(selectedColumnIndex)}
+                  onClick={() => removeColumn(i)}
                   variant="destructive"
                   size="xs"
                   icon={<MdDelete size={14} />}
                   title="Delete column"
+                  className="shrink-0"
                 >
-                  Delete
+                  <span className="hidden xl:inline">Delete</span>
                 </Button>
               </div>
-              <NestedBlocksEditor
-                blocks={selectedColumn.blocks ?? []}
-                onChange={blocks =>
-                  updateColumn(selectedColumnIndex, {
-                    ...selectedColumn,
-                    blocks,
-                  })
-                }
-                label={`Column ${selectedColumnIndex + 1}`}
-                onSelectBlock={(block) =>
-                  onSelectNestedBlock?.(block.id, selectedColumnIndex)
-                }
-              />
+              <div className="p-2 flex-1 overflow-y-auto">
+                <NestedBlocksEditor
+                  blocks={col.blocks ?? []}
+                  onChange={blocks =>
+                    updateColumn(i, {
+                      ...col,
+                      blocks,
+                    })
+                  }
+                  label=""
+                  onSelectBlock={(block) =>
+                    onSelectNestedBlock?.(block.id)
+                  }
+                />
+              </div>
             </div>
-          )}
-
-
-        </>
+          ))}
+        </div>
       )}
     </div>
   );

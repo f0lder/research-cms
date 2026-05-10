@@ -1,5 +1,6 @@
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
+import RenderHtml from 'react-native-render-html';
 import { FieldBlock, FieldType } from '@research-cms/shared-types';
 import { useTheme } from '../src/app/_layout';
 
@@ -49,6 +50,8 @@ function BlockValue({ block, colors }: { block: FieldBlock; colors: ReturnType<t
     }
     case 'textarea':
       return <Text style={[s.textarea, { color: colors.text }]}>{String(block.value)}</Text>;
+    case 'richtext':
+      return <RichTextValue html={String(block.value)} colors={colors} />;
     case 'number':
       return <Text style={[s.mono, { color: colors.text }]}>{String(block.value)}</Text>;
     case 'date':
@@ -93,6 +96,28 @@ function BlockValue({ block, colors }: { block: FieldBlock; colors: ReturnType<t
     default:
       return <Text style={[s.text, { color: colors.text }]}>{String(block.value)}</Text>;
   }
+}
+
+function RichTextValue({ html, colors }: { html: string; colors: ReturnType<typeof useTheme> }) {
+  const { width } = useWindowDimensions();
+  const trimmed = html.trim();
+  if (!trimmed) return null;
+  return (
+    <RenderHtml
+      contentWidth={width}
+      source={{ html: trimmed }}
+      baseStyle={{ color: colors.text, fontSize: 15, lineHeight: 22 }}
+      tagsStyles={{
+        a: { color: colors.accent, textDecorationLine: 'underline' },
+        p: { marginTop: 0, marginBottom: 8 },
+        h1: { fontSize: 22, fontWeight: '700', marginTop: 12, marginBottom: 6 },
+        h2: { fontSize: 19, fontWeight: '700', marginTop: 10, marginBottom: 6 },
+        h3: { fontSize: 17, fontWeight: '700', marginTop: 8, marginBottom: 4 },
+        code: { fontFamily: 'monospace', backgroundColor: colors.border, paddingHorizontal: 4, borderRadius: 3 },
+        blockquote: { borderLeftWidth: 3, borderLeftColor: colors.accent, paddingLeft: 10, marginLeft: 0, fontStyle: 'italic' },
+      }}
+    />
+  );
 }
 
 export function Block({ block }: { block: FieldBlock }) {

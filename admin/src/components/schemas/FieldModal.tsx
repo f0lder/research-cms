@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { FieldType, FieldDefinition } from '@research-cms/shared-types';
 import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui';
+import { Button, TypeIcon } from '@/components/ui';
 import { FieldTypeSelector } from './FieldTypeSelector';
 import { FieldConfigForm } from './FieldConfigForm';
 
@@ -41,8 +41,7 @@ export function FieldModal({ isOpen, onClose, onSave, existingField, mode }: Fie
       label: fieldData.label,
       type: selectedType,
       required: fieldData.required ?? false,
-      ...(fieldData.selectOptions && { selectOptions: fieldData.selectOptions }),
-      ...(fieldData.targetSlug && { targetSlug: fieldData.targetSlug }),
+      ...(fieldData.config && { config: fieldData.config }),
     };
 
     onSave(field);
@@ -59,7 +58,14 @@ export function FieldModal({ isOpen, onClose, onSave, existingField, mode }: Fie
   return (
     <Modal
       isOpen={isOpen}
-      title={mode === 'create' ? 'Add Field' : 'Edit Field'}
+      title={
+        <div className="flex items-center gap-2">
+          {selectedType && step === 'config' && (
+            <TypeIcon type={selectedType} className="w-5 h-5 text-primary" />
+          )}
+          <span>{mode === 'create' ? 'Add Field' : 'Edit Field'}</span>
+        </div>
+      }
       onClose={handleClose}
       size="lg"
       footer={

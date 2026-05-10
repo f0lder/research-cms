@@ -156,15 +156,34 @@
   }
 }
 
+@utility toast{
+  @apply border-l-4 p-4 rounded shadow-lg min-w-80 bg-surface border-2 border-primary flex items-center gap-3;
+}
+
 @utility badge{
   @apply inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-white ml-2 border-2 border-on-surface uppercase tracking-widest shadow-hard;
 }
 
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 font-bold cursor-pointer transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest border-2 active:translate-x-1 active:translate-y-1 active:shadow-none shadow-hard;
+  @apply inline-flex items-center justify-center gap-2 font-bold cursor-pointer transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed hover:cursor-pointer uppercase tracking-widest border-2 active:translate-x-1 active:translate-y-1 active:shadow-none shadow-hard;
 }
 
 @layer components {
+
+  .toast-success {
+    @apply toast text-primary;
+  }
+  .toast-error {
+    @apply toast text-error;
+  }
+
+  .toast-info {
+    @apply toast text-primary;
+  }
+
+  .toast-warning {
+    @apply toast text-black;
+  }
 
   .btn-primary {
     @apply btn bg-primary text-white border-on-surface hover:opacity-90;
@@ -180,6 +199,14 @@
 
   .btn-ghost {
     @apply btn bg-transparent text-on-surface border-on-surface hover:bg-surface-container;
+  }
+
+  .btn-underline {
+    @apply inline-flex items-center justify-center gap-2 font-bold cursor-pointer transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest bg-transparent text-on-surface hover:text-primary border-b-2 border-b-transparent hover:border-primary;
+  }
+
+  .btn-underline-active{
+    @apply inline-flex items-center justify-center gap-2 font-bold cursor-pointer transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest bg-transparent text-primary border-b-2 border-primary;
   }
 
   .badge {

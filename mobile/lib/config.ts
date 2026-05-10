@@ -2,6 +2,8 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 function getApiUrl(): string {
+  // Explicit override always wins
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
   // Web always runs in the same browser as the dev machine
   if (Platform.OS === 'web') return 'http://localhost:3000';
   // On a device/emulator, use the Expo CLI's LAN address so the device can reach the host
@@ -16,4 +18,4 @@ function getApiUrl(): string {
 }
 
 export const API_URL = getApiUrl();
-export const API_KEY = 'cms_b7b346647f8841c8bc18c785df53e71d8ca967a120ebc850';
+export const API_KEY = process.env.EXPO_PUBLIC_API_KEY ?? '';

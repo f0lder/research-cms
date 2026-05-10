@@ -14,6 +14,9 @@ const STATUS_MAP: Record<string, string> = {
   logout: 'badge-auth',
   restore: 'badge-restore',
   content: 'badge-published',
+  search: 'badge-auth',
+  seo: 'badge-client',
+  revision: 'badge-published'
 };
 
 const SIZE_MAP: Record<string, string> = {

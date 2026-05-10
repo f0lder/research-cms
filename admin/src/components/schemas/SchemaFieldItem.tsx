@@ -1,5 +1,6 @@
 'use client';
 import { FieldDefinition } from '@research-cms/shared-types';
+import { TypeIcon, Button, Text, Badge } from '@/components/ui';
 
 interface SchemaFieldItemProps {
   field: FieldDefinition;
@@ -10,40 +11,47 @@ interface SchemaFieldItemProps {
 
 export function SchemaFieldItem({ field, disabled, onEdit, onDelete }: SchemaFieldItemProps) {
   return (
-    <div className="flex items-center justify-between gap-3 p-3 hover:bg-surface-container-low transition-colors">
+    <div className="flex items-center justify-between gap-3 p-3 hover:bg-surface-container-low transition-colors border-b-2 border-on-surface last:border-b-0">
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-on-surface">{field.label}</div>
-        <div className="flex items-center gap-2 text-xs text-on-surface-variant mt-1 flex-wrap">
-          <span className="font-mono">{field.name}</span>
-          <span>•</span>
-          <span className="font-mono text-primary">{field.type}</span>
+        <Text variant="body-sm" className="font-semibold">{field.label}</Text>
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <Text variant="code" color="secondary">{field.name}</Text>
+          <Text variant="caption" color="secondary">•</Text>
+          <div className="flex items-center gap-1 text-primary">
+            <TypeIcon type={field.type} className="w-3.5 h-3.5" />
+            <Text variant="code" className="text-primary">{field.type}</Text>
+          </div>
           {field.required && (
             <>
-              <span>•</span>
-              <span className="font-bold text-error">required</span>
+              <Text variant="caption" color="secondary">•</Text>
+              <Text variant="code" color="error">
+                Required
+              </Text>
             </>
           )}
         </div>
       </div>
       <div className="flex gap-2 shrink-0">
-        <button
+        <Button
           type="button"
           onClick={onEdit}
           disabled={disabled}
-          className="px-3 py-1.5 bg-primary text-surface text-xs font-bold uppercase hover:opacity-80 disabled:opacity-50"
+          variant="primary"
+          size="sm"
           title="Edit field"
         >
           Edit
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={onDelete}
           disabled={disabled}
-          className="px-3 py-1.5 bg-error text-surface text-xs font-bold uppercase hover:opacity-80 disabled:opacity-50"
+          variant="destructive"
+          size="sm"
           title="Delete field"
         >
           Delete
-        </button>
+        </Button>
       </div>
     </div>
   );

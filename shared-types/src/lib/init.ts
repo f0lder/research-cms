@@ -83,7 +83,8 @@ export type SettingType =
   | 'boolean'
   | 'color'
   | 'select'
-  | 'media';
+  | 'media'
+  | 'page';
 
 export interface SettingDefinition {
   key: string;                       // unique within (scope, schemaView)
@@ -121,7 +122,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     label: 'Home Page',
     description: 'Page entry id served as the home page for this client.',
     category: 'General',
-    type: 'text',
+    type: 'page',
     scope: 'client',
     isPublic: true,
   },

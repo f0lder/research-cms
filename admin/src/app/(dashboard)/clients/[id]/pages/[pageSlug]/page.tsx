@@ -152,6 +152,7 @@ export default function PageEditorPage() {
     <BlocksEditor
       blocks={blocks}
       onBlocksChange={setBlocks}
+      clientId={clientId}
       onHeaderContent={
         <div>
           {/* Breadcrumb */}

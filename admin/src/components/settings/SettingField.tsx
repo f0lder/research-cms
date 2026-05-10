@@ -14,56 +14,43 @@ interface SettingFieldProps {
   onChange: (value: unknown) => void;
   saving?: boolean;
   pages?: ContentEntry[];
+  clientId?: string;
 }
 
-/**
- * Renders a single setting input based on its registered type.
- * Special-cases `client.homePage` with a page picker.
- */
+import { PagePickerSelect } from '@/components/ui';
+
 export function SettingField({
   definition,
   value,
   onChange,
   saving = false,
   pages = [],
+  clientId,
 }: SettingFieldProps) {
-  // Page picker — special case for the home page setting
-  if (definition.key === 'client.homePage') {
-    const opts = pages.map(p => ({
-      value: p._id ?? '',
-      label: (p.data?.title as string) ?? p._id ?? '',
-    }));
-    return (
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <Text variant="caption" color="secondary" as="label" className="uppercase tracking-widest font-bold">
-            {definition.label}
-          </Text>
-          {saving && <Text variant="caption" color="secondary">Saving…</Text>}
-        </div>
-        {definition.description && (
-          <Text variant="caption" color="secondary" className="mb-2">{definition.description}</Text>
-        )}
-        <Select<Option>
-          isClearable
-          options={opts}
-          value={opts.find(o => o.value === value) ?? null}
-          onChange={opt => onChange(opt?.value ?? null)}
-          isDisabled={saving || opts.length === 0}
-          placeholder={opts.length === 0 ? 'No pages available' : 'No home page set'}
-          classNamePrefix="rs"
-          styles={{
-            control: base => ({ ...base, minHeight: 40, fontSize: 13, fontFamily: 'Inter', fontWeight: 600, borderColor: '#000000', borderWidth: 2, borderRadius: 0, boxShadow: 'none', '&:hover': { borderColor: '#000000' } }),
-            menu: base => ({ ...base, fontSize: 13, fontFamily: 'Inter', fontWeight: 600, borderRadius: 0, zIndex: 30, border: '2px solid #000', boxShadow: '4px 4px 0 #000' }),
-            option: (base, s) => ({ ...base, backgroundColor: s.isFocused ? '#F5F5F5' : '#FFFFFF', color: '#000000' }),
-            placeholder: base => ({ ...base, color: '#5a4136' }),
-          }}
-        />
-      </div>
-    );
-  }
 
   switch (definition.type) {
+    case 'page':
+      return (
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <Text variant="caption" color="secondary" as="label" className="uppercase tracking-widest font-bold">
+              {definition.label}
+            </Text>
+            {saving && <Text variant="caption" color="secondary">Saving…</Text>}
+          </div>
+          {definition.description && (
+            <Text variant="caption" color="secondary" className="mb-2">{definition.description}</Text>
+          )}
+          <PagePickerSelect
+            label={null}
+            value={value}
+            onChange={onChange}
+            disabled={saving}
+            clientId={clientId}
+          />
+        </div>
+      );
+
     case 'text':
       return (
         <TextInputSetting

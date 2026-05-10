@@ -1,5 +1,6 @@
 'use client';
 import { useState, useCallback, ReactNode } from 'react';
+import { MdCheckCircle, MdError, MdInfo, MdWarning, MdClose } from 'react-icons/md';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -26,7 +27,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback((message: string, type: ToastType, duration = 3000) => {
     const id = Math.random().toString(36).slice(2);
     setToasts(prev => [...prev, { id, message, type, duration }]);
-    
+
     if (duration > 0) {
       setTimeout(() => removeToast(id), duration);
     }
@@ -68,32 +69,23 @@ function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
 }
 
 function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) => void }) {
-  const colors = {
-    success: 'bg-surface border-2 border-primary text-on-surface',
-    error: 'bg-surface border-2 border-error text-on-surface',
-    info: 'bg-surface border-2 border-primary text-on-surface',
-    warning: 'bg-surface border-2 border-warning text-on-surface',
-  };
-
   const icon = {
-    success: '✓',
-    error: '✕',
-    info: 'ℹ',
-    warning: '⚠',
+    success: <MdCheckCircle className="w-5 h-5" />,
+    error: <MdError className="w-5 h-5" />,
+    info: <MdInfo className="w-5 h-5" />,
+    warning: <MdWarning className="w-5 h-5" />,
   };
 
   return (
-    <div className={`${colors[toast.type]} border-l-4 p-4 rounded shadow-lg min-w-80 animate-in fade-in slide-in-from-right-5`}>
-      <div className="flex items-start gap-3">
-        <span className="font-bold text-xl flex-shrink-0">{icon[toast.type]}</span>
-        <p className="flex-1 text-sm font-semibold">{toast.message}</p>
-        <button
-          onClick={() => onRemove(toast.id)}
-          className="text-xl font-bold opacity-60 hover:opacity-100 flex-shrink-0"
-        >
-          ×
-        </button>
-      </div>
+    <div className={`toast-${toast.type}`}>
+      {icon[toast.type]}
+      <p className="flex-1 text-sm font-semibold text-on-surface">{toast.message}</p>
+      <button
+        onClick={() => onRemove(toast.id)}
+        className="text-on-surface opacity-60 hover:cursor-pointer hover:opacity-100 flex-shrink-0 flex items-center justify-center"
+      >
+        <MdClose className="w-5 h-5" />
+      </button>
     </div>
   );
 }

@@ -98,6 +98,10 @@ export interface ContentEntry {
   deletedAt?: string;
   /** When the entry was published. */
   publishedAt?: string;
+  /** SEO meta title (when schema.features.seo is enabled). */
+  metaTitle?: string;
+  /** SEO meta description (when schema.features.seo is enabled). */
+  metaDescription?: string;
   /** Version number for content versioning. */
   version?: number;
   createdAt?: string;

@@ -1,6 +1,6 @@
 'use client';
 import { FieldType } from '@research-cms/shared-types';
-import { Card, Grid } from '@/components/ui';
+import { Card, Grid, TypeIcon } from '@/components/ui';
 
 interface FieldTypeSelectorProps {
   onSelect: (type: FieldType) => void;
@@ -35,10 +35,15 @@ export function FieldTypeSelector({ onSelect }: FieldTypeSelectorProps) {
           onClick={() => onSelect(type as FieldType)}
           className="cursor-pointer"
         >
-          <div className="text-left">
-            <div className="font-bold text-sm uppercase text-on-surface">{label}</div>
-            <div className="text-xs text-on-surface-variant mt-1">{description}</div>
-            <div className="text-xs text-on-surface-variant font-mono mt-2">{type}</div>
+          <div className="flex items-start gap-3 text-left">
+            <div className="mt-0.5 text-on-surface">
+              <TypeIcon type={type as FieldType} className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-bold text-sm uppercase text-on-surface">{label}</div>
+              <div className="text-xs text-on-surface-variant mt-1">{description}</div>
+              <div className="text-xs text-on-surface-variant font-mono mt-2">{type}</div>
+            </div>
           </div>
         </Card>
       ))}

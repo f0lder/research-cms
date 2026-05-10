@@ -57,6 +57,7 @@ export class ContentService {
 			'publishedAt',
 			'deletedAt',
 			'version',
+			...(resolvedSchema.features?.seo ? ['metaTitle', 'metaDescription'] : []),
 		]);
 		for (const key of Object.keys(data)) {
 			if (!allowed.has(key)) errors.push(`Unknown field: "${key}"`);

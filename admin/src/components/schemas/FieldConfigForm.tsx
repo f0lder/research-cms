@@ -23,12 +23,21 @@ export function FieldConfigForm({ type, field, onChange, mode }: FieldConfigForm
   };
 
   const handleSelectOptionsChange = (options: string[]) => {
-    onChange({ selectOptions: options });
+    onChange({ config: { type: 'select', options } });
   };
 
   const handleTargetSlugChange = (value: string) => {
-    onChange({ targetSlug: value });
+    if (type !== 'reference' && type !== 'references') return;
+    onChange({ config: { type, targetSlug: value } });
   };
+
+  const selectOptions =
+    field.config?.type === 'select' ? (field.config.options as string[]) : [];
+
+  const targetSlug =
+    field.config?.type === 'reference' || field.config?.type === 'references'
+      ? String(field.config.targetSlug ?? '')
+      : '';
 
   return (
     <div className="space-y-3">
@@ -72,14 +81,14 @@ export function FieldConfigForm({ type, field, onChange, mode }: FieldConfigForm
       {/* Type-specific config */}
       {type === 'select' && (
         <SelectOptions
-          options={field.selectOptions || []}
+          options={selectOptions}
           onChange={handleSelectOptionsChange}
         />
       )}
 
       {(type === 'reference' || type === 'references') && (
         <ReferenceConfig
-          targetSlug={field.targetSlug || ''}
+          targetSlug={targetSlug}
           onChange={handleTargetSlugChange}
         />
       )}

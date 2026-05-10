@@ -7,13 +7,58 @@ import {
   SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Block, blockRegistry, ColumnBlock } from '@research-cms/shared-types';
+import { Block, blockRegistry } from '@research-cms/shared-types';
 import { MdDelete, MdExpandMore, MdChevronRight, MdDragIndicator } from 'react-icons/md';
 import { BlockConfigForm, AddBlockPanel, NestedBlocksEditor, ColumnsEditor } from '.';
-import { Button, Heading, Text } from '@/components/ui';
+import { Button, Heading, Text, TypeIcon } from '@/components/ui';
 import { registerBuiltInBlocks } from '@research-cms/shared-types';
 
 registerBuiltInBlocks(); // Ensure blocks are registered before any editor is rendered
+
+function findBlockById(blocks: Block[], id: string): Block | null {
+  for (const block of blocks) {
+    if (block.id === id) return block;
+    if (block.type === 'row') {
+      const columns = (block as any).columns ?? [];
+      for (const col of columns) {
+        const found = findBlockById(col.blocks ?? [], id);
+        if (found) return found;
+      }
+    }
+    if (['column', 'card'].includes(block.type)) {
+      const found = findBlockById((block as any).blocks ?? [], id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function updateBlockById(blocks: Block[], id: string, updatedBlock: Block | null): Block[] {
+  return blocks.reduce((acc: Block[], block) => {
+    if (block.id === id) {
+      if (updatedBlock) acc.push(updatedBlock);
+    } else {
+      let newBlock = { ...block };
+      if (block.type === 'row') {
+        const columns = (block as any).columns ?? [];
+        newBlock = {
+          ...newBlock,
+          columns: columns.map((col: any) => ({
+            ...col,
+            blocks: updateBlockById(col.blocks ?? [], id, updatedBlock)
+          }))
+        };
+      } else if (['column', 'card'].includes(block.type)) {
+        newBlock = {
+          ...newBlock,
+          blocks: updateBlockById((block as any).blocks ?? [], id, updatedBlock)
+        };
+      }
+      acc.push(newBlock);
+    }
+    return acc;
+  }, []);
+}
 
 /**
  * Reusable block editor component with inline nested block editing.
@@ -26,23 +71,24 @@ export function BlocksEditor({
   onHeaderContent,
   schemaSlug,
   infoNote,
+  clientId,
 }: {
   blocks: Block[];
   onBlocksChange: (blocks: Block[]) => void;
   onHeaderContent?: ReactNode; // Custom header content above the blocks
   schemaSlug?: string; // Optional: for layout templates, passes context schema
   infoNote?: ReactNode; // Optional: info message at bottom left
+  clientId?: string; // Optional: scopes page-pickers to this client's pages
 }) {
-  const [selectedBlockIndex, setSelectedBlockIndex] = useState<number | null>(null);
-  const [expandedBlockIndex, setExpandedBlockIndex] = useState<number | null>(null);
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [expandedBlockIds, setExpandedBlockIds] = useState<string[]>([]);
   const [showAddBlockPanel, setShowAddBlockPanel] = useState(false);
-  const [selectedNestedBlock, setSelectedNestedBlock] = useState<{
-    blockId: string;
-    parentIndex: number;
-    parentType: 'row' | 'column' | 'card';
-    nestedIndex: number;
-  } | null>(null);
+  
   const sensors = useSensors(useSensor(PointerSensor));
+
+  const toggleExpand = (id: string) => {
+    setExpandedBlockIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -66,20 +112,16 @@ export function BlocksEditor({
     onBlocksChange(withOrderUpdated);
   };
 
-  const updateBlock = (index: number, updated: Block) => {
-    onBlocksChange(blocks.map((b, i) => i === index ? updated : b));
+  const updateBlock = (id: string, updated: Block) => {
+    onBlocksChange(updateBlockById(blocks, id, updated));
   };
 
-  const removeBlock = (index: number) => {
-    onBlocksChange(blocks.filter((_, i) => i !== index));
-    if (selectedBlockIndex === index) {
-      setSelectedBlockIndex(null);
-    } else if (selectedBlockIndex !== null && selectedBlockIndex > index) {
-      setSelectedBlockIndex(selectedBlockIndex - 1);
+  const removeBlock = (id: string) => {
+    onBlocksChange(updateBlockById(blocks, id, null));
+    if (selectedBlockId === id) {
+      setSelectedBlockId(null);
     }
-    if (expandedBlockIndex === index) {
-      setExpandedBlockIndex(null);
-    }
+    setExpandedBlockIds(prev => prev.filter(x => x !== id));
   };
 
   const addBlock = (type: string) => {
@@ -87,30 +129,11 @@ export function BlocksEditor({
     if (block) {
       const newBlock = { ...block, order: blocks.length };
       onBlocksChange([...blocks, newBlock]);
-      setSelectedBlockIndex(blocks.length);
+      setSelectedBlockId(newBlock.id);
     }
   };
 
-  const getSelectedNestedBlock = (): Block | null => {
-    if (!selectedNestedBlock) return null;
-    const parentBlock = blocks[selectedNestedBlock.parentIndex];
-    if (!parentBlock) return null;
-
-    // If parent is a row, get the column first, then the blocks
-    if (selectedNestedBlock.parentType === 'row') {
-      const columnIndex = (selectedNestedBlock as any).columnIndex;
-      const columns = (parentBlock as any).columns ?? [];
-      const column = columns[columnIndex];
-      if (!column) return null;
-      return (column.blocks ?? [])[selectedNestedBlock.nestedIndex] ?? null;
-    }
-
-    // For column or card, blocks are directly on the parent
-    const blocksList = (parentBlock as any).blocks ?? [];
-    return blocksList[selectedNestedBlock.nestedIndex] ?? null;
-  };
-
-  const selectedBlock = selectedBlockIndex !== null && blocks[selectedBlockIndex] ? blocks[selectedBlockIndex] : null;
+  const selectedBlock = selectedBlockId ? findBlockById(blocks, selectedBlockId) : null;
 
   return (
     <div className="page flex flex-col h-screen overflow-hidden">
@@ -134,35 +157,29 @@ export function BlocksEditor({
                       <SortableBlockItem
                         block={block}
                         index={i}
-                        isSelected={selectedBlockIndex === i}
-                        isExpanded={expandedBlockIndex === i}
+                        isSelected={selectedBlockId === block.id}
+                        isExpanded={expandedBlockIds.includes(block.id)}
                         onSelect={() => {
-                          setSelectedBlockIndex(i);
-                          setSelectedNestedBlock(null);
-                          // Auto-expand container blocks
-                          if (['row', 'column', 'card'].includes(block.type)) {
-                            setExpandedBlockIndex(expandedBlockIndex === i ? null : i);
+                          setSelectedBlockId(block.id);
+                          if (['row', 'column', 'card'].includes(block.type) && !expandedBlockIds.includes(block.id)) {
+                             toggleExpand(block.id);
                           }
                         }}
+                        onToggleExpand={() => toggleExpand(block.id)}
                       />
 
                       {/* Inline nested editor for expanded container blocks */}
-                      {expandedBlockIndex === i && ['row', 'column', 'card'].includes(block.type) && (
+                      {expandedBlockIds.includes(block.id) && ['row', 'column', 'card'].includes(block.type) && (
                         <div className="ml-4 mt-2 mb-3 border-2 border-primary bg-surface-container">
                           {block.type === 'row' && (
                             <div className="p-3">
                               <ColumnsEditor
                                 columns={(block as any).columns ?? []}
                                 onChange={cols => {
-                                  updateBlock(i, { ...block, columns: cols });
+                                  updateBlock(block.id, { ...block, columns: cols });
                                 }}
-                                onSelectNestedBlock={(blockId, colIndex) => {
-                                  const col = (block as any).columns?.[colIndex];
-                                  if (col) {
-                                    const nestedIndex = col.blocks?.findIndex((b: Block) => b.id === blockId) ?? -1;
-                                    // Store: parentIndex=row, columnIndex=colIndex, nestedIndex=nested block index
-                                    setSelectedNestedBlock({ blockId, parentIndex: i, parentType: 'row', nestedIndex, columnIndex: colIndex } as any);
-                                  }
+                                onSelectNestedBlock={(blockId) => {
+                                  setSelectedBlockId(blockId);
                                 }}
                               />
                             </div>
@@ -172,11 +189,11 @@ export function BlocksEditor({
                               <NestedBlocksEditor
                                 blocks={(block as any).blocks ?? []}
                                 onChange={nestedBlocks => {
-                                  updateBlock(i, { ...block, blocks: nestedBlocks });
+                                  updateBlock(block.id, { ...block, blocks: nestedBlocks });
                                 }}
                                 label={block.type === 'column' ? 'Column Content' : 'Card Content'}
-                                onSelectBlock={(nestedBlock, nestedIndex) => {
-                                  setSelectedNestedBlock({ blockId: nestedBlock.id, parentIndex: i, parentType: block.type as 'column' | 'card', nestedIndex });
+                                onSelectBlock={(nestedBlock) => {
+                                  setSelectedBlockId(nestedBlock.id);
                                 }}
                               />
                             </div>
@@ -229,80 +246,7 @@ export function BlocksEditor({
 
         {/* Right sidebar */}
         <div className="w-80 shrink-0 border-l-2 border-on-surface bg-surface-container flex flex-col overflow-hidden">
-          {/* Block settings section */}
-          {selectedNestedBlock ? (
-            // Nested block selected - show its settings in main sidebar
-            (() => {
-              const nestedBlock = getSelectedNestedBlock();
-              if (!nestedBlock) return null;
-              const parentBlock = blocks[selectedNestedBlock.parentIndex];
-
-              // Get the parent blocks list (works for row->column->blocks, column->blocks, card->blocks)
-              let parentBlocksList: Block[] = [];
-              if (selectedNestedBlock.parentType === 'row') {
-                const columnIndex = (selectedNestedBlock as any).columnIndex;
-                const columns = (parentBlock as any).columns ?? [];
-                const column = columns[columnIndex];
-                parentBlocksList = column?.blocks ?? [];
-              } else {
-                parentBlocksList = (parentBlock as any).blocks ?? [];
-              }
-
-              return (
-                <div className="flex-1 overflow-y-auto p-4 min-h-0">
-                  <div className="mb-4 flex items-start justify-between">
-                    <div>
-                      <Heading level={4}>Nested Block Settings</Heading>
-                      <Text variant="code" color="secondary" className="mt-1">
-                        {blockRegistry.get(nestedBlock.type)?.label ?? nestedBlock.type}
-                      </Text>
-                      <Text variant="caption" color="secondary" className="mt-1">
-                        in {selectedNestedBlock.parentType}{selectedNestedBlock.parentType === 'row' && (` (col ${(selectedNestedBlock as any).columnIndex + 1})`)}
-                      </Text>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        const updated = parentBlocksList.filter((_: Block, idx: number) => idx !== selectedNestedBlock.nestedIndex);
-                        if (selectedNestedBlock.parentType === 'row') {
-                          const columnIndex = (selectedNestedBlock as any).columnIndex;
-                          const columns = (parentBlock as any).columns ?? [];
-                          const updatedColumns = columns.map((col: ColumnBlock, idx: number) =>
-                            idx === columnIndex ? { ...col, blocks: updated } : col
-                          );
-                          updateBlock(selectedNestedBlock.parentIndex, { ...(parentBlock as any), columns: updatedColumns });
-                        } else {
-                          updateBlock(selectedNestedBlock.parentIndex, { ...(parentBlock as any), blocks: updated });
-                        }
-                        setSelectedNestedBlock(null);
-                      }}
-                      variant="destructive"
-                      size="xs"
-                      title="Delete block"
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                  <BlockConfigForm
-                    block={nestedBlock}
-                    onChange={b => {
-                      const updated = parentBlocksList.map((blk: Block, idx: number) => idx === selectedNestedBlock.nestedIndex ? b : blk);
-                      if (selectedNestedBlock.parentType === 'row') {
-                        const columnIndex = (selectedNestedBlock as any).columnIndex;
-                        const columns = (parentBlock as any).columns ?? [];
-                        const updatedColumns = columns.map((col: ColumnBlock, idx: number) =>
-                          idx === columnIndex ? { ...col, blocks: updated } : col
-                        );
-                        updateBlock(selectedNestedBlock.parentIndex, { ...(parentBlock as any), columns: updatedColumns });
-                      } else {
-                        updateBlock(selectedNestedBlock.parentIndex, { ...(parentBlock as any), blocks: updated });
-                      }
-                    }}
-                    schemaSlug={schemaSlug}
-                  />
-                </div>
-              );
-            })()
-          ) : selectedBlock && !['row', 'column', 'card'].includes(selectedBlock.type) ? (
+          {selectedBlock ? (
             <div className="flex-1 overflow-y-auto p-4 min-h-0">
               <div className="mb-4 flex items-start justify-between">
                 <div>
@@ -312,7 +256,7 @@ export function BlocksEditor({
                   </Text>
                 </div>
                 <Button
-                  onClick={() => removeBlock(selectedBlockIndex ?? -1)}
+                  onClick={() => removeBlock(selectedBlock.id)}
                   variant="destructive"
                   size="xs"
                   icon={<MdDelete size={14} />}
@@ -323,26 +267,10 @@ export function BlocksEditor({
               </div>
               <BlockConfigForm
                 block={selectedBlock}
-                onChange={b => updateBlock(selectedBlockIndex ?? -1, b)}
+                onChange={b => updateBlock(selectedBlock.id, b)}
                 schemaSlug={schemaSlug}
+                clientId={clientId}
               />
-            </div>
-          ) : selectedBlock && ['row', 'column', 'card'].includes(selectedBlock.type) ? (
-            <div className="flex-1 flex items-center justify-center text-center p-4">
-              <div>
-                <Text variant="body-sm" className="font-bold uppercase mb-2">Container Block</Text>
-                <Text variant="caption" color="secondary">Edit content in the expanded area above</Text>
-                <div className="mt-4 flex justify-center">
-                  <Button
-                    onClick={() => removeBlock(selectedBlockIndex ?? -1)}
-                    variant="destructive"
-                    size="xs"
-                    icon={<MdDelete size={14} />}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center text-center p-4">
@@ -366,12 +294,14 @@ function SortableBlockItem({
   isSelected,
   isExpanded,
   onSelect,
+  onToggleExpand,
 }: {
   block: Block;
   index: number;
   isSelected: boolean;
   isExpanded?: boolean;
   onSelect: () => void;
+  onToggleExpand?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const def = blockRegistry.get(block.type);
@@ -389,7 +319,7 @@ function SortableBlockItem({
     >
       <div
         onClick={onSelect}
-        className="flex items-center gap-2 px-3 py-2"
+        className="flex items-center gap-3 px-3 py-2"
       >
         <button
           {...attributes}
@@ -400,6 +330,11 @@ function SortableBlockItem({
         >
           <MdDragIndicator size={18} />
         </button>
+        
+        <div className="text-on-surface-variant shrink-0 flex items-center justify-center">
+          <TypeIcon type={block.type} className="w-5 h-5" />
+        </div>
+
         <div className="flex-1 min-w-0">
           <Text variant="code" color="secondary" as="span" className="block uppercase tracking-wider font-bold">{typeLabel}</Text>
           {block && (block as any).config?.label && (
@@ -407,9 +342,9 @@ function SortableBlockItem({
           )}
         </div>
         {isContainer && (
-          <span className="text-on-surface-variant shrink-0 flex items-center">
+          <button onClick={(e) => { e.stopPropagation(); onToggleExpand?.(); }} className="text-on-surface-variant shrink-0 flex items-center hover:text-primary">
             {isExpanded ? <MdExpandMore size={18} /> : <MdChevronRight size={18} />}
-          </span>
+          </button>
         )}
       </div>
     </div>

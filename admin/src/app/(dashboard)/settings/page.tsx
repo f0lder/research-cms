@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { SettingDefinition } from '@research-cms/shared-types';
 import {
   getSettings,
   updateSetting,
@@ -8,14 +9,15 @@ import {
 } from '@/app/actions';
 import { ListSkeleton } from '@/components/skeletons';
 import { Button } from '@/components/ui/Button';
-import { Text } from '@/components/ui/Text';
 import { SettingRow } from '@/components/settings/SettingRow';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function GlobalSettingsPage() {
   const [items, setItems] = useState<SettingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const load = useCallback(async () => {
     const { data, error: err } = await getSettings({ scope: 'global' });
@@ -94,6 +96,40 @@ export default function GlobalSettingsPage() {
             </div>
           </section>
         ))}
+
+        <section>
+          <h2 className="text-sm font-semibold text-zinc-900 mb-2">Toast testing</h2>
+          <div className="panel flex flex-wrap gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => showToast('This is a success toast', 'success')}
+            >
+              Success
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => showToast('This is an error toast', 'error')}
+            >
+              Error
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => showToast('This is an info toast', 'info')}
+            >
+              Info
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => showToast('This is a warning toast', 'warning')}
+            >
+              Warning
+            </Button>
+          </div>
+        </section>
       </div>
     </div>
   );

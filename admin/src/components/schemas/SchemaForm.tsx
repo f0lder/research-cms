@@ -224,45 +224,53 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <TextField
-          label="Schema Name *"
-          required
-          value={name}
-          onChange={e => handleNameChange(e.target.value)}
-          disabled={isSubmitting}
-          placeholder="e.g., Product"
-        />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Labels & Metadata */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            <TextField
+              label="Schema Name *"
+              required
+              value={name}
+              onChange={e => handleNameChange(e.target.value)}
+              disabled={isSubmitting}
+              placeholder="e.g., Product"
+            />
 
-        <TextField
-          label="URL Slug *"
-          required
-          value={slug}
-          onChange={e => handleSlugChange(e.target.value)}
-          disabled={isSubmitting}
-          placeholder="e.g., product"
-          helperText="Lowercase letters, numbers, and dashes only"
-        />
+            <TextField
+              label="URL Slug *"
+              required
+              value={slug}
+              onChange={e => handleSlugChange(e.target.value)}
+              disabled={isSubmitting}
+              placeholder="e.g., product"
+              helperText="Lowercase letters, numbers, and dashes only"
+            />
 
-        <SchemaMetadata
-          singularName={singularName}
-          pluralName={pluralName}
-          description={description}
-          features={features}
-          disabled={isSubmitting}
-          onSingularNameChange={setSingularName}
-          onPluralNameChange={setPluralName}
-          onDescriptionChange={setDescription}
-          onFeaturesChange={setFeatures}
-        />
+            <SchemaMetadata
+              singularName={singularName}
+              pluralName={pluralName}
+              description={description}
+              features={features}
+              disabled={isSubmitting}
+              onSingularNameChange={setSingularName}
+              onPluralNameChange={setPluralName}
+              onDescriptionChange={setDescription}
+              onFeaturesChange={(f) => setFeatures(f ?? {})}
+            />
+          </div>
 
-        <SchemaFieldsList
-          fields={fields}
-          disabled={isSubmitting}
-          onAddField={() => openFieldModal()}
-          onEditField={openFieldModal}
-          onDeleteField={removeField}
-        />
+          {/* Right Column: Custom Fields */}
+          <div className="lg:col-span-7">
+            <SchemaFieldsList
+              fields={fields}
+              disabled={isSubmitting}
+              onAddField={() => openFieldModal()}
+              onEditField={openFieldModal}
+              onDeleteField={removeField}
+            />
+          </div>
+        </div>
 
         <FieldModal
           isOpen={fieldModalOpen}

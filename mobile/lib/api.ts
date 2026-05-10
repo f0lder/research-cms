@@ -60,30 +60,12 @@ export async function listPages(): Promise<PublicEntryResponse[]> {
 }
 
 export async function getPage(pageSlug: string): Promise<PublicEntryResponse> {
-  console.log('[Pages] Looking for page:', pageSlug);
-  const pages = await listPages();
-  console.log('[Pages] Searching through', pages.length, 'pages');
-
-  // Try to find by slug first (preferred)
-  const page = pages.find(p => {
-    const slug = (p.data as any)?.slug;
-    console.log('[Pages] Checking page', p._id, 'slug:', slug);
-    return slug === pageSlug;
-  });
-  if (page) {
-    console.log('[Pages] Found by slug:', page._id);
-    return page;
+  try {
+    return await get<PublicEntryResponse>(`/public/page/by-slug/${encodeURIComponent(pageSlug)}`);
+  } catch {
+    // Fallback for callers that pass a Mongo _id rather than a slug
+    return await get<PublicEntryResponse>(`/public/page/${encodeURIComponent(pageSlug)}`);
   }
-
-  // Fallback to ID lookup
-  const pageById = pages.find(p => p._id === pageSlug);
-  if (pageById) {
-    console.log('[Pages] Found by ID:', pageById._id);
-    return pageById;
-  }
-
-  console.error('[Pages] Page not found:', pageSlug);
-  throw new Error(`Page not found: ${pageSlug}`);
 }
 
 export interface MediaEntry {
@@ -97,6 +79,10 @@ export interface MediaEntry {
 
 export function getLayout(schemaSlug: string): Promise<{ schemaId: string; schemaSlug: string; blocks: Block[] }> {
   return get(`/public/layouts/${schemaSlug}`);
+}
+
+export function getRenderedLayout(schemaSlug: string, id: string): Promise<{ schemaSlug: string; entryId: string; blocks: Block[]; data: Record<string, unknown> }> {
+  return get(`/public/layouts/${schemaSlug}/render/${id}`);
 }
 
 export function getMedia(id: string): Promise<PublicEntryResponse> {

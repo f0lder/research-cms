@@ -450,11 +450,7 @@ const rowDefinition: BlockDefinition<RowBlock> = {
 
   schema: {
     fields: [
-      {
-        name: 'columns',
-        label: 'Columns',
-        type: 'columns',
-      },
+
       {
         name: 'gap',
         label: 'Gap (px)',
@@ -503,11 +499,7 @@ const columnDefinition: BlockDefinition<ColumnBlock> = {
         options: ['auto', 'full'],
         defaultValue: 'auto',
       },
-      {
-        name: 'blocks',
-        label: 'Blocks',
-        type: 'blocks',
-      },
+
     ],
   },
 
@@ -537,11 +529,7 @@ const cardDefinition: BlockDefinition<CardBlock> = {
         label: 'Tap Action',
         type: 'action-picker',
       },
-      {
-        name: 'blocks',
-        label: 'Blocks',
-        type: 'blocks',
-      },
+
     ],
   },
 
