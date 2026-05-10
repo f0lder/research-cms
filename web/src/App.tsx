@@ -4,14 +4,16 @@ import { API_KEY } from '@/lib/config';
 import { listPages, getPage, getClientSettings, listSchemas, SchemaSummary } from '@/lib/api';
 import { ThemeProvider, createColors, useTheme, applyThemeVars } from '@/lib/theme';
 import { BlockRenderer } from '@/components/BlockRenderer';
-import { ArchiveView } from '@/views/ArchiveView';
-import { EntryView } from '@/views/EntryView';
+import ArchiveView from '@/views/ArchiveView';
+import EntryView from '@/views/EntryView';
+import DebugView from '@/views/DebugView';
 
 type Route =
   | { type: 'home' }
   | { type: 'page'; slug: string }
   | { type: 'archive'; slug: string }
-  | { type: 'entry'; slug: string; id: string };
+  | { type: 'entry'; slug: string; id: string }
+  | { type: 'debug' };
 
 function parseRoute(): Route {
   const hash = window.location.hash.replace(/^#\/?/, '').replace(/\/$/, '');
@@ -19,6 +21,9 @@ function parseRoute(): Route {
   const segments = hash.split('/').filter(Boolean);
   if (segments[0] === 'schema' && segments[1]) {
     return { type: 'archive', slug: decodeURIComponent(segments[1]) };
+  }
+  if (segments[0] === 'debug') {
+    return { type: 'debug' };
   }
   if (segments.length >= 2) {
     return { type: 'entry', slug: decodeURIComponent(segments[0]), id: decodeURIComponent(segments[1]) };
@@ -131,6 +136,10 @@ function RouteContent({
 
   if (route.type === 'entry') {
     return <EntryView slug={route.slug} id={route.id} />;
+  }
+
+  if (route.type === 'debug') {
+    return <DebugView />;
   }
 
   // 'page'

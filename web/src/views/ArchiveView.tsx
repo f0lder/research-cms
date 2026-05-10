@@ -6,7 +6,7 @@ import { useTheme } from '@/lib/theme';
 
 const PAGE_SIZE = 20;
 
-export function ArchiveView({ slug, schemaName }: { slug: string; schemaName: string }) {
+export default function ArchiveView({ slug, schemaName }: { slug: string; schemaName: string }) {
   const colors = useTheme();
   const [entries, setEntries] = useState<PublicEntryResponse[]>([]);
   const [loading, setLoading] = useState(true);

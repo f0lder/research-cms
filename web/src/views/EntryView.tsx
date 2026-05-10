@@ -4,7 +4,7 @@ import { getRenderedLayout } from '@/lib/api';
 import { BlockRenderer } from '@/components/BlockRenderer';
 import { useTheme } from '@/lib/theme';
 
-export function EntryView({ slug, id }: { slug: string; id: string }) {
+export default function EntryView({ slug, id }: { slug: string; id: string }) {
   const colors = useTheme();
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [data, setData] = useState<Record<string, unknown> | null>(null);
