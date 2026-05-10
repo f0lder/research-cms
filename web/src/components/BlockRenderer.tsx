@@ -17,6 +17,8 @@ import {
 } from '@research-cms/shared-types';
 import { getMedia, listEntries } from '@/lib/api';
 
+type ArchiveItem = { _id: string; schemaSlug: string; data?: Record<string, unknown> };
+
 function spacing(prefix: 'padding' | 'margin', s?: Spacing): CSSProperties {
   if (!s) return {};
   return {
@@ -332,6 +334,92 @@ function FieldValue({ block, value, loading }: { block: FieldBlock; value: unkno
   }
 }
 
+function ArchiveRenderer({ block }: { block: ArchiveBlock }) {
+  const [items, setItems] = useState<ArchiveItem[] | null>(block.items ?? null);
+  const [loading, setLoading] = useState(!block.items);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const result = await listEntries(block.schemaSlug, 1, block.limit ?? 50);
+      setItems(result.items);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load');
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [block.schemaSlug, block.limit]);
+
+  useEffect(() => {
+    if (block.items) return;
+    load();
+  }, [block.items, load]);
+
+  const containerStyle: CSSProperties = { ...baseStyle(block), marginTop: 16, marginBottom: 16 };
+
+  if (loading) {
+    return (
+      <div style={{ ...containerStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 100 }}>
+        <span className="cms-loading">Loading…</span>
+      </div>
+    );
+  }
+
+  if (error || !items || items.length === 0) {
+    return (
+      <div style={containerStyle}>
+        {block.title && <h3 className="cms-archive-title">{block.title}</h3>}
+        <p className="cms-text-sub">{block.emptyMessage ?? 'No items found'}</p>
+      </div>
+    );
+  }
+
+  const renderItem = (item: ArchiveItem, key: number) => {
+    const data = item.data ?? {};
+    const title = (data.title as string) || (data.name as string) || item.schemaSlug;
+    return (
+      <a
+        key={key}
+        href={`#/${item.schemaSlug}/${item._id}`}
+        className="cms-archive-card"
+      >
+        <div className="cms-archive-card-title">{title}</div>
+        <div className="cms-archive-card-sub cms-text-sub">ID: {item._id.slice(0, 12)}</div>
+      </a>
+    );
+  };
+
+  if (block.layout === 'grid') {
+    const cols = block.columns ?? 2;
+    return (
+      <div style={containerStyle}>
+        {block.title && <h3 className="cms-archive-title">{block.title}</h3>}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+            gap: 12,
+          }}
+        >
+          {items.map((item, i) => renderItem(item, i))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={containerStyle}>
+      {block.title && <h3 className="cms-archive-title">{block.title}</h3>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {items.map((item, i) => renderItem(item, i))}
+      </div>
+    </div>
+  );
+}
+
 function CardRenderer({ block, entryData }: { block: CardBlock; entryData?: Record<string, unknown> }) {
   const elevationShadows: Record<number, string> = {
     0: 'none',
@@ -370,6 +458,7 @@ export function BlockRenderer({ block, entryData }: { block: Block; entryData?: 
     case 'column': return <ColumnRenderer block={block} entryData={entryData} />;
     case 'card': return <CardRenderer block={block} entryData={entryData} />;
     case 'field': return <FieldRenderer block={block} entryData={entryData} />;
+    case 'archive': return <ArchiveRenderer block={block} />;
     default: return null;
   }
 }
