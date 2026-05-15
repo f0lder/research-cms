@@ -7,7 +7,7 @@ import {
   SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Block, blockRegistry } from '@research-cms/shared-types';
+import { Block, RowBlock, CardBlock, blockRegistry } from '@research-cms/shared-types';
 import { MdDelete, MdExpandMore, MdChevronRight, MdDragIndicator } from 'react-icons/md';
 import { BlockConfigForm, AddBlockPanel, NestedBlocksEditor, ColumnsEditor } from '.';
 import { Button, Heading, Text, TypeIcon } from '@/components/ui';
@@ -19,14 +19,13 @@ function findBlockById(blocks: Block[], id: string): Block | null {
   for (const block of blocks) {
     if (block.id === id) return block;
     if (block.type === 'row') {
-      const columns = (block as any).columns ?? [];
-      for (const col of columns) {
+      for (const col of (block as RowBlock).columns) {
         const found = findBlockById(col.blocks ?? [], id);
         if (found) return found;
       }
     }
     if (['column', 'card'].includes(block.type)) {
-      const found = findBlockById((block as any).blocks ?? [], id);
+      const found = findBlockById((block as CardBlock).blocks ?? [], id);
       if (found) return found;
     }
   }
@@ -38,21 +37,16 @@ function updateBlockById(blocks: Block[], id: string, updatedBlock: Block | null
     if (block.id === id) {
       if (updatedBlock) acc.push(updatedBlock);
     } else {
-      let newBlock = { ...block };
+      let newBlock: Block = { ...block };
       if (block.type === 'row') {
-        const columns = (block as any).columns ?? [];
-        newBlock = {
-          ...newBlock,
-          columns: columns.map((col: any) => ({
-            ...col,
-            blocks: updateBlockById(col.blocks ?? [], id, updatedBlock)
-          }))
-        };
+        const { columns = [] } = block as RowBlock;
+        newBlock = { ...newBlock, columns: columns.map(col => ({
+          ...col,
+          blocks: updateBlockById(col.blocks ?? [], id, updatedBlock)
+        })) } as Block;
       } else if (['column', 'card'].includes(block.type)) {
-        newBlock = {
-          ...newBlock,
-          blocks: updateBlockById((block as any).blocks ?? [], id, updatedBlock)
-        };
+        const { blocks: nestedBlocks = [] } = block as CardBlock;
+        newBlock = { ...newBlock, blocks: updateBlockById(nestedBlocks, id, updatedBlock) } as Block;
       }
       acc.push(newBlock);
     }

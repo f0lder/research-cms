@@ -58,13 +58,11 @@ export default function ContentCreatePage() {
       <ContentForm
         mode="create"
         schema={schema}
-        onSuccess={(createdEntry: ContentEntry) => {
+        onSuccess={(createdEntry?: ContentEntry) => {
           showToast(`${schema.name} created successfully`, 'success');
-          // Navigate to the edit page for the newly created entry
-          if (createdEntry._id) {
+          if (createdEntry?._id) {
             router.push(adminRoutes.contentEdit(slug, createdEntry._id.toString()));
           } else {
-            // Fallback to schema detail if ID wasn't returned
             router.push(adminRoutes.schemaDetail(slug));
           }
         }}
