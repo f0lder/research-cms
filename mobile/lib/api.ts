@@ -7,22 +7,17 @@ const baseHeaders = { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' }
 
 async function get<T>(path: string): Promise<T> {
   const url = `${API_URL}${path}`;
-  console.log('[API] GET', url);
 
   try {
     const res = await fetch(url, { headers: baseHeaders });
     const body = await res.json().catch(() => ({}));
-    console.log('[API] Response status:', res.status);
-    console.log('[API] Response body:', body);
 
     if (!res.ok) {
       const msg = body.message ?? `Request failed: ${res.status}`;
-      console.error('[API] Error:', msg);
       throw new Error(msg);
     }
     return body as T;
   } catch (e) {
-    console.error('[API] Fetch error:', e);
     throw e;
   }
 }
@@ -49,9 +44,7 @@ export function getEntry(slug: string, id: string): Promise<PublicEntryResponse>
 // Pages are entries in the 'page' schema
 export async function listPages(): Promise<PublicEntryResponse[]> {
   try {
-    console.log('[Pages] Fetching all pages...');
     const result = await get<{ items: PublicEntryResponse[] }>('/public/page');
-    console.log('[Pages] Got', result.items?.length ?? 0, 'pages');
     return result.items || [];
   } catch (e) {
     console.error('[Pages] Error fetching pages:', e);

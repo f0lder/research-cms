@@ -109,7 +109,6 @@ function ImageBlockRenderer({ block, colors }: { block: ImageBlock; colors: Retu
           caption: (entry.data as any)?.caption,
           altText: (entry.data as any)?.altText,
         };
-        console.log('[Media] Loaded:', mediaData);
         setMedia(mediaData);
       } catch (e) {
         console.error('Failed to load media:', e);
@@ -314,13 +313,7 @@ function FieldBlockRenderer({ block, entryData, colors }: { block: FieldBlock; e
     setLoading(false);
   }, [block.fieldType, block.fieldName, fieldValue]);
 
-  console.log('[FieldBlock]', block.fieldName, {
-    hasEntryData: !!entryData,
-    fieldValue,
-    resolvedValue,
-    fieldType: block.fieldType,
-    loading,
-  });
+
 
   if (loading) {
     return (
