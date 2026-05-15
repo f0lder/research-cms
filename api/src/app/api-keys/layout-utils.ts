@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid';
-import { v4 as uuidv4 } from 'uuid';
 import { Block, ContentTypeDefinition, createFieldBlock } from '@research-cms/shared-types';
 
 export function bootstrapFromSchema(schema: Pick<ContentTypeDefinition, 'fields'>): Block[] {
