@@ -5,6 +5,7 @@
  */
 import {
   BaseBlock,
+  Block,
   BlockDefinition,
   HeadingBlock,
   TextBlock,
@@ -431,10 +432,9 @@ const fieldDefinition: BlockDefinition<FieldBlock> = {
   defaultConfig: () => ({
     fieldName: '',
     label: '',
-    fieldType: 'text' as any,
+    fieldType: 'text' as const,
     showLabel: true,
-    labelPosition: 'above',
-    value: null,
+    labelPosition: 'above' as const,
   }),
 };
 
@@ -563,3 +563,53 @@ export const BUILT_IN_BLOCK_DEFINITIONS: BlockDefinition<BaseBlock>[] = [
   columnDefinition,
   cardDefinition,
 ] as BlockDefinition<BaseBlock>[];
+
+// ── Interpolation ──────────────────────────────────────────────────────────────
+
+export function interpolateString(str: string, data: Record<string, unknown>): string {
+  return str.replace(/\{([^}]+)\}/g, (_m, rawKey) => {
+    const val = data[(rawKey as string).trim()];
+    return val !== undefined && val !== null ? String(val) : _m;
+  });
+}
+
+function interpolateBlockDeep(
+  block: Record<string, unknown>,
+  data: Record<string, unknown>,
+): Record<string, unknown> {
+  const copy = { ...block };
+
+  for (const key of Object.keys(copy)) {
+    if (typeof copy[key] === 'string' && key !== 'id' && key !== 'type') {
+      copy[key] = interpolateString(copy[key] as string, data);
+    }
+  }
+
+  if (copy.type === 'row' && Array.isArray(copy.columns)) {
+    copy.columns = (copy.columns as Array<Record<string, unknown>>).map(col => ({
+      ...col,
+      blocks: (col.blocks as Block[] | undefined ?? []).map(b => interpolateBlockDeep(b as unknown as Record<string, unknown>, data)),
+    }));
+  } else if (
+    ['column', 'card'].includes(copy.type as string) &&
+    Array.isArray(copy.blocks)
+  ) {
+    copy.blocks = (copy.blocks as Block[]).map(b => interpolateBlockDeep(b as unknown as Record<string, unknown>, data));
+  }
+
+  if (copy.config && typeof copy.config === 'object') {
+    const cfg = { ...copy.config } as Record<string, unknown>;
+    for (const k of Object.keys(cfg)) {
+      if (typeof cfg[k] === 'string') {
+        cfg[k] = interpolateString(cfg[k] as string, data);
+      }
+    }
+    copy.config = cfg;
+  }
+
+  return copy;
+}
+
+export function interpolateBlocks<T extends Block>(blocks: T[], data: Record<string, unknown>): T[] {
+  return blocks.map(b => interpolateBlockDeep(b as unknown as Record<string, unknown>, data) as unknown as T);
+}
