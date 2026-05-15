@@ -5,7 +5,7 @@ import { ApiKeysService } from '../api-keys/api-keys.service';
 import { SchemaService } from '../schema/schema.service';
 import { SettingsService } from '../settings/settings.service';
 import { ApiKeyGuard } from '../api-keys/guards/api-key.guard';
-import { interpolateBlocks } from './interpolate';
+import { interpolateBlocks } from '@research-cms/shared-types';
 
 type PublicRequest = Request & {
   clientId: string;
