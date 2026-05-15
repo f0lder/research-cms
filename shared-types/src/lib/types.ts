@@ -16,35 +16,20 @@ export type BuiltInFieldType =
   | 'references'
   | 'blocks';
 
-/** Open field type — built-in or any plugin-defined string. */
-export type FieldType = BuiltInFieldType | (string & {});
+/** Field type — discriminated by the literals listed. */
+export type FieldType = BuiltInFieldType;
 
-/** Built-in field configurations — well-typed for autocomplete. */
-export type BuiltInFieldConfig =
+/** Per-field configuration — present only for types that need extra options. */
+export type FieldConfig =
   | { type: 'select'; options: string[] }
   | { type: 'tags' }
   | { type: 'reference'; targetSlug: string }
   | { type: 'references'; targetSlug: string };
 
-/** Plugin field configurations — arbitrary for extensibility. */
-export type PluginFieldConfig = {
-  type: string;
-  [key: string]: unknown;
-};
+/** Field value as stored in the database. */
+export type FieldValue = string | number | boolean | string[] | Record<string, unknown> | unknown[];
 
-/** Per-type metadata — built-in or plugin-defined. */
-export type FieldConfig = BuiltInFieldConfig | PluginFieldConfig;
-
-/** Built-in field values — serializable to JSON. */
-export type BuiltInFieldValue = string | number | boolean | string[];
-
-/** Plugin field values — arbitrary serializable structures. */
-export type PluginFieldValue = Record<string, unknown> | unknown[];
-
-/** Field value as stored in database. */
-export type FieldValue = BuiltInFieldValue | PluginFieldValue;
-
-/** Field value after population (resolved references + plugin metadata). */
+/** Field value after population (resolved references). */
 export type ResolvedFieldValue =
   | FieldValue
   | ContentEntry
@@ -164,7 +149,6 @@ export interface BlockSchema {
 
 /**
  * Context passed to resolve functions.
- * Plugins can extend this via module augmentation.
  */
 export interface BlockResolveContext {
   depth: number;
