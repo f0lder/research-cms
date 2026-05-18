@@ -3,6 +3,10 @@ import { Reflector } from '@nestjs/core';
 import { AuthService } from '../auth.service';
 import { UserRole } from '../schemas/user.schema';
 
+interface AuthenticatedRequest {
+  userId?: string;
+}
+
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector, private authService: AuthService) {}
@@ -13,8 +17,8 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const userId = (request as any).userId;
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const userId = request.userId;
 
     if (!userId) {
       return false;

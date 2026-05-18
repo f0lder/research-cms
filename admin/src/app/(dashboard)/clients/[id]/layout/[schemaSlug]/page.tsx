@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Block, ContentTypeDefinition, blockRegistry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { getSchema, getClientLayout, updateClientLayout } from '@/app/actions';
+import { useToast } from '@/contexts/ToastContext';
 import { BlocksEditor } from '@/components/blocks';
 import { Button, Heading, Text } from '@/components/ui';
 
@@ -16,11 +17,12 @@ export default function EntryDetailLayoutPage() {
   const clientId = extractParam(params, 'id');
   const schemaSlug = extractParam(params, 'schemaSlug');
 
+  const { showToast } = useToast();
+
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [schema, setSchema] = useState<ContentTypeDefinition | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -60,18 +62,15 @@ export default function EntryDetailLayoutPage() {
   useEffect(() => { load(); }, [load]);
 
   const handleSave = async () => {
-    if (!schema) { setError('Schema not found'); return; }
-    if (!clientId) { setError('Client not found'); return; }
+    if (!schema) { showToast('Schema not found', 'error'); return; }
+    if (!clientId) { showToast('Client not found', 'error'); return; }
     setSaving(true);
-    setSaved(false);
-    setError('');
 
     const { error: err } = await updateClientLayout(clientId, schemaSlug, blocks);
     setSaving(false);
-    if (err) { setError(err); return; }
+    if (err) { showToast(err, 'error'); return; }
 
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    showToast('Layout saved', 'success');
   };
 
   if (loading) return <div className="page text-sm text-zinc-400">Loading…</div>;
@@ -107,9 +106,9 @@ export default function EntryDetailLayoutPage() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className={`btn-primary ${saved ? 'opacity-75' : ''}`}
+              className="btn-primary"
             >
-              {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save layout'}
+              {saving ? 'Saving…' : 'Save layout'}
             </Button>
           </div>
         </div>

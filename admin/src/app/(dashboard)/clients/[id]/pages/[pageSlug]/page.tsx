@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Block, blockRegistry, PAGE_SCHEMA_SLUG, ContentEntry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { createEntry, updateEntry, getEntry, getPageBySlug, bulkUpdateStatus } from '@/app/actions';
+import { useToast } from '@/contexts/ToastContext';
 import { BlocksEditor } from '@/components/blocks';
 import { Button, Container, TextField, Text } from '@/components/ui';
 
@@ -19,6 +20,8 @@ export default function PageEditorPage() {
   const pageSlug = extractParam(params, 'pageSlug');
   const isNew = pageSlug === IS_NEW;
 
+  const { showToast } = useToast();
+
   const [pageEntry, setPageEntry] = useState<ContentEntry | null>(null);
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -28,7 +31,6 @@ export default function PageEditorPage() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -72,21 +74,19 @@ export default function PageEditorPage() {
   }, [title, isNew, slugIsManual]);
 
   const handleSave = async () => {
-    if (!title.trim() || !slug.trim()) { setError('Title and slug are required.'); return; }
+    if (!title.trim() || !slug.trim()) { showToast('Title and slug are required.', 'error'); return; }
 
     // Check for duplicate slugs on new pages
     if (isNew) {
       const { data: existingPage } = await getPageBySlug(clientId, slug.trim());
       if (existingPage) {
-        setError('A page with this slug already exists for this client.');
+        showToast('A page with this slug already exists for this client.', 'error');
         setSaving(false);
         return;
       }
     }
 
     setSaving(true);
-    setSaved(false);
-    setError('');
 
     const trimmedDescription = description.trim();
     const entryData = {
@@ -94,38 +94,31 @@ export default function PageEditorPage() {
       title: title.trim(),
       slug: slug.trim(),
       ...(trimmedDescription && { description: trimmedDescription }),
-      blocks, // Directly store blocks array (not JSON)
+      blocks,
     };
 
     if (isNew) {
-      // Create page entry
       const { data: entry, error: entryErr } = await createEntry(PAGE_SCHEMA_SLUG, entryData);
-      if (entryErr) { setSaving(false); setError(entryErr); return; }
-      if (!entry?._id) { setSaving(false); setError('Failed to create page entry'); return; }
+      if (entryErr) { setSaving(false); showToast(entryErr, 'error'); return; }
+      if (!entry?._id) { setSaving(false); showToast('Failed to create page entry', 'error'); return; }
 
-      // Set status if published
       if (status === 'published') {
         const { error: statusErr } = await bulkUpdateStatus(PAGE_SCHEMA_SLUG, [entry._id], 'published');
-        if (statusErr) { setSaving(false); setError(statusErr); return; }
+        if (statusErr) { setSaving(false); showToast(statusErr, 'error'); return; }
       }
 
       setPageEntry(entry);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-      // Redirect to edit URL using the slug
+      showToast('Page created', 'success');
       const newSlug = (entry.data?.slug as string) ?? slug.trim();
       window.history.replaceState(null, '', `/clients/${clientId}/pages/${newSlug}`);
     } else if (pageEntry?._id) {
-      // Update page entry with status
       const { error: entryErr } = await updateEntry(PAGE_SCHEMA_SLUG, pageEntry._id, entryData);
-      if (entryErr) { setSaving(false); setError(entryErr); return; }
+      if (entryErr) { setSaving(false); showToast(entryErr, 'error'); return; }
 
-      // Update status
       const { error: statusErr } = await bulkUpdateStatus(PAGE_SCHEMA_SLUG, [pageEntry._id], status);
-      if (statusErr) { setSaving(false); setError(statusErr); return; }
+      if (statusErr) { setSaving(false); showToast(statusErr, 'error'); return; }
 
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      showToast('Page saved', 'success');
     }
     setSaving(false);
   };
@@ -228,9 +221,8 @@ export default function PageEditorPage() {
               disabled={saving}
               variant="primary"
               size="md"
-              className={saved ? 'opacity-75' : ''}
             >
-              {saving ? 'Saving…' : saved ? 'Saved ✓' : isNew ? 'Create page' : 'Save page'}
+              {saving ? 'Saving…' : isNew ? 'Create page' : 'Save page'}
             </Button>
           </div>
         </div>

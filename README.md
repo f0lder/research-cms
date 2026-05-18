@@ -1,3 +1,171 @@
+# Research CMS — Conference Presentation
+
+## Slide 1 — Title
+
+**Research CMS**  
+A self-hosted, open-source content management platform for digital agencies and non-technical users  
+*Server-Driven UI · Dynamic Schema Builder · Multi-Client Management*
+
+---
+
+## Slide 2 — Market Landscape
+
+**What's on the market today:**
+
+| Solution | Type | Cost | Self-Hosted | Non-Technical Friendly |
+|----------|------|------|-------------|------------------------|
+| WordPress | Monolithic | Free / Paid plugins | ✅ | ✅ (limited) |
+| Strapi | Headless CMS | Free / Cloud paid | ✅ | ❌ Developer-oriented |
+| Contentful | Headless CMS | $300+/mo | ❌ Cloud only | ❌ Developer-oriented |
+| Sanity | Headless CMS | Free tier / $15+/mo | ❌ Cloud only | ❌ Developer-oriented |
+| Ghost | Newsletter CMS | Free / $9/mo | ✅ | ✅ (limited scope) |
+| Directus | Headless CMS | Free / $15+/mo Cloud | ✅ | ❌ Developer-oriented |
+
+**Key gap:** Developer-oriented CMSs require coding expertise to model content, while user-friendly alternatives (WordPress) lack multi-channel delivery. Commercial headless solutions are expensive and not self-hosted.
+
+---
+
+## Slide 3 — Competitor Comparison
+
+**Similar products and how we differ:**
+
+| Feature | WordPress | Strapi | Contentful | **Research CMS** |
+|---------|-----------|--------|------------|------------------|
+| Define content types visually | Limited (CPT UI plugin) | ✅ Admin UI | ✅ Admin UI | **✅ Admin UI — 17 field types** |
+| No-code content modeling | ❌ | ⚠️ Requires dev to configure | ⚠️ Requires dev to configure | **✅ Built for non-technical users** |
+| Multi-channel delivery | ⚠️ Via REST API (plugin) | ✅ REST/GraphQL | ✅ REST/GraphQL | **✅ Web + Mobile (SDUI) built-in** |
+| Application updates for UI changes | No | Yes (frontend deploys) | Yes (frontend deploys) | **No — SDUI renders dynamically** |
+| Self-hosted | ✅ | ✅ | ❌ | **✅ Yes — full control** |
+| Price | Free (paid plugins) | Free | $300+/mo | **Free — open source** |
+| Multi-client from one install | ❌ (multisite limited) | ❌ | ❌ | **✅ Yes — single dashboard** |
+| Per-client block layouts | ❌ | ❌ | ❌ | **✅ Yes — drag & drop block editor** |
+
+---
+
+## Slide 4 — The Problem & Our Solution
+
+**The gap in the current landscape:**
+
+- Small digital agencies manage 5–15 client projects, each needing a website or mobile app
+- They can't afford $300+/mo per client for Contentful or hire full-time developers for Strapi
+- WordPress works for simple sites but fails for structured content, mobile delivery, or multi-project management
+
+**Our solution:**
+
+A modular web platform where non-technical users define their own content types — articles, products, events, or any structure — directly through a graphical interface, without writing code. Each project (client) gets web or mobile configuration with its own theme, pages, and navigation, while sharing the same underlying engine.
+
+---
+
+## Slide 5 — Dynamic Schema Builder
+
+**Define content types visually — no code required.**
+
+- 17 field types: text, textarea, richtext, email, url, number, date, datetime, boolean, media, select, tags, reference, references, blocks
+- Drag-and-drop field ordering
+- Per-field configuration: required, default values, select options, reference targets
+- Schema features toggle: drafts, revisions, full-text search, SEO fields, slug generation
+- Changes take effect immediately — schema definitions propagate to all consumers in real time
+
+**What this means for your workflow:**  
+A non-technical user creates a "Product" schema with 6 fields in under 3 minutes. The backend validates, the admin generates forms, and the mobile/web apps render the new content type — all without a single line of code.
+
+---
+
+## Slide 6 — Server-Driven UI (SDUI)
+
+**The architecture that eliminates app updates.**
+
+- Content structure (blocks, layouts, field positions) is configured in the admin panel
+- Mobile and web apps fetch layout definitions from the API at runtime
+- Changes to layout, field order, visibility, or block types are reflected immediately
+- No app store reviews, no redeployments, no developer coordination
+
+**How it works:**
+1. Admin builds a page layout using blocks (Heading, Image, Text, Archive, etc.)
+2. API serves the layout definition + content to client apps
+3. Client apps render blocks using a `BlockRenderer` that maps types to native components
+4. Next launch: same app, different layout — instant update
+
+**Supported platforms:** Web (React/Vite) + Mobile (Expo/React Native)
+
+---
+
+## Slide 7 — Block & Page Builder
+
+**Drag-and-drop page building for non-technical users.**
+
+- 12 built-in block types across 3 categories:
+  - **Static:** Heading, Text, Divider, Spacer, Image, Button
+  - **Content:** Field, Archive (dynamic list), Entry (single)
+  - **Layout:** Row (with columns), Column, Card
+- Blocks organized into a sidebar palette — drag to add, reorder visually
+- Sidebar configuration panel auto-generated from each block's schema
+- Per-block visibility controls (hide on mobile/tablet/desktop)
+- Animations: fade-in, slide-up, slide-in
+- Nested containers: Rows contain Columns, Cards contain block stacks
+
+**Use case:** A client manager builds a landing page with a hero image, heading, feature cards row, and archive of latest products — all in the admin interface, no developer needed.
+
+---
+
+## Slide 8 — Multi-Client & Multi-Project Management
+
+**One dashboard to manage all your projects.**
+
+- Create API clients with templates (none / mobile / web)
+- Per-client schema access controls — choose which content types each client can access
+- Per-client block layouts — customize how each schema renders per client
+- Per-client theme settings — colors, border radius, typography via settings registry
+- Built-in usage tracking and analytics per API key
+- Client-specific pages with block-based layouts
+
+**Why this matters:**  
+A single Research CMS instance can power 10+ client projects. Each has its own API key, its own content access rules, its own layouts, and its own theme — all managed from one login.
+
+---
+
+## Slide 9 — Open Source, Self-Hosted, and Cost-Effective
+
+**Full control over your data and infrastructure.**
+
+- **Open source** (MIT license) — no licensing fees, no per-seat pricing
+- **Self-hosted** — data stays on your infrastructure, no vendor lock-in
+- **No per-client pricing** — unlimited clients, unlimited entries
+- **Single server** — the API, admin, web, and mobile backends all run on one Node.js server + MongoDB
+
+**Cost comparison (10 clients):**
+
+| Solution | Monthly Cost |
+|----------|-------------|
+| Contentful (10 spaces) | $3,000+ |
+| Sanity (10 projects) | $150+ |
+| Strapi Cloud (10 projects) | $500+ |
+| **Research CMS (self-hosted)** | **~$20 (server only)** |
+
+---
+
+## Slide 10 — Summary & Call to Action
+
+**What we've built:**
+
+- ✅ A dynamic content type builder — no code required
+- ✅ Server-Driven UI — instant layout changes across web + mobile
+- ✅ Drag-and-drop page/block editor — built for non-technical users
+- ✅ Multi-client management — one dashboard for all projects
+- ✅ Self-hosted, open source — full control, zero licensing cost
+
+**The key insight:**  
+The bottleneck in headless CMS isn't content creation — it's the developer coordination required every time the data model or layout changes. Research CMS eliminates that bottleneck.
+
+**Try it:**
+- Self-hosted deployment in minutes
+- One server, unlimited clients
+- Open source at github.com/your-org/research-cms
+
+---
+
+---
+
 # Research CMS — Headless CMS Dissertation Project
 
 ## Project Overview

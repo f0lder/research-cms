@@ -1,29 +1,17 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Block, ContentTypeDefinition } from '@research-cms/shared-types';
+import { Block, ContentTypeDefinition, createFieldBlock } from '@research-cms/shared-types';
 
-/** Build a default field-block layout from a schema's fields. */
 export function bootstrapFromSchema(schema: Pick<ContentTypeDefinition, 'fields'>): Block[] {
-  return schema.fields.map((f, i) => ({
+  return schema.fields.map((f, i) => createFieldBlock({
     id: uuidv4(),
-    type: 'field' as const,
     fieldName: f.name,
     label: f.label,
     fieldType: f.type,
-    value: null,
     visible: true,
     order: i,
-    showLabel: true,
-    labelPosition: 'above' as const,
-  }) as unknown as Block);
+  }));
 }
 
-/**
- * Reconcile a saved block list with the current schema fields:
- * - keep non-field blocks as-is
- * - update field blocks' label/fieldType from schema; drop blocks whose field no longer exists
- * - migrate legacy `config.fieldName` → top-level `fieldName`
- * Returns a bootstrapped layout when nothing is saved.
- */
 export function syncWithSchema(
   schema: Pick<ContentTypeDefinition, 'fields'>,
   saved: unknown[] | null,
@@ -33,29 +21,26 @@ export function syncWithSchema(
   const fieldMap = new Map(schema.fields.map(f => [f.name, f]));
   const retained: Block[] = [];
 
-  for (const b of saved as Array<Record<string, unknown> & { type: string }>) {
+  for (const b of saved as Block[]) {
     if (b.type === 'field') {
-      const config = (b.config ?? {}) as { fieldName?: string };
-      const fieldName = (b.fieldName as string | undefined) || config.fieldName;
+      const fieldName = b.fieldName;
       if (!fieldName) continue;
 
       const f = fieldMap.get(fieldName);
-      if (!f) continue; // field was removed from the schema — drop this block
+      if (!f) continue;
 
-      retained.push({
-        id: b.id as string,
-        type: 'field' as const,
+      retained.push(createFieldBlock({
+        id: b.id,
         fieldName,
         label: f.label,
         fieldType: f.type,
-        value: (b.value ?? null) as never,
-        visible: b.visible !== false,
-        order: (b.order as number | undefined) ?? 0,
-        showLabel: (b.showLabel as boolean | undefined) ?? true,
-        labelPosition: (b.labelPosition as 'above' | 'inline' | undefined) ?? 'above',
-      } as unknown as Block);
+        visible: b.visible,
+        order: b.order,
+        showLabel: b.showLabel,
+        labelPosition: b.labelPosition,
+      }));
     } else {
-      retained.push(b as unknown as Block);
+      retained.push(b);
     }
   }
 

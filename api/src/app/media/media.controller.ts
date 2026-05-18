@@ -9,7 +9,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { StorageService } from './storage.interface';
 import { ContentService } from '../content/content.service';
 import { SessionGuard } from '../auth/guards/session.guard';
-import { MEDIA_SCHEMA_SLUG, MediaEntry } from '@research-cms/shared-types';
+import { MEDIA_SCHEMA_SLUG, MediaEntry, MediaDocument } from '@research-cms/shared-types';
 import { CmsEvents, MediaUploadedEvent, MediaDeletedEvent } from '../events';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
@@ -88,8 +88,7 @@ export class MediaController {
     this.eventEmitter.emit(CmsEvents.MEDIA_DELETED, new MediaDeletedEvent(id, url));
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private toMediaEntry(entry: any): MediaEntry {
+  private toMediaEntry(entry: MediaDocument): MediaEntry {
     return {
       _id: String(entry._id),
       title: String(entry.data.title ?? ''),

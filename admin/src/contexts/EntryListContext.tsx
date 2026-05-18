@@ -10,6 +10,7 @@ import {
 	bulkDeleteEntries,
 	searchEntries,
 	getAllEntries,
+	getEntry,
 } from '@/app/actions';
 
 interface EntryListContextType {
@@ -130,11 +131,10 @@ export function EntryListProvider({ children }: { children: ReactNode }) {
 	const handleRestore = useCallback(async (slug: string, id: string) => {
 		const res = await restoreEntry(slug, id);
 		if (res.error) alert(res.error);
-		// After restoring, we need to fetch the updated entry to get its current data
 		else {
-			const restoredEntry = await getAllEntries(slug, { id });
-			if (restoredEntry.data?.items?.[0]) {
-				setEntries(prev => [restoredEntry.data.items[0], ...prev]);
+			const restoredEntry = await getEntry(slug, id);
+			if (restoredEntry?.data) {
+				setEntries(prev => [restoredEntry.data as ContentEntry, ...prev]);
 				setTrashEntries(prev => prev.filter(e => e._id !== id));
 			} else {
 				// If we can't fetch the restored entry, just remove it from trash and alert the user

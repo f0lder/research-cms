@@ -153,7 +153,13 @@ export async function createClientWithTemplate(name: string, template: ClientTem
 
   const clientId = client._id;
 
-  let pagesToCreate: any[] = [];
+  interface PageTemplate {
+    title: string;
+    slug: string;
+    isHome: boolean;
+    blocks: Block[];
+  }
+  let pagesToCreate: PageTemplate[] = [];
   let theme: Record<string, string | number> = {};
 
   if (template === 'mobile') {

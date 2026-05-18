@@ -16,35 +16,20 @@ export type BuiltInFieldType =
   | 'references'
   | 'blocks';
 
-/** Open field type — built-in or any plugin-defined string. */
-export type FieldType = BuiltInFieldType | (string & {});
+/** Field type — discriminated by the literals listed. */
+export type FieldType = BuiltInFieldType;
 
-/** Built-in field configurations — well-typed for autocomplete. */
-export type BuiltInFieldConfig =
+/** Per-field configuration — present only for types that need extra options. */
+export type FieldConfig =
   | { type: 'select'; options: string[] }
   | { type: 'tags' }
   | { type: 'reference'; targetSlug: string }
   | { type: 'references'; targetSlug: string };
 
-/** Plugin field configurations — arbitrary for extensibility. */
-export type PluginFieldConfig = {
-  type: string;
-  [key: string]: unknown;
-};
+/** Field value as stored in the database. */
+export type FieldValue = string | number | boolean | string[] | Record<string, unknown> | unknown[];
 
-/** Per-type metadata — built-in or plugin-defined. */
-export type FieldConfig = BuiltInFieldConfig | PluginFieldConfig;
-
-/** Built-in field values — serializable to JSON. */
-export type BuiltInFieldValue = string | number | boolean | string[];
-
-/** Plugin field values — arbitrary serializable structures. */
-export type PluginFieldValue = Record<string, unknown> | unknown[];
-
-/** Field value as stored in database. */
-export type FieldValue = BuiltInFieldValue | PluginFieldValue;
-
-/** Field value after population (resolved references + plugin metadata). */
+/** Field value after population (resolved references). */
 export type ResolvedFieldValue =
   | FieldValue
   | ContentEntry
@@ -164,7 +149,6 @@ export interface BlockSchema {
 
 /**
  * Context passed to resolve functions.
- * Plugins can extend this via module augmentation.
  */
 export interface BlockResolveContext {
   depth: number;
@@ -189,7 +173,8 @@ export interface BlockDefinition<TBlock extends BaseBlock = BaseBlock> {
   schema: BlockSchema;
 
   // Default config when a new block is created
-  defaultConfig: () => Omit<TBlock, keyof BaseBlock>;
+  // Partial allows omitting fields that have sensible runtime defaults (e.g. null/undefined).
+  defaultConfig: () => Partial<Omit<TBlock, keyof BaseBlock>>;
 
   // Optional async resolution — called server-side
   // Static blocks skip this; content blocks (archive, entry) use it
@@ -377,7 +362,7 @@ export interface FieldBlock extends BaseBlock {
   fieldType: FieldType;
   showLabel?: boolean;
   labelPosition?: 'above' | 'inline' | 'hidden';
-  value: ResolvedFieldValue;  // resolved server-side
+  value?: ResolvedFieldValue;
 }
 
 export interface ArchiveBlock extends BaseBlock {
@@ -426,6 +411,43 @@ export interface CardBlock extends BaseBlock {
   pressAction?: ButtonAction;
 }
 
+// ── Block Factory Functions ─────────────────────────────────────────────────────
+
+/** Build a FieldBlock from raw props — no cast needed once value is optional. */
+export function createFieldBlock(props: {
+  id: string;
+  fieldName: string;
+  label: string;
+  fieldType: FieldType;
+  order: number;
+  visible: boolean;
+  showLabel?: boolean;
+  labelPosition?: 'above' | 'inline' | 'hidden';
+  value?: ResolvedFieldValue;
+}): FieldBlock {
+  return {
+    type: 'field',
+    id: props.id,
+    fieldName: props.fieldName,
+    label: props.label,
+    fieldType: props.fieldType,
+    order: props.order,
+    visible: props.visible,
+    showLabel: props.showLabel ?? true,
+    labelPosition: props.labelPosition ?? 'above',
+    value: props.value,
+  };
+}
+
+
+
+/** Raw MongoDB document shape for media entries (used in API controllers). */
+export interface MediaDocument {
+  _id: unknown;
+  createdAt?: { toISOString?: () => string };
+  data: Record<string, unknown>;
+}
+
 // ── Unified Block Type ─────────────────────────────────────────────────────────
 
 /** All block types (exhaustive union). */
@@ -448,16 +470,14 @@ export type Block =
 
 export type BlockType = Block['type'];
 
-// ── Templates (no resolved values) ─────────────────────────────────────────────
+// ── Templates ──────────────────────────────────────────────────────────────────
 
 /**
- * Layout template blocks — no resolved data.
- * Used in ClientLayout to define schema rendering templates.
+ * Layout template blocks — same as Block since all resolved fields are
+ * already optional/nullable.  Kept as a type alias for documentation
+ * clarity: "these blocks haven't been resolved yet".
  */
-export type LayoutBlock =
-  | Omit<FieldBlock, 'value'>
-  | Omit<ArchiveBlock, 'items'>
-  | Omit<EntryBlock, 'entry'>;
+export type LayoutBlock = Block;
 
 // ── Resolved Entry Response ────────────────────────────────────────────────────
 
@@ -515,7 +535,7 @@ export interface ActivityItem {
 /** Per-schema block layout stored on a client — keyed by ContentType _id. */
 export interface ClientLayout {
   schemaId: string;
-  blocks: LayoutBlock[];
+  blocks: Block[];
 }
 
 export interface Client {

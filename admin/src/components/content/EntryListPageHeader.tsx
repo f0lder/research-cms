@@ -107,8 +107,7 @@ export function EntryListPageHeader({ schema, slug, isAdmin }: PageHeaderProps) 
         <div className="flex items-center gap-2">
           {rebuildMessage && (
             <span
-              className="text-sm"
-              style={rebuildMessage.startsWith('✓') ? { color: '#16a34a' } : { color: '#dc2626' }}
+              className={`text-sm ${rebuildMessage.startsWith('✓') ? 'text-green-600' : 'text-error'}`}
             >
               {rebuildMessage}
             </span>
