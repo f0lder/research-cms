@@ -7,6 +7,9 @@ const defaultTheme = {
   backgroundColor: '#FFFFFF',
   textColor: '#1F2937',
   borderColor: '#E5E7EB',
+  headerBg: '#3B82F6',
+  menuBg: '#FFFFFF',
+  headerTextColor: '#1F2937',
   borderRadius: 8,
   borderWidth: 1,
 };
@@ -22,6 +25,9 @@ export function createColors(settings: Record<string, unknown>) {
   const border = String(settings['client.theme.borderColor'] ?? defaultTheme.borderColor);
   const borderRadius = Number(settings['client.theme.borderRadius'] ?? defaultTheme.borderRadius);
   const borderWidth = Number(settings['client.theme.borderWidth'] ?? defaultTheme.borderWidth);
+  const headerBg = String(settings['client.theme.headerBg'] ?? defaultTheme.headerBg);
+  const menuBg = String(settings['client.theme.menuBg'] ?? defaultTheme.menuBg);
+  const headerTextColor = String(settings['client.theme.headerTextColor'] ?? defaultTheme.headerTextColor);
 
   return {
     bg,
@@ -30,6 +36,9 @@ export function createColors(settings: Record<string, unknown>) {
     accent,
     border,
     text,
+    headerBg,
+    menuBg,
+    headerTextColor,
     subText: adjustAlpha(text, 0.6),
     metaText: adjustAlpha(text, 0.4),
     cardBg: bg,
@@ -56,6 +65,9 @@ export function applyThemeVars(colors: ThemeColors) {
   root.style.setProperty('--color-sub-text', colors.subText);
   root.style.setProperty('--color-meta-text', colors.metaText);
   root.style.setProperty('--color-border', colors.border);
+  root.style.setProperty('--color-header-bg', colors.headerBg);
+  root.style.setProperty('--color-menu-bg', colors.menuBg);
+  root.style.setProperty('--color-header-text', colors.headerTextColor);
   root.style.setProperty('--border-width', `${colors.borderWidth}px`);
   root.style.setProperty('--border-radius', `${colors.borderRadius}px`);
 }

@@ -8,6 +8,9 @@ const defaultTheme = {
   backgroundColor:  '#FFFFFF',
   textColor:        '#1F2937',
   borderColor:      '#E5E7EB',
+  headerBg:         '#3B82F6',
+  menuBg:           '#FFFFFF',
+  headerTextColor:  '#1F2937',
   borderRadius:     8,
   borderWidth:      1,
 };
@@ -20,10 +23,15 @@ export function createColors(settings: Record<string, unknown>) {
   const bg = String(settings['client.theme.backgroundColor'] ?? defaultTheme.backgroundColor);
   const text = String(settings['client.theme.textColor'] ?? defaultTheme.textColor);
   const border = String(settings['client.theme.borderColor'] ?? defaultTheme.borderColor);
+  const headerBg = String(settings['client.theme.headerBg'] ?? defaultTheme.headerBg);
+  const menuBg = String(settings['client.theme.menuBg'] ?? defaultTheme.menuBg);
+  const headerTextColor = String(settings['client.theme.headerTextColor'] ?? defaultTheme.headerTextColor);
 
   return {
     bg,
-    headerBg:     primary,
+    headerBg,
+    menuBg,
+    headerTextColor,
     headerText:   '#ffffff',
     primary,
     secondary,
@@ -47,6 +55,9 @@ export const C = createColors({
   'client.theme.backgroundColor':  defaultTheme.backgroundColor,
   'client.theme.textColor':        defaultTheme.textColor,
   'client.theme.borderColor':      defaultTheme.borderColor,
+  'client.theme.headerBg':         defaultTheme.headerBg,
+  'client.theme.menuBg':           defaultTheme.menuBg,
+  'client.theme.headerTextColor':  defaultTheme.headerTextColor,
 });
 
 // Adjust color opacity (simple implementation for hex colors with alpha)

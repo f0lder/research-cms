@@ -109,9 +109,13 @@ export default function App() {
 
   return (
     <ThemeProvider value={colors}>
-      <div style={{ height: 4, background: `linear-gradient(90deg, ${colors.primary} 0%, ${colors.secondary} 50%, ${colors.accent} 100%)` }} />
+      <header style={{ background: colors.headerBg }}>
+        <div style={{ height: 4, background: `linear-gradient(90deg, ${colors.primary} 0%, ${colors.secondary} 50%, ${colors.accent} 100%)` }} />
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 16px' }}>
+          <Nav pages={pages} schemas={schemas} route={route} menuItems={menuItems} />
+        </div>
+      </header>
       <main style={{ maxWidth: 960, margin: '0 auto', padding: '32px 16px', fontFamily: 'system-ui, sans-serif', color: colors.text }}>
-        <Nav pages={pages} schemas={schemas} route={route} menuItems={menuItems} />
         <RouteContent route={route} pages={pages} schemas={schemas} />
       </main>
     </ThemeProvider>
@@ -189,12 +193,12 @@ function Nav({ pages, schemas, route, menuItems }: { pages: PublicEntryResponse[
   const colors = useTheme();
 
   const linkStyle = (active: boolean): React.CSSProperties => ({
-    color: active ? colors.primary : colors.subText,
+    color: active ? colors.accent : colors.headerTextColor,
     fontWeight: active ? 600 : 400,
     textDecoration: 'none',
     fontSize: 14,
     paddingBottom: 4,
-    borderBottom: active ? `2px solid ${colors.primary}` : '2px solid transparent',
+    borderBottom: active ? `2px solid ${colors.accent}` : '2px solid transparent',
   });
 
   const isActive = (item: MenuItem): boolean => {
@@ -226,9 +230,8 @@ function Nav({ pages, schemas, route, menuItems }: { pages: PublicEntryResponse[
           display: 'flex',
           flexWrap: 'wrap',
           gap: 16,
-          marginBottom: 24,
-          paddingBottom: 12,
-          borderBottom: `${colors.borderWidth}px solid ${colors.border}`,
+          padding: '12px 0',
+          background: colors.menuBg,
           alignItems: 'center',
         }}
       >
@@ -259,9 +262,8 @@ function Nav({ pages, schemas, route, menuItems }: { pages: PublicEntryResponse[
         display: 'flex',
         flexWrap: 'wrap',
         gap: 16,
-        marginBottom: 24,
-        paddingBottom: 12,
-        borderBottom: `${colors.borderWidth}px solid ${colors.border}`,
+        padding: '12px 0',
+        background: colors.menuBg,
         alignItems: 'center',
       }}
     >
