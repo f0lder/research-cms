@@ -1,166 +1,152 @@
-# Research CMS — Conference Presentation
+# Research CMS — Prezentare Conferință
 
-## Slide 1 — Title
+## Slide 1 — Titlu
 
 **Research CMS**  
-A self-hosted, open-source content management platform for digital agencies and non-technical users  
-*Server-Driven UI · Dynamic Schema Builder · Multi-Client Management*
+Platformă CMS open-source, self-hosted, pentru agenții digitale și utilizatori non-tehnici  
+*Server-Driven UI · Constructor de Scheme · Multi-Client Management*
+
+> [Screenshot: logo + titlu proiect]
 
 ---
 
-## Slide 2 — Market Landscape
+## Slide 2 — Piața Actuală
 
-**What's on the market today:**
+| Soluție | Tip | Cost | Self-Hosted |
+|---------|-----|------|-------------|
+| WordPress | Monolithic | Free / Pluginuri plătite | ✅ |
+| Strapi | Headless CMS | Gratuit / Cloud plătit | ✅ |
+| Contentful | Headless CMS | $300+/lună | ❌ |
+| Sanity | Headless CMS | $15+/lună | ❌ |
+| Ghost | Newsletter CMS | $9+/lună | ✅ |
+| Directus | Headless CMS | Gratuit / Cloud plătit | ✅ |
 
-| Solution | Type | Cost | Self-Hosted | Non-Technical Friendly |
-|----------|------|------|-------------|------------------------|
-| WordPress | Monolithic | Free / Paid plugins | ✅ | ✅ (limited) |
-| Strapi | Headless CMS | Free / Cloud paid | ✅ | ❌ Developer-oriented |
-| Contentful | Headless CMS | $300+/mo | ❌ Cloud only | ❌ Developer-oriented |
-| Sanity | Headless CMS | Free tier / $15+/mo | ❌ Cloud only | ❌ Developer-oriented |
-| Ghost | Newsletter CMS | Free / $9/mo | ✅ | ✅ (limited scope) |
-| Directus | Headless CMS | Free / $15+/mo Cloud | ✅ | ❌ Developer-oriented |
+**Problema:** CMS-urile dezvoltatorilor necesită cunoștințe tehnice. CMS-urile user-friendly (WordPress) nu livreză pe multiple canale. Soluțiile comerciale sunt scumpe.
 
-**Key gap:** Developer-oriented CMSs require coding expertise to model content, while user-friendly alternatives (WordPress) lack multi-channel delivery. Commercial headless solutions are expensive and not self-hosted.
+> [Screenshot: tabel comparativ]
 
 ---
 
-## Slide 3 — Competitor Comparison
+## Slide 3 — Competiție
 
-**Similar products and how we differ:**
-
-| Feature | WordPress | Strapi | Contentful | **Research CMS** |
+| Funcție | WordPress | Strapi | Contentful | **Research CMS** |
 |---------|-----------|--------|------------|------------------|
-| Define content types visually | Limited (CPT UI plugin) | ✅ Admin UI | ✅ Admin UI | **✅ Admin UI — 17 field types** |
-| No-code content modeling | ❌ | ⚠️ Requires dev to configure | ⚠️ Requires dev to configure | **✅ Built for non-technical users** |
-| Multi-channel delivery | ⚠️ Via REST API (plugin) | ✅ REST/GraphQL | ✅ REST/GraphQL | **✅ Web + Mobile (SDUI) built-in** |
-| Application updates for UI changes | No | Yes (frontend deploys) | Yes (frontend deploys) | **No — SDUI renders dynamically** |
-| Self-hosted | ✅ | ✅ | ❌ | **✅ Yes — full control** |
-| Price | Free (paid plugins) | Free | $300+/mo | **Free — open source** |
-| Multi-client from one install | ❌ (multisite limited) | ❌ | ❌ | **✅ Yes — single dashboard** |
-| Per-client block layouts | ❌ | ❌ | ❌ | **✅ Yes — drag & drop block editor** |
+| Tipuri de conținut vizuale | Limitativ | ✅ | ✅ | **✅ 17 tipuri câmp** |
+| Fără cod | ❌ | ⚠️ | ⚠️ | **✅ Da** |
+| Multi-canal | ⚠️ REST API | ✅ | ✅ | **✅ Web + Mobile SDUI** |
+| Self-hosted | ✅ | ✅ | ❌ | **✅ Da** |
+| Preț | Gratuit / Pluginuri | Gratuit | $300+/lună | **Gratuit** |
+| Multi-client dintr-o instanță | ❌ | ❌ | ❌ | **✅ Da** |
+
+> [Screenshot: tabel competiție evidențiind Research CMS]
 
 ---
 
-## Slide 4 — The Problem & Our Solution
+## Slide 4 — Problema și Soluția
 
-**The gap in the current landscape:**
+**Problema:**  
+Agențiile digitale mici gestionează 5–15 proiecte. Nu își permit $300+/lună/client pentru Contentful sau developeri pentru Strapi.
 
-- Small digital agencies manage 5–15 client projects, each needing a website or mobile app
-- They can't afford $300+/mo per client for Contentful or hire full-time developers for Strapi
-- WordPress works for simple sites but fails for structured content, mobile delivery, or multi-project management
+**Soluția:**  
+Platformă modulară unde utilizatorii non-tehnici își definesc singuri tipurile de conținut — articole, produse, evenimente — direct din interfață grafică, fără cod.
 
-**Our solution:**
-
-A modular web platform where non-technical users define their own content types — articles, products, events, or any structure — directly through a graphical interface, without writing code. Each project (client) gets web or mobile configuration with its own theme, pages, and navigation, while sharing the same underlying engine.
+> [Screenshot: admin dashboard — lista scheme]
 
 ---
 
-## Slide 5 — Dynamic Schema Builder
+## Slide 5 — Constructor Dinamic de Scheme
 
-**Define content types visually — no code required.**
+- **17 tipuri de câmpuri:** text, textarea, richtext, email, url, number, date, boolean, media, select, tags, references, blocks
+- Ordonează câmpurile drag-and-drop
+- Configurare per câmp: required, valori implicite, opțiuni, referințe
+- Toggle features: drafturi, revizii, search, SEO, slug
+- Schimbări propagate instant către toate aplicațiile client
 
-- 17 field types: text, textarea, richtext, email, url, number, date, datetime, boolean, media, select, tags, reference, references, blocks
-- Drag-and-drop field ordering
-- Per-field configuration: required, default values, select options, reference targets
-- Schema features toggle: drafts, revisions, full-text search, SEO fields, slug generation
-- Changes take effect immediately — schema definitions propagate to all consumers in real time
+**Rezultat:** Un utilizator non-tehnic creează o schemă "Produs" cu 6 câmpuri în sub 3 minute.
 
-**What this means for your workflow:**  
-A non-technical user creates a "Product" schema with 6 fields in under 3 minutes. The backend validates, the admin generates forms, and the mobile/web apps render the new content type — all without a single line of code.
+> [Screenshot: schema builder — formular creare cu câmpuri]
 
 ---
 
 ## Slide 6 — Server-Driven UI (SDUI)
 
-**The architecture that eliminates app updates.**
+- Conținutul și layout-ul se configurează în admin
+- Aplicațiile mobile/web fetch-uiesc layout-ul la runtime
+- Schimbări de layout, ordine câmpuri, vizibilitate — **imediat reflectate**
+- Fără app store review-uri, fără redeploy-uri, fără coordonare cu developeri
 
-- Content structure (blocks, layouts, field positions) is configured in the admin panel
-- Mobile and web apps fetch layout definitions from the API at runtime
-- Changes to layout, field order, visibility, or block types are reflected immediately
-- No app store reviews, no redeployments, no developer coordination
+**Cum funcționează:**  
+Admin construiește pagină cu blocuri → API servește layout + conținut → Clientul render-ează cu BlockRenderer
 
-**How it works:**
-1. Admin builds a page layout using blocks (Heading, Image, Text, Archive, etc.)
-2. API serves the layout definition + content to client apps
-3. Client apps render blocks using a `BlockRenderer` that maps types to native components
-4. Next launch: same app, different layout — instant update
+**Platforme suportate:** Web (React/Vite) + Mobile (Expo/React Native)
 
-**Supported platforms:** Web (React/Vite) + Mobile (Expo/React Native)
+> [Screenshot: diagramă arhitectură SDUI — Admin → API → Web + Mobile]
 
 ---
 
 ## Slide 7 — Block & Page Builder
 
-**Drag-and-drop page building for non-technical users.**
+- **12 tipuri de blocuri** în 3 categorii:
+  - *Static:* Heading, Text, Divider, Spacer, Image, Button
+  - *Content:* Field, Archive (listă dinamică), Entry (individual)
+  - *Layout:* Row (coloane), Column, Card
+- Drag-and-drop din paletă, reordonare vizuală
+- Configurare per bloc în sidebar (autogenerată din schema blocului)
+- Vizibilitate per dispozitiv (mobile/tabletă/desktop)
 
-- 12 built-in block types across 3 categories:
-  - **Static:** Heading, Text, Divider, Spacer, Image, Button
-  - **Content:** Field, Archive (dynamic list), Entry (single)
-  - **Layout:** Row (with columns), Column, Card
-- Blocks organized into a sidebar palette — drag to add, reorder visually
-- Sidebar configuration panel auto-generated from each block's schema
-- Per-block visibility controls (hide on mobile/tablet/desktop)
-- Animations: fade-in, slide-up, slide-in
-- Nested containers: Rows contain Columns, Cards contain block stacks
+**Caz de uz:** Manager de client construiește o pagină landing cu hero, heading, carduri și arhivă produse — tot din admin, fără developer.
 
-**Use case:** A client manager builds a landing page with a hero image, heading, feature cards row, and archive of latest products — all in the admin interface, no developer needed.
+> [Screenshot: block editor — paletă + zonă editare + sidebar configurare]
 
 ---
 
-## Slide 8 — Multi-Client & Multi-Project Management
+## Slide 8 — Multi-Client Management
 
-**One dashboard to manage all your projects.**
+- Creează API clienți cu template-uri (none / mobile / web)
+- Control acces per-client la scheme
+- Layout-uri per-client per-schemă
+- Teme per-client (culori, border-radius, typografie)
+- Urmărire utilizare și analytics per API key
+- Pagini specifice clientului cu block-based layouts
 
-- Create API clients with templates (none / mobile / web)
-- Per-client schema access controls — choose which content types each client can access
-- Per-client block layouts — customize how each schema renders per client
-- Per-client theme settings — colors, border radius, typography via settings registry
-- Built-in usage tracking and analytics per API key
-- Client-specific pages with block-based layouts
+**Un singur server Research CMS poate alimenta 10+ proiecte client.**
 
-**Why this matters:**  
-A single Research CMS instance can power 10+ client projects. Each has its own API key, its own content access rules, its own layouts, and its own theme — all managed from one login.
-
----
-
-## Slide 9 — Open Source, Self-Hosted, and Cost-Effective
-
-**Full control over your data and infrastructure.**
-
-- **Open source** (MIT license) — no licensing fees, no per-seat pricing
-- **Self-hosted** — data stays on your infrastructure, no vendor lock-in
-- **No per-client pricing** — unlimited clients, unlimited entries
-- **Single server** — the API, admin, web, and mobile backends all run on one Node.js server + MongoDB
-
-**Cost comparison (10 clients):**
-
-| Solution | Monthly Cost |
-|----------|-------------|
-| Contentful (10 spaces) | $3,000+ |
-| Sanity (10 projects) | $150+ |
-| Strapi Cloud (10 projects) | $500+ |
-| **Research CMS (self-hosted)** | **~$20 (server only)** |
+> [Screenshot: listă clienți în admin + pagină detaliu client]
 
 ---
 
-## Slide 10 — Summary & Call to Action
+## Slide 9 — Open Source & Self-Hosted
 
-**What we've built:**
+- **Licență MIT** — fără taxe de licențiere
+- **Self-hosted** — datele rămân pe infrastructura ta
+- **Fără preț per client** — clienți nelimitați, intrări nelimitate
+- **Un singur server:** API, admin, web și mobile pornesc de pe un Node.js + MongoDB
 
-- ✅ A dynamic content type builder — no code required
-- ✅ Server-Driven UI — instant layout changes across web + mobile
-- ✅ Drag-and-drop page/block editor — built for non-technical users
-- ✅ Multi-client management — one dashboard for all projects
-- ✅ Self-hosted, open source — full control, zero licensing cost
+| Soluție (10 clienți) | Cost lunar |
+|----------------------|------------|
+| Contentful | $3,000+ |
+| Sanity | $150+ |
+| Strapi Cloud | $500+ |
+| **Research CMS (self-hosted)** | **~$20 (server)** |
 
-**The key insight:**  
-The bottleneck in headless CMS isn't content creation — it's the developer coordination required every time the data model or layout changes. Research CMS eliminates that bottleneck.
+> [Screenshot: grafic/iconiță cost — Research CMS vs. competiție]
 
-**Try it:**
-- Self-hosted deployment in minutes
-- One server, unlimited clients
-- Open source at github.com/your-org/research-cms
+---
+
+## Slide 10 — Concluzie
+
+- ✅ Constructor dinamic de tipuri de conținut — fără cod
+- ✅ Server-Driven UI — schimbări instant pe web + mobile
+- ✅ Drag-and-drop page editor — pentru utilizatori non-tehnici
+- ✅ Multi-client — un dashboard pentru toate proiectele
+- ✅ Self-hosted, open-source — control total, cost zero
+
+**Gândește-te:**  
+Blocajul în headless CMS nu e crearea de conținut — e coordonarea cu developerii de fiecare dată când se schimbă modelul de date. Research CMS elimină acest blocaj.
+
+**Încearcă:** github.com/f0lder/research-cms
+
+> [Screenshot: aplicația în funcțiune — admin + web + mobile]
 
 ---
 
