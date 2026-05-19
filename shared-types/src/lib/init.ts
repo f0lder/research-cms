@@ -110,6 +110,15 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     isPublic: true,
   },
   {
+    key: 'client.theme.logo',
+    label: 'Logo',
+    description: 'Logo image displayed in the header.',
+    category: 'Branding',
+    type: 'media',
+    scope: 'client',
+    isPublic: true,
+  },
+  {
     key: 'client.brandName',
     label: 'Brand Name',
     category: 'Branding',

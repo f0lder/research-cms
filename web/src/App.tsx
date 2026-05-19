@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Block, PublicEntryResponse, MenuItem } from '@research-cms/shared-types';
 import { API_KEY } from '@/lib/config';
-import { listPages, getPage, getClientSettings, listSchemas, getMenu, SchemaSummary } from '@/lib/api';
+import { listPages, getPage, getClientSettings, listSchemas, getMenu, getMedia, SchemaSummary } from '@/lib/api';
 import { ThemeProvider, createColors, useTheme, applyThemeVars } from '@/lib/theme';
 import { BlockRenderer } from '@/components/BlockRenderer';
 import ArchiveView from '@/views/ArchiveView';
@@ -37,6 +37,7 @@ export default function App() {
   const [schemas, setSchemas] = useState<SchemaSummary[]>([]);
   const [settings, setSettings] = useState<Record<string, unknown>>({});
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [logoUrl, setLogoUrl] = useState('');
   const [bootstrapLoading, setBootstrapLoading] = useState(true);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
@@ -76,6 +77,10 @@ export default function App() {
         setSchemas(s.filter(x => x.slug !== 'page' && x.slug !== 'media'));
         setSettings(st);
         if (mi.length > 0) setMenuItems(mi);
+        const logoId = st['client.theme.logo'] as string | undefined;
+        if (logoId) {
+          getMedia(logoId).then(m => !cancelled && setLogoUrl(m.url)).catch(() => {});
+        }
       })
       .catch(e => !cancelled && setBootstrapError(e instanceof Error ? e.message : 'Failed to load'))
       .finally(() => !cancelled && setBootstrapLoading(false));
@@ -111,7 +116,8 @@ export default function App() {
     <ThemeProvider value={colors}>
       <header style={{ background: colors.headerBg }}>
         <div style={{ height: 4, background: `linear-gradient(90deg, ${colors.primary} 0%, ${colors.secondary} 50%, ${colors.accent} 100%)` }} />
-        <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 16px' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 16px', display: 'flex', alignItems: 'center', gap: 24 }}>
+          {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 32, width: 'auto' }} />}
           <Nav pages={pages} schemas={schemas} route={route} menuItems={menuItems} />
         </div>
       </header>
