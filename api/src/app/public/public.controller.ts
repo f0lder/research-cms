@@ -1,9 +1,10 @@
-import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards, NotFoundException } from '@nestjs/common';
 import { Request } from 'express';
 import { PublicService } from './public.service';
 import { ApiKeysService } from '../api-keys/api-keys.service';
 import { SchemaService } from '../schema/schema.service';
 import { SettingsService } from '../settings/settings.service';
+import { MenusService } from '../menus/menus.service';
 import { ApiKeyGuard } from '../api-keys/guards/api-key.guard';
 import { interpolateBlocks } from '@research-cms/shared-types';
 
@@ -20,6 +21,7 @@ export class PublicController {
     private readonly apiKeysService: ApiKeysService,
     private readonly schemaService: SchemaService,
     private readonly settingsService: SettingsService,
+    private readonly menusService: MenusService,
   ) {}
 
   @Get()
@@ -103,6 +105,27 @@ export class PublicController {
     @Req() req: PublicRequest,
   ) {
     return this.publicService.findPageBySlug(slug, req.clientId);
+  }
+
+  // ── Menus ─────────────────────────────────────────────────────────────────────
+
+  @Get('menus/:slot')
+  async getMenuBySlot(
+    @Param('slot') slot: string,
+    @Req() req: PublicRequest,
+  ) {
+    const menu = await this.menusService.findBySlot(req.clientId, slot);
+    if (!menu) {
+      return { menu: null, items: [] };
+    }
+    return {
+      menu: {
+        name: menu.name,
+        slug: menu.slug,
+        slot: menu.slot,
+      },
+      items: menu.items.sort((a, b) => a.order - b.order),
+    };
   }
 
   // ── Schema content ───────────────────────────────────────────────────────────

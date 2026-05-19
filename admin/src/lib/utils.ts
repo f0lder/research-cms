@@ -74,6 +74,8 @@ export const adminRoutes = {
   clientLayout:  (id: string, schemaSlug: string) => `/clients/${id}/layout/${schemaSlug}`,
   clientPageNew: (id: string) => `/clients/${id}/pages/new`,
   clientPageEdit:(id: string, pageSlug: string) => `/clients/${id}/pages/${pageSlug}`,
+  clientMenus:   (id: string) => `/clients/${id}/menus`,
+  clientMenuEdit:(id: string, menuId: string) => `/clients/${id}/menus/${menuId}`,
   webhooks:       '/webhooks',
   webhookNew:     '/webhooks/new',
   webhookEdit:    (id: string) => `/webhooks/${id}`,

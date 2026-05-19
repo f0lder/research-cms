@@ -11,6 +11,8 @@ import {
   FieldValue,
   Block,
   Webhook,
+  Menu,
+  MenuItem,
   PAGE_SCHEMA_SLUG,
   SettingDefinition,
   SettingScope,
@@ -476,6 +478,28 @@ export async function updateClientLayout(clientId: string, schemaSlug: string, b
     return { error: schema.error || 'Schema not found'};
   }
   return serverApi.put(`/clients/${clientId}/layouts/${schemaSlug}`, { blocks });
+}
+
+// ── Menus ──────────────────────────────────────────────────────────────────
+
+export async function getClientMenus(clientId: string) {
+  return serverApi.get<Menu[]>(`/clients/${clientId}/menus`);
+}
+
+export async function getClientMenu(clientId: string, menuId: string) {
+  return serverApi.get<Menu>(`/clients/${clientId}/menus/${menuId}`);
+}
+
+export async function createClientMenu(clientId: string, data: { name: string; slug: string; slot?: string }) {
+  return serverApi.post<Menu>(`/clients/${clientId}/menus`, data);
+}
+
+export async function updateClientMenu(clientId: string, menuId: string, data: Partial<Menu>) {
+  return serverApi.patch<Menu>(`/clients/${clientId}/menus/${menuId}`, data);
+}
+
+export async function deleteClientMenu(clientId: string, menuId: string) {
+  return serverApi.delete(`/clients/${clientId}/menus/${menuId}`);
 }
 
 // ── Media ──────────────────────────────────────────────────────────────────

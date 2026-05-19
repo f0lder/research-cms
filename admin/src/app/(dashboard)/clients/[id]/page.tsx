@@ -358,6 +358,21 @@ export default function ClientDetailPage() {
         )}
       </section>
 
+      {/* ── Menus ────────────────────────────────────── */}
+      <section className="section">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <Heading level={3}>Menus</Heading>
+            <Text variant="body-md" color="secondary" className="mt-1">
+              Navigations and link collections for this client.
+            </Text>
+          </div>
+          <Link href={adminRoutes.clientMenus(id)} className="no-underline">
+            <Button variant="secondary" size="sm" className="whitespace-nowrap">Manage menus</Button>
+          </Link>
+        </div>
+      </section>
+
       {/* ── Block layouts ───────────────────────────── */}
       <section className="section">
         <Heading level={3} className="mb-1">Block Layouts</Heading>

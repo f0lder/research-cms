@@ -552,6 +552,33 @@ export interface Client {
   createdAt?: string;
 }
 
+// ── Menus ──────────────────────────────────────────────────────────────────────
+
+export type MenuItemType = 'page' | 'entry' | 'archive' | 'external';
+
+export interface MenuItem {
+  id: string;
+  label: string;
+  type: MenuItemType;
+  pageSlug?: string;
+  schemaSlug?: string;
+  entryId?: string;
+  archiveSchema?: string;
+  url?: string;
+  order: number;
+}
+
+export interface Menu {
+  _id?: string;
+  clientId: string;
+  name: string;
+  slug: string;
+  slot?: string;
+  items: MenuItem[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // ── Webhooks ──────────────────────────────────────────────────────────────────
 
 export interface Webhook {
