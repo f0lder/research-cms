@@ -1,5 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, Modal, Pressable, SafeAreaView, StyleSheet } from 'react-native';
-import { PageEntryResponse } from '@research-cms/shared-types';
+import { View, Text, ScrollView, TouchableOpacity, Modal, Pressable, SafeAreaView, StyleSheet, Linking } from 'react-native';
+import { PageEntryResponse, MenuItem } from '@research-cms/shared-types';
 import { useTheme } from '../src/app/_layout';
 
 type Schema = { slug: string; name: string };
@@ -8,13 +8,31 @@ interface Props {
   visible: boolean;
   schemas: Schema[];
   pages: PageEntryResponse[];
+  headerMenuItems?: MenuItem[];
   homePageId?: string | null;
   activeSlug: string | null;
   onSelect: (path: string) => void;
   onClose: () => void;
 }
 
-export function Sidebar({ visible, schemas, pages, homePageId, activeSlug, onSelect, onClose }: Props) {
+export function Sidebar({ visible, schemas, pages, headerMenuItems = [], homePageId, activeSlug, onSelect, onClose }: Props) {
+
+  const itemHref = (item: MenuItem): string => {
+    switch (item.type) {
+      case 'page':   return `/pages/${item.pageSlug ?? ''}`;
+      case 'entry':  return `/${item.schemaSlug ?? ''}/${item.entryId ?? ''}`;
+      case 'archive': return `/${item.archiveSchema ?? ''}`;
+      case 'external': return item.url ?? '#';
+    }
+  };
+
+  const handleMenuItemPress = (item: MenuItem) => {
+    if (item.type === 'external' && item.url) {
+      Linking.openURL(item.url);
+      return;
+    }
+    onSelect(itemHref(item));
+  };
   const colors = useTheme();
   
   const s = StyleSheet.create({
@@ -46,6 +64,31 @@ export function Sidebar({ visible, schemas, pages, homePageId, activeSlug, onSel
             </TouchableOpacity>
           </View>
           <ScrollView>
+            {/* Menu items section */}
+            {headerMenuItems.length > 0 && (
+              <>
+                <View style={s.sectionLabel}>
+                  <Text style={s.sectionLabelText}>Navigation</Text>
+                </View>
+                {headerMenuItems.map(item => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={s.item}
+                    onPress={() => handleMenuItemPress(item)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={s.itemText}>{item.label}</Text>
+                    <Text style={s.itemSlug}>
+                      {item.type === 'page' ? `/${item.pageSlug}` :
+                       item.type === 'entry' ? `/${item.schemaSlug}/${item.entryId}` :
+                       item.type === 'archive' ? `/schema/${item.archiveSchema}` :
+                       item.url}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </>
+            )}
+
             {/* Pages section */}
             {pages.length > 0 && (
               <>
@@ -100,6 +143,14 @@ export function Sidebar({ visible, schemas, pages, homePageId, activeSlug, onSel
             {pages.length === 0 && schemas.length === 0 && (
               <Text style={s.empty}>No content available.</Text>
             )}
+
+            <View style={s.sectionLabel}>
+              <Text style={s.sectionLabelText}>System</Text>
+            </View>
+            <TouchableOpacity style={s.item} onPress={() => onSelect('/debug')} activeOpacity={0.7}>
+              <Text style={s.itemText}>Debug</Text>
+              <Text style={s.itemSlug}>/debug</Text>
+            </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
       </View>

@@ -18,7 +18,17 @@ export class MenuModel {
   @Prop()
   slot?: string;
 
-  @Prop({ type: [{ id: String, label: String, type: String, pageSlug: String, schemaSlug: String, entryId: String, archiveSchema: String, url: String, order: Number }], default: [] })
+  @Prop({ type: [{
+    id: { type: String },
+    label: { type: String },
+    type: { type: String, enum: ['page', 'entry', 'archive', 'external'] },
+    pageSlug: { type: String },
+    schemaSlug: { type: String },
+    entryId: { type: String },
+    archiveSchema: { type: String },
+    url: { type: String },
+    order: { type: Number },
+  }], default: [] })
   items!: {
     id: string;
     label: string;

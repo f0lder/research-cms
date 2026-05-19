@@ -10,6 +10,8 @@ const defaultTheme = {
   headerBg: '#3B82F6',
   menuBg: '#FFFFFF',
   headerTextColor: '#1F2937',
+  footerBg: '#1F2937',
+  footerTextColor: '#FFFFFF',
   borderRadius: 8,
   borderWidth: 1,
 };
@@ -28,6 +30,8 @@ export function createColors(settings: Record<string, unknown>) {
   const headerBg = String(settings['client.theme.headerBg'] ?? defaultTheme.headerBg);
   const menuBg = String(settings['client.theme.menuBg'] ?? defaultTheme.menuBg);
   const headerTextColor = String(settings['client.theme.headerTextColor'] ?? defaultTheme.headerTextColor);
+  const footerBg = String(settings['client.theme.footerBg'] ?? defaultTheme.footerBg);
+  const footerTextColor = String(settings['client.theme.footerTextColor'] ?? defaultTheme.footerTextColor);
 
   return {
     bg,
@@ -39,6 +43,8 @@ export function createColors(settings: Record<string, unknown>) {
     headerBg,
     menuBg,
     headerTextColor,
+    footerBg,
+    footerTextColor,
     subText: adjustAlpha(text, 0.6),
     metaText: adjustAlpha(text, 0.4),
     cardBg: bg,
@@ -68,6 +74,8 @@ export function applyThemeVars(colors: ThemeColors) {
   root.style.setProperty('--color-header-bg', colors.headerBg);
   root.style.setProperty('--color-menu-bg', colors.menuBg);
   root.style.setProperty('--color-header-text', colors.headerTextColor);
+  root.style.setProperty('--color-footer-bg', colors.footerBg);
+  root.style.setProperty('--color-footer-text', colors.footerTextColor);
   root.style.setProperty('--border-width', `${colors.borderWidth}px`);
   root.style.setProperty('--border-radius', `${colors.borderRadius}px`);
 }

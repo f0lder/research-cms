@@ -37,6 +37,7 @@ export default function App() {
   const [schemas, setSchemas] = useState<SchemaSummary[]>([]);
   const [settings, setSettings] = useState<Record<string, unknown>>({});
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [footerItems, setFooterItems] = useState<MenuItem[]>([]);
   const [logoUrl, setLogoUrl] = useState('');
   const [bootstrapLoading, setBootstrapLoading] = useState(true);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
@@ -70,16 +71,20 @@ export default function App() {
       getMenu('header')
         .then(r => r.items)
         .catch(() => [] as MenuItem[]),
+      getMenu('footer')
+        .then(r => r.items)
+        .catch(() => [] as MenuItem[]),
     ])
-      .then(([p, s, st, mi]) => {
+      .then(([p, s, st, mi, fi]) => {
         if (cancelled) return;
         setPages(p);
         setSchemas(s.filter(x => x.slug !== 'page' && x.slug !== 'media'));
         setSettings(st);
         if (mi.length > 0) setMenuItems(mi);
+        if (fi.length > 0) setFooterItems(fi);
         const logoId = st['client.theme.logo'] as string | undefined;
         if (logoId) {
-          getMedia(logoId).then(m => !cancelled && setLogoUrl(m.url)).catch(() => {});
+          getMedia(logoId).then(m => !cancelled && setLogoUrl((m.data?.url as string) ?? '')).catch(() => {});
         }
       })
       .catch(e => !cancelled && setBootstrapError(e instanceof Error ? e.message : 'Failed to load'))
@@ -117,13 +122,14 @@ export default function App() {
       <header style={{ background: colors.headerBg }}>
         <div style={{ height: 4, background: `linear-gradient(90deg, ${colors.primary} 0%, ${colors.secondary} 50%, ${colors.accent} 100%)` }} />
         <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 16px', display: 'flex', alignItems: 'center', gap: 24 }}>
-          {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 32, width: 'auto' }} />}
+          {logoUrl && <a href="#/"><img src={logoUrl} alt="Logo" style={{ height: 32, width: 'auto', cursor: 'pointer' }} /></a>}
           <Nav pages={pages} schemas={schemas} route={route} menuItems={menuItems} />
         </div>
       </header>
       <main style={{ maxWidth: 960, margin: '0 auto', padding: '32px 16px', fontFamily: 'system-ui, sans-serif', color: colors.text }}>
-        <RouteContent route={route} pages={pages} schemas={schemas} />
+        <RouteContent route={route} pages={pages} schemas={schemas} settings={settings} />
       </main>
+      <Footer footerItems={footerItems} colors={colors} />
     </ThemeProvider>
   );
 }
@@ -132,10 +138,12 @@ function RouteContent({
   route,
   pages,
   schemas,
+  settings,
 }: {
   route: Route;
   pages: PublicEntryResponse[];
   schemas: SchemaSummary[];
+  settings: Record<string, unknown>;
 }) {
   if (route.type === 'home') {
     if (pages.length === 0 && schemas.length === 0) {
@@ -154,7 +162,7 @@ function RouteContent({
   }
 
   if (route.type === 'debug') {
-    return <DebugView />;
+    return <DebugView settings={settings} />;
   }
 
   // 'page'
@@ -237,7 +245,6 @@ function Nav({ pages, schemas, route, menuItems }: { pages: PublicEntryResponse[
           flexWrap: 'wrap',
           gap: 16,
           padding: '12px 0',
-          background: colors.menuBg,
           alignItems: 'center',
         }}
       >
@@ -269,7 +276,6 @@ function Nav({ pages, schemas, route, menuItems }: { pages: PublicEntryResponse[
         flexWrap: 'wrap',
         gap: 16,
         padding: '12px 0',
-        background: colors.menuBg,
         alignItems: 'center',
       }}
     >
@@ -293,6 +299,44 @@ function Nav({ pages, schemas, route, menuItems }: { pages: PublicEntryResponse[
         </a>
       ))}
     </nav>
+  );
+}
+
+function Footer({ footerItems, colors }: { footerItems: MenuItem[]; colors: ReturnType<typeof createColors> }) {
+  if (footerItems.length === 0) return null;
+
+  const linkStyle: React.CSSProperties = {
+    color: colors.footerTextColor,
+    textDecoration: 'none',
+    fontSize: 14,
+    opacity: 0.85,
+  };
+
+  const itemHref = (item: MenuItem): string => {
+    switch (item.type) {
+      case 'page':   return `#/${item.pageSlug ?? ''}`;
+      case 'entry':  return `#/${item.schemaSlug ?? ''}/${item.entryId ?? ''}`;
+      case 'archive': return `#/schema/${item.archiveSchema ?? ''}`;
+      case 'external': return item.url ?? '#';
+    }
+  };
+
+  return (
+    <footer style={{ background: colors.footerBg, padding: '32px 16px', marginTop: 48 }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'center' }}>
+        {footerItems.map(item => (
+          <a
+            key={item.id}
+            href={itemHref(item)}
+            target={item.type === 'external' ? '_blank' : undefined}
+            rel={item.type === 'external' ? 'noopener noreferrer' : undefined}
+            style={linkStyle}
+          >
+            {item.label}
+          </a>
+        ))}
+      </div>
+    </footer>
   );
 }
 

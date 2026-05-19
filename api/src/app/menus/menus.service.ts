@@ -24,13 +24,15 @@ export class MenusService {
   }
 
   async update(clientId: string, id: string, data: Partial<Pick<MenuDocument, 'name' | 'slug' | 'slot' | 'items'>>): Promise<MenuDocument> {
-    const menu = await this.model.findOneAndUpdate(
-      { _id: id, clientId },
-      { $set: data },
-      { new: true },
-    ).exec();
+    const menu = await this.model.findOne({ _id: id, clientId }).exec();
     if (!menu) throw new NotFoundException('Menu not found');
-    return menu;
+    if (data.name !== undefined) menu.name = data.name;
+    if (data.slug !== undefined) menu.slug = data.slug;
+    if (data.slot !== undefined) menu.slot = data.slot;
+    if (data.items !== undefined) {
+      menu.items = typeof data.items === 'string' ? JSON.parse(data.items) : data.items;
+    }
+    return menu.save();
   }
 
   async delete(clientId: string, id: string): Promise<void> {
