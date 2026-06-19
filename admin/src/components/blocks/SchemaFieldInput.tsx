@@ -4,17 +4,9 @@ import { ReactNode } from 'react';
 import { BlockSchemaField, Block, ColumnBlock } from '@research-cms/shared-types';
 import { NestedBlocksEditor } from './NestedBlocksEditor';
 import { ColumnsEditor } from './ColumnsEditor';
-import { Text, Toggle, PagePickerSelect, SchemaPickerSelect, EntryPickerSelect, FieldPickerSelect, FieldPickerMultiSelect } from '@/components/ui';
+import { Text, Toggle, SelectField, PagePickerSelect, SchemaPickerSelect, EntryPickerSelect, FieldPickerSelect, FieldPickerMultiSelect } from '@/components/ui';
 
 const compactInput = 'w-full border-2 border-on-surface bg-surface px-2 py-1 font-code text-caption text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent';
-
-const compactSelectStyles = {
-  control: (base: any) => ({ ...base, minHeight: 32, fontSize: 12, fontFamily: 'ui-monospace, monospace', borderColor: '#000', borderWidth: 2, borderRadius: 0, boxShadow: 'none', '&:hover': { borderColor: '#000' } }),
-  menu: (base: any) => ({ ...base, fontSize: 12, fontFamily: 'ui-monospace, monospace', borderRadius: 0, zIndex: 30, border: '2px solid #000', boxShadow: '4px 4px 0 #000' }),
-  option: (base: any, s: any) => ({ ...base, backgroundColor: s.isFocused ? '#f4f4f5' : 'white', color: '#000', fontSize: 12 }),
-  multiValue: (base: any) => ({ ...base, backgroundColor: '#f4f4f5', borderRadius: 0, border: '1px solid #000' }),
-  multiValueLabel: (base: any) => ({ ...base, fontSize: 11, fontFamily: 'ui-monospace, monospace' }),
-};
 
 function FieldLabel({ field }: { field: BlockSchemaField }) {
   return (
@@ -114,19 +106,14 @@ export function SchemaFieldInput({
       return (
         <div>
           {label}
-          <select
-            className={compactInput}
+          <SelectField
             value={String(value ?? (field.defaultValue ?? ''))}
-            onChange={e => onChange(e.target.value || undefined)}
+            onChange={v => onChange(v || undefined)}
             disabled={disabled}
-          >
-            <option value="">— Select —</option>
-            {(field.options ?? []).map(opt => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
+            isClearable
+            placeholder="— Select —"
+            options={field.options ?? []}
+          />
         </div>
       );
 
@@ -313,11 +300,9 @@ function ActionPickerInput({
 
   return (
     <div className="flex flex-col gap-1">
-      <select
-        className={compactInput}
+      <SelectField
         value={current.type ?? 'url'}
-        onChange={e => {
-          const type = e.target.value;
+        onChange={type => {
           let newAction: any = { type: 'url', url: '' };
           if (type === 'navigate') newAction = { type: 'navigate', pageSlug: '' };
           else if (type === 'schema') newAction = { type: 'schema', schemaSlug: '' };
@@ -325,12 +310,13 @@ function ActionPickerInput({
           onChange(newAction);
         }}
         disabled={disabled}
-      >
-        <option value="url">URL</option>
-        <option value="navigate">Navigate to page</option>
-        <option value="schema">Navigate to schema</option>
-        <option value="entry">Navigate to entry</option>
-      </select>
+        options={[
+          { value: 'url', label: 'URL' },
+          { value: 'navigate', label: 'Navigate to page' },
+          { value: 'schema', label: 'Navigate to schema' },
+          { value: 'entry', label: 'Navigate to entry' },
+        ]}
+      />
 
       {current.type === 'url' && (
         <input

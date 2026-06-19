@@ -6,6 +6,8 @@ import { Client } from '@research-cms/shared-types';
 import { formatDateTime, extractParam, adminRoutes } from '@/lib/utils';
 import { getClient } from '@/app/actions';
 import { ApiKeyUsageChart } from '@/components/clients/ApiKeyUsageChart';
+import { Breadcrumb } from '@/components/ui';
+import { LuKey, LuChartColumn } from 'react-icons/lu';
 
 export default function ClientUsagePage() {
   const params = useParams();
@@ -43,13 +45,13 @@ export default function ClientUsagePage() {
 
   return (
     <div className="page">
-      <p className="breadcrumb mb-6">
-        <Link href={adminRoutes.clients}>Clients</Link>
-        <span className="mx-1">/</span>
-        <Link href={adminRoutes.clientDetail(id)}>{client.name}</Link>
-        <span className="mx-1">/</span>
-        Usage
-      </p>
+      <Breadcrumb
+        items={[
+          { label: 'Clients', href: adminRoutes.clients, icon: LuKey },
+          { label: client.name, href: adminRoutes.clientDetail(id) },
+          { label: 'Usage', icon: LuChartColumn },
+        ]}
+      />
 
       {/* ── Header ─────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6 mb-6">

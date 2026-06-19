@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { Breadcrumb } from '@/components/ui';
+import { LuDatabase, LuFilePen } from 'react-icons/lu';
 import { ContentTypeDefinition, ContentEntry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { getSchema, getEntry } from '@/app/actions';
@@ -59,13 +60,13 @@ export default function ContentEditPage() {
 
   return (
     <div className="page">
-      <p className="breadcrumb">
-        <Link href="/schemas">Content Types</Link>
-        <span className="mx-1">/</span>
-        <Link href={adminRoutes.schemaDetail(slug)}>{schema.name}</Link>
-        <span className="mx-1">/</span>
-        Edit entry
-      </p>
+      <Breadcrumb
+        items={[
+          { label: 'Schemas', href: '/schemas', icon: LuDatabase },
+          { label: schema.name, href: adminRoutes.schemaDetail(slug) },
+          { label: 'Edit entry', icon: LuFilePen },
+        ]}
+      />
 
       <h1 className="page-heading mb-8">Edit {schema.name}</h1>
 

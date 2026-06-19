@@ -25,6 +25,24 @@ export class User {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop({ default: '' })
+  firstName: string;
+
+  @Prop({ default: '' })
+  lastName: string;
+
+  @Prop({ default: '' })
+  displayName: string;
+
+  @Prop({ default: '' })
+  bio: string;
+
+  @Prop({ default: '' })
+  website: string;
+
+  @Prop({ default: '' })
+  avatarUrl: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

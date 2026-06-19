@@ -1,13 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Block, blockRegistry, PAGE_SCHEMA_SLUG, ContentEntry } from '@research-cms/shared-types';
+import { Block, PAGE_SCHEMA_SLUG, ContentEntry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { createEntry, updateEntry, getEntry, getPageBySlug, bulkUpdateStatus } from '@/app/actions';
 import { useToast } from '@/contexts/ToastContext';
 import { BlocksEditor } from '@/components/blocks';
-import { Button, Container, TextField, Text } from '@/components/ui';
+import { Button, Container, TextField, Text, SelectField, Breadcrumb } from '@/components/ui';
+import { LuKey, LuFileText } from 'react-icons/lu';
 
 
 const IS_NEW = '_new';
@@ -149,13 +149,13 @@ export default function PageEditorPage() {
       onHeaderContent={
         <div>
           {/* Breadcrumb */}
-          <Text variant="caption" color="secondary" className="mb-4 uppercase tracking-widest font-bold">
-            <Link href={adminRoutes.clients} className="hover:text-on-surface">Clients</Link>
-            <span className="mx-1">/</span>
-            <Link href={adminRoutes.clientDetail(clientId)} className="hover:text-on-surface">Client</Link>
-            <span className="mx-1">/</span>
-            {isNew ? 'New page' : title || 'Edit page'}
-          </Text>
+          <Breadcrumb
+            items={[
+              { label: 'Clients', href: adminRoutes.clients, icon: LuKey },
+              { label: 'Client', href: adminRoutes.clientDetail(clientId) },
+              { label: isNew ? 'New page' : title || 'Edit page', icon: LuFileText },
+            ]}
+          />
 
           {error && (
             <div className="mb-4 border-2 border-error bg-surface px-4 py-3">
@@ -197,16 +197,16 @@ export default function PageEditorPage() {
               />
             </div>
             <div className="flex gap-4 mb-4">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 min-w-44">
                 <label className="font-label uppercase text-label text-on-surface">Status</label>
-                <select
-                  className="border-2 border-on-surface bg-surface px-4 py-2 font-code text-code text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                <SelectField
                   value={status}
-                  onChange={e => setStatus(e.target.value as 'draft' | 'published')}
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                </select>
+                  onChange={v => setStatus(v as 'draft' | 'published')}
+                  options={[
+                    { value: 'draft', label: 'Draft' },
+                    { value: 'published', label: 'Published' },
+                  ]}
+                />
               </div>
             </div>
           </div>

@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { ContentTypeDefinition, ContentEntry } from '@research-cms/shared-types';
 import { extractParam, adminRoutes } from '@/lib/utils';
 import { getSchema } from '@/app/actions';
 import ContentForm from '@/components/content/ContentForm';
 import { useToast } from '@/contexts/ToastContext';
+import { Breadcrumb } from '@/components/ui';
+import { LuDatabase, LuFilePlus } from 'react-icons/lu';
 
 export default function ContentCreatePage() {
   const params = useParams();
@@ -45,13 +46,13 @@ export default function ContentCreatePage() {
 
   return (
     <div className="page">
-      <p className="breadcrumb">
-        <Link href="/schemas">Content Types</Link>
-        <span className="mx-1">/</span>
-        <Link href={adminRoutes.schemaDetail(slug)}>{schema.name}</Link>
-        <span className="mx-1">/</span>
-        New entry
-      </p>
+      <Breadcrumb
+        items={[
+          { label: 'Schemas', href: '/schemas', icon: LuDatabase },
+          { label: schema.name, href: adminRoutes.schemaDetail(slug) },
+          { label: 'New entry', icon: LuFilePlus },
+        ]}
+      />
 
       <h1 className="page-heading mb-8">New {schema.name}</h1>
 

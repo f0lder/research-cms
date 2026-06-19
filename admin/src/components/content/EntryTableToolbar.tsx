@@ -1,5 +1,6 @@
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 import { ColumnPicker } from './ColumnPicker';
+import { SelectField } from '@/components/ui';
 import { useEntryList } from '@/contexts/EntryListContext';
 
 interface TableToolbarProps {
@@ -38,17 +39,20 @@ export function EntryTableToolbar({
 			{/* Bulk actions */}
 			{selectedCount > 0 && tab === 'entries' && (
 				<div className="flex gap-2 items-center">
-					<select
-						value={bulkStatus}
-						onChange={e => setBulkStatus(e.target.value)}
-						className="field-input text-xs py-1"
-					>
-						<option value="">Set status to…</option>
-						<option value="draft">Draft</option>
-						<option value="published">Published</option>
-						<option value="scheduled">Scheduled</option>
-						<option value="archived">Archived</option>
-					</select>
+					<div className="min-w-44">
+						<SelectField
+							value={bulkStatus}
+							onChange={setBulkStatus}
+							placeholder="Set status to…"
+							isClearable
+							options={[
+								{ value: 'draft', label: 'Draft' },
+								{ value: 'published', label: 'Published' },
+								{ value: 'scheduled', label: 'Scheduled' },
+								{ value: 'archived', label: 'Archived' },
+							]}
+						/>
+					</div>
 					<button
 						onClick={() => handleBulkStatus(slug)}
 						disabled={!bulkStatus}

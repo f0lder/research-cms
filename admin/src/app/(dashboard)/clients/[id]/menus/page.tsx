@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { Menu } from '@research-cms/shared-types';
 import { extractParam, adminRoutes, generateSlugFromName } from '@/lib/utils';
 import { getClient, getClientMenus, createClientMenu, deleteClientMenu } from '@/app/actions';
-import { Button, Container, Heading, Text, Modal, TextField } from '@/components/ui';
+import { Button, Container, Heading, Text, Modal, TextField, Breadcrumb } from '@/components/ui';
+import { LuKey, LuMenu } from 'react-icons/lu';
 import { useToast } from '@/contexts/ToastContext';
 
 export default function MenusListPage() {
@@ -88,13 +89,13 @@ export default function MenusListPage() {
 
   return (
     <Container size="lg" padding="lg">
-      <Text variant="caption" color="secondary" className="mb-6 uppercase tracking-widest font-bold">
-        <Link href={adminRoutes.clients} className="hover:text-on-surface">Clients</Link>
-        <span className="mx-1">/</span>
-        <Link href={adminRoutes.clientDetail(id)} className="hover:text-on-surface">{clientName}</Link>
-        <span className="mx-1">/</span>
-        Menus
-      </Text>
+      <Breadcrumb
+        items={[
+          { label: 'Clients', href: adminRoutes.clients, icon: LuKey },
+          { label: clientName, href: adminRoutes.clientDetail(id) },
+          { label: 'Menus', icon: LuMenu },
+        ]}
+      />
 
       {error && (
         <div className="mb-4 border-2 border-error bg-surface px-4 py-3">

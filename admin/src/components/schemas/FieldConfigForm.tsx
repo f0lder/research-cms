@@ -1,6 +1,6 @@
 'use client';
 import { FieldType, FieldDefinition } from '@research-cms/shared-types';
-import { Text, Toggle } from '@/components/ui';
+import { Text, Toggle, SchemaPickerSelect } from '@/components/ui';
 
 interface FieldConfigFormProps {
   type: FieldType;
@@ -155,17 +155,14 @@ function ReferenceConfig({
   onChange: (slug: string) => void;
 }) {
   return (
-    <div>
-      <label className="block text-sm font-bold uppercase text-on-surface mb-1">
-        Target Schema Slug *
-      </label>
-      <input
-        type="text"
-        value={targetSlug}
-        onChange={e => onChange(e.target.value)}
-        placeholder="e.g., author"
-        className="w-full border-2 border-on-surface px-3 py-2 font-mono text-sm"
-      />
-    </div>
+    <SchemaPickerSelect
+      label={
+        <label className="block text-sm font-bold uppercase text-on-surface mb-1">
+          Target Schema Slug *
+        </label>
+      }
+      value={targetSlug}
+      onChange={val => onChange(typeof val === 'string' ? val : '')}
+    />
   );
 }

@@ -6,7 +6,8 @@ import { Webhook } from '@research-cms/shared-types';
 import { extractParam } from '@/lib/utils';
 import { getWebhook, createWebhook, updateWebhook } from '@/app/actions';
 import { useToast } from '@/contexts/ToastContext';
-import { Toggle } from '@/components/ui';
+import { Toggle, Breadcrumb } from '@/components/ui';
+import { LuWebhook } from 'react-icons/lu';
 
 const ALL_EVENTS = [
   'content.created',
@@ -123,16 +124,13 @@ export default function WebhookEditorPage() {
 
   return (
     <div className="page">
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => router.push('/webhooks')}
-          className="text-xs text-zinc-400 hover:text-zinc-700 font-mono bg-transparent border-0 cursor-pointer p-0"
-        >
-          ← Webhooks
-        </button>
-        <span className="text-zinc-300">/</span>
-        <h1 className="text-lg font-bold font-mono">{isNew ? 'New webhook' : name || 'Edit webhook'}</h1>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: 'Webhooks', href: '/webhooks', icon: LuWebhook },
+          { label: isNew ? 'New webhook' : name || 'Edit webhook' },
+        ]}
+      />
+      <h1 className="text-lg font-bold font-mono mb-6">{isNew ? 'New webhook' : name || 'Edit webhook'}</h1>
 
       {error && <div className="alert-error mb-4 text-xs">{error}</div>}
 

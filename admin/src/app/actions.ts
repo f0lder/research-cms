@@ -17,6 +17,8 @@ import {
   SettingDefinition,
   SettingScope,
   SettingSchemaView,
+  User,
+  UpdatableUserFields,
 } from '@research-cms/shared-types';
 
 // ── Schemas ────────────────────────────────────────────────────────────────
@@ -575,21 +577,20 @@ export async function testWebhook(id: string) {
 
 // ── Users ──────────────────────────────────────────────────────────────────
 
-interface UserEntry {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-  createdAt?: string;
+export async function getUsers() {
+  return serverApi.get<User[]>(`/auth/users`);
 }
 
-export async function getUsers() {
-  return serverApi.get<UserEntry[]>(`/auth/users`);
+export async function getUser(userId: string) {
+  return serverApi.get<User>(`/auth/users/${userId}`);
+}
+
+export async function updateUser(userId: string, updates: UpdatableUserFields) {
+  return serverApi.patch<User>(`/auth/users/${userId}`, updates);
 }
 
 export async function updateUserRole(userId: string, role: string) {
-  return serverApi.patch<{ role: string }>(`/auth/users/${userId}`, { role });
+  return serverApi.patch<User>(`/auth/users/${userId}`, { role });
 }
 
 // ── Settings ────────────────────────────────────────────────────────────────

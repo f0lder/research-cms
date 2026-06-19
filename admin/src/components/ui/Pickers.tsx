@@ -3,20 +3,11 @@
 import { ReactNode, useState, useEffect } from 'react';
 import Select from 'react-select';
 import { Text } from './Text';
+import { SelectOption, pickerSelectStyles } from './Select';
 import { getAllSchemas, getAllEntries } from '@/app/actions';
 
-export interface SelectOption {
-  value: string;
-  label: string;
-}
-
-export const pickerSelectStyles = {
-  control: (base: any) => ({ ...base, minHeight: 32, fontSize: 12, fontFamily: 'ui-monospace, monospace', borderColor: '#000', borderWidth: 2, borderRadius: 0, boxShadow: 'none', '&:hover': { borderColor: '#000' } }),
-  menu: (base: any) => ({ ...base, fontSize: 12, fontFamily: 'ui-monospace, monospace', borderRadius: 0, zIndex: 30, border: '2px solid #000', boxShadow: '4px 4px 0 #000' }),
-  option: (base: any, s: any) => ({ ...base, backgroundColor: s.isFocused ? '#f4f4f5' : 'white', color: '#000', fontSize: 12 }),
-  multiValue: (base: any) => ({ ...base, backgroundColor: '#f4f4f5', borderRadius: 0, border: '1px solid #000' }),
-  multiValueLabel: (base: any) => ({ ...base, fontSize: 11, fontFamily: 'ui-monospace, monospace' }),
-};
+export type { SelectOption };
+export { pickerSelectStyles };
 
 // ── Page Picker ────────────────────────────────────────────────────────
 

@@ -4,7 +4,7 @@ import { SessionService } from './session.service';
 import { SessionGuard } from './guards/session.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
-import { UserRole } from './schemas/user.schema';
+import { User, UserRole } from './schemas/user.schema';
 
 @Controller('auth')
 export class AuthController {
@@ -75,9 +75,16 @@ export class AuthController {
 
   @UseGuards(SessionGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
+  @Get('users/:id')
+  getUser(@Param('id') id: string) {
+    return this.authService.adminGetUser(id);
+  }
+
+  @UseGuards(SessionGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Patch('users/:id')
-  updateUserRole(@Param('id') id: string, @Body() body: { role: UserRole }) {
-    return this.authService.updateUserRole(id, body.role);
+  updateUser(@Param('id') id: string, @Body() body: Partial<User>) {
+    return this.authService.updateUser(id, body);
   }
 
   @Post('logout')

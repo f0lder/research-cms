@@ -5,8 +5,9 @@ import { useParams } from 'next/navigation';
 import { Menu, MenuItem, MenuItemType } from '@research-cms/shared-types';
 import { extractParam, adminRoutes, generateRandomId } from '@/lib/utils';
 import { getClient, getClientMenu, updateClientMenu } from '@/app/actions';
-import { Button, Container, Heading, Text, TextField, Modal } from '@/components/ui';
+import { Button, Container, Heading, Text, TextField, Modal, Breadcrumb } from '@/components/ui';
 import { PagePickerSelect, SchemaPickerSelect, EntryPickerSelect } from '@/components/ui';
+import { LuKey, LuMenu } from 'react-icons/lu';
 import { useToast } from '@/contexts/ToastContext';
 import {
   DndContext,
@@ -226,15 +227,14 @@ export default function MenuEditorPage() {
 
   return (
     <Container size="lg" padding="lg">
-      <Text variant="caption" color="secondary" className="mb-6 uppercase tracking-widest font-bold">
-        <Link href={adminRoutes.clients} className="hover:text-on-surface">Clients</Link>
-        <span className="mx-1">/</span>
-        <Link href={adminRoutes.clientDetail(id)} className="hover:text-on-surface">{clientName}</Link>
-        <span className="mx-1">/</span>
-        <Link href={adminRoutes.clientMenus(id)} className="hover:text-on-surface">Menus</Link>
-        <span className="mx-1">/</span>
-        {menu?.name ?? 'Edit'}
-      </Text>
+      <Breadcrumb
+        items={[
+          { label: 'Clients', href: adminRoutes.clients, icon: LuKey },
+          { label: clientName, href: adminRoutes.clientDetail(id) },
+          { label: 'Menus', href: adminRoutes.clientMenus(id), icon: LuMenu },
+          { label: menu?.name ?? 'Edit' },
+        ]}
+      />
 
       {error && (
         <div className="mb-4 border-2 border-error bg-surface px-4 py-3">
