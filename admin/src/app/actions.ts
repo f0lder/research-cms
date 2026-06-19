@@ -11,10 +11,14 @@ import {
   FieldValue,
   Block,
   Webhook,
+  Menu,
+  MenuItem,
   PAGE_SCHEMA_SLUG,
   SettingDefinition,
   SettingScope,
   SettingSchemaView,
+  User,
+  UpdatableUserFields,
 } from '@research-cms/shared-types';
 
 // ── Schemas ────────────────────────────────────────────────────────────────
@@ -478,6 +482,28 @@ export async function updateClientLayout(clientId: string, schemaSlug: string, b
   return serverApi.put(`/clients/${clientId}/layouts/${schemaSlug}`, { blocks });
 }
 
+// ── Menus ──────────────────────────────────────────────────────────────────
+
+export async function getClientMenus(clientId: string) {
+  return serverApi.get<Menu[]>(`/clients/${clientId}/menus`);
+}
+
+export async function getClientMenu(clientId: string, menuId: string) {
+  return serverApi.get<Menu>(`/clients/${clientId}/menus/${menuId}`);
+}
+
+export async function createClientMenu(clientId: string, data: { name: string; slug: string; slot?: string }) {
+  return serverApi.post<Menu>(`/clients/${clientId}/menus`, data);
+}
+
+export async function updateClientMenu(clientId: string, menuId: string, data: Partial<Menu>) {
+  return serverApi.patch<Menu>(`/clients/${clientId}/menus/${menuId}`, data);
+}
+
+export async function deleteClientMenu(clientId: string, menuId: string) {
+  return serverApi.delete(`/clients/${clientId}/menus/${menuId}`);
+}
+
 // ── Media ──────────────────────────────────────────────────────────────────
 
 export async function getMediaLibrary() {
@@ -551,21 +577,20 @@ export async function testWebhook(id: string) {
 
 // ── Users ──────────────────────────────────────────────────────────────────
 
-interface UserEntry {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-  createdAt?: string;
+export async function getUsers() {
+  return serverApi.get<User[]>(`/auth/users`);
 }
 
-export async function getUsers() {
-  return serverApi.get<UserEntry[]>(`/auth/users`);
+export async function getUser(userId: string) {
+  return serverApi.get<User>(`/auth/users/${userId}`);
+}
+
+export async function updateUser(userId: string, updates: UpdatableUserFields) {
+  return serverApi.patch<User>(`/auth/users/${userId}`, updates);
 }
 
 export async function updateUserRole(userId: string, role: string) {
-  return serverApi.patch<{ role: string }>(`/auth/users/${userId}`, { role });
+  return serverApi.patch<User>(`/auth/users/${userId}`, { role });
 }
 
 // ── Settings ────────────────────────────────────────────────────────────────

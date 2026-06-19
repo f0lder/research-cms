@@ -1,7 +1,7 @@
 'use client';
 
 import { ActivityItem } from '@research-cms/shared-types';
-import { API_URL } from '@/config';
+import { api } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 
 export function ActivityFeed() {
@@ -11,13 +11,8 @@ export function ActivityFeed() {
   useEffect(() => {
     const fetchActivity = async () => {
       try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        const response = await fetch(`${API_URL}/logs/activity?limit=20`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (response.ok) {
-          setActivities(await response.json());
-        }
+        const { data } = await api.get<ActivityItem[]>('/logs/activity?limit=20');
+        if (data) setActivities(data);
       } catch (err) {
         console.error('Error fetching activity:', err);
       } finally {
@@ -26,7 +21,7 @@ export function ActivityFeed() {
     };
 
     fetchActivity();
-    const interval = setInterval(fetchActivity, 30000); // Refresh every 30 seconds
+    const interval = setInterval(fetchActivity, 30000);
     return () => clearInterval(interval);
   }, []);
 

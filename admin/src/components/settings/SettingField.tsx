@@ -17,7 +17,10 @@ interface SettingFieldProps {
   clientId?: string;
 }
 
-import { PagePickerSelect } from '@/components/ui';
+import { PagePickerSelect, Button } from '@/components/ui';
+import MediaPickerModal from '@/components/content/MediaPickerModal';
+import { getMediaLibrary } from '@/app/actions';
+import { MediaEntry } from '@research-cms/shared-types';
 
 export function SettingField({
   definition,
@@ -163,16 +166,7 @@ export function SettingField({
     }
 
     case 'media':
-      return (
-        <input
-          type="text"
-          className="field-input"
-          placeholder="Media entry id"
-          value={(value as string | undefined) ?? ''}
-          onChange={e => onChange(e.target.value)}
-          disabled={saving}
-        />
-      );
+      return <MediaSetting definition={definition} value={value as string | undefined} onChange={onChange} saving={saving} />;
 
     default:
       return (
@@ -183,6 +177,71 @@ export function SettingField({
         </div>
       );
   }
+}
+
+function MediaSetting({
+  definition, value, onChange, saving,
+}: {
+  definition: SettingDefinition;
+  value: string | undefined;
+  onChange: (value: unknown) => void;
+  saving: boolean;
+}) {
+  const [resolved, setResolved] = useState<MediaEntry | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!value) { setResolved(null); return; }
+    getMediaLibrary().then(res => {
+      const found = res.data?.find(m => m._id === value);
+      setResolved(found ?? null);
+    });
+  }, [value]);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <Text variant="caption" color="secondary" as="label" className="uppercase tracking-widest font-bold">
+          {definition.label}
+        </Text>
+        {saving && <Text variant="caption" color="secondary">Saving…</Text>}
+      </div>
+      {definition.description && (
+        <Text variant="caption" color="secondary" className="mb-2">{definition.description}</Text>
+      )}
+
+      {resolved ? (
+        <div className="flex items-center gap-3 border-2 border-on-surface p-2 bg-surface-container-low">
+          <img src={resolved.url} alt={resolved.title} className="w-12 h-12 object-cover border border-on-surface" />
+          <div className="flex-1 min-w-0">
+            <Text variant="body-sm" className="font-bold truncate">{resolved.title}</Text>
+            {resolved.fileSize && (
+              <Text variant="code" color="secondary">{(resolved.fileSize / 1024).toFixed(1)} KB</Text>
+            )}
+          </div>
+          <Button variant="secondary" size="xs" onClick={() => setPickerOpen(true)} disabled={saving}>Change</Button>
+          <Button variant="destructive" size="xs" onClick={() => onChange(null)} disabled={saving}>×</Button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setPickerOpen(true)} disabled={saving}>
+            Browse Media
+          </Button>
+          {value && (
+            <Text variant="code" color="secondary">ID: {value}</Text>
+          )}
+        </div>
+      )}
+
+      {pickerOpen && (
+        <MediaPickerModal
+          currentId={value}
+          onSelect={entry => { onChange(entry._id); setPickerOpen(false); }}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
+    </div>
+  );
 }
 
 /** Text input that only commits on blur (avoids saving on every keystroke). */

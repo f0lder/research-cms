@@ -9,7 +9,8 @@ import {
 } from '@/lib/utils';
 import { getClient, getAllSchemas, getAllEntries, deleteEntry, updateClientSchemas, deleteClient, getSettings, updateSetting, type SettingItem } from '@/app/actions';
 import { SectionsSkeleton } from '@/components/skeletons';
-import { Button, Container, Heading, Text, TextField } from '@/components/ui';
+import { Button, Container, Heading, Text, TextField, Breadcrumb } from '@/components/ui';
+import { LuKey } from 'react-icons/lu';
 import { useToast } from '@/contexts/ToastContext';
 import { SettingField } from '@/components/settings/SettingField';
 
@@ -181,11 +182,12 @@ export default function ClientDetailPage() {
 
   return (
     <Container size="lg" padding="lg">
-      <Text variant="caption" color="secondary" className="mb-6 uppercase tracking-widest font-bold">
-        <Link href={adminRoutes.clients} className="hover:text-on-surface">Clients</Link>
-        <span className="mx-1">/</span>
-        {client.name}
-      </Text>
+      <Breadcrumb
+        items={[
+          { label: 'Clients', href: adminRoutes.clients, icon: LuKey },
+          { label: client.name },
+        ]}
+      />
 
       {error && (
         <div className="mb-4 border-2 border-error bg-surface px-4 py-3">
@@ -356,6 +358,21 @@ export default function ClientDetailPage() {
             })}
           </div>
         )}
+      </section>
+
+      {/* ── Menus ────────────────────────────────────── */}
+      <section className="section">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <Heading level={3}>Menus</Heading>
+            <Text variant="body-md" color="secondary" className="mt-1">
+              Navigations and link collections for this client.
+            </Text>
+          </div>
+          <Link href={adminRoutes.clientMenus(id)} className="no-underline">
+            <Button variant="secondary" size="sm" className="whitespace-nowrap">Manage menus</Button>
+          </Link>
+        </div>
       </section>
 
       {/* ── Block layouts ───────────────────────────── */}

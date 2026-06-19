@@ -1,5 +1,5 @@
 import { API_URL, API_KEY } from '@/lib/config';
-import { PublicEntryResponse, Block } from '@research-cms/shared-types';
+import { PublicEntryResponse, Block, MenuItem } from '@research-cms/shared-types';
 
 export type { PublicEntryResponse };
 
@@ -80,6 +80,15 @@ export function getRenderedLayout(schemaSlug: string, id: string): Promise<{ sch
 
 export function getMedia(id: string): Promise<PublicEntryResponse> {
   return get<PublicEntryResponse>(`/public/media/${id}`);
+}
+
+export interface MenuResponse {
+  menu: { name: string; slug: string; slot: string } | null;
+  items: MenuItem[];
+}
+
+export function getMenu(slot: string): Promise<MenuResponse> {
+  return get<MenuResponse>(`/public/menus/${encodeURIComponent(slot)}`);
 }
 
 /** Fetch the client-scoped public settings (auto-resolved from the API key). */

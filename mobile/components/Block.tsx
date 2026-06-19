@@ -50,6 +50,10 @@ function BlockValue({ block, colors }: { block: FieldBlock; colors: ReturnType<t
     }
     case 'textarea':
       return <Text style={[s.textarea, { color: colors.text }]}>{String(block.value)}</Text>;
+    case 'email':
+      return <Text style={[s.mono, { color: colors.accent }]}>{String(block.value)}</Text>;
+    case 'url':
+      return <Text style={[s.mono, { color: colors.accent, textDecorationLine: 'underline' }]}>{String(block.value)}</Text>;
     case 'richtext':
       return <RichTextValue html={String(block.value)} colors={colors} />;
     case 'number':

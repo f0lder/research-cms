@@ -552,6 +552,33 @@ export interface Client {
   createdAt?: string;
 }
 
+// ── Menus ──────────────────────────────────────────────────────────────────────
+
+export type MenuItemType = 'page' | 'entry' | 'archive' | 'external';
+
+export interface MenuItem {
+  id: string;
+  label: string;
+  type: MenuItemType;
+  pageSlug?: string;
+  schemaSlug?: string;
+  entryId?: string;
+  archiveSchema?: string;
+  url?: string;
+  order: number;
+}
+
+export interface Menu {
+  _id?: string;
+  clientId: string;
+  name: string;
+  slug: string;
+  slot?: string;
+  items: MenuItem[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // ── Webhooks ──────────────────────────────────────────────────────────────────
 
 export interface Webhook {
@@ -583,5 +610,34 @@ export interface User {
   name: string;
   role: UserRole;
   isActive: boolean;
+  /** Given name. */
+  firstName?: string;
+  /** Family name. */
+  lastName?: string;
+  /** Name shown publicly; falls back to `name` when empty. */
+  displayName?: string;
+  /** Short biographical info. */
+  bio?: string;
+  /** Personal or company website. */
+  website?: string;
+  /** URL of the profile picture / avatar. */
+  avatarUrl?: string;
   createdAt?: string;
+  updatedAt?: string;
 }
+
+/** Fields an admin may update on a user via the admin UI. */
+export type UpdatableUserFields = Partial<
+  Pick<
+    User,
+    | 'name'
+    | 'firstName'
+    | 'lastName'
+    | 'displayName'
+    | 'bio'
+    | 'website'
+    | 'avatarUrl'
+    | 'role'
+    | 'isActive'
+  >
+>;

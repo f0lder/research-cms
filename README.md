@@ -1,154 +1,206 @@
-# Research CMS — Prezentare Conferință
+# Research CMS — Prezentare Proiect de Diplomă
 
 ## Slide 1 — Titlu
 
-**Research CMS**  
-Platformă CMS open-source, self-hosted, pentru agenții digitale și utilizatori non-tehnici  
-*Server-Driven UI · Constructor de Scheme · Multi-Client Management*
+**Research CMS** — Platformă de management al conținutului cu definire dinamică a structurii datelor
 
-> [Screenshot: logo + titlu proiect]
-
----
-
-## Slide 2 — Piața Actuală
-
-| Soluție | Tip | Cost | Self-Hosted |
-|---------|-----|------|-------------|
-| WordPress | Monolithic | Free / Pluginuri plătite | ✅ |
-| Strapi | Headless CMS | Gratuit / Cloud plătit | ✅ |
-| Contentful | Headless CMS | $300+/lună | ❌ |
-| Sanity | Headless CMS | $15+/lună | ❌ |
-| Ghost | Newsletter CMS | $9+/lună | ✅ |
-| Directus | Headless CMS | Gratuit / Cloud plătit | ✅ |
-
-**Problema:** CMS-urile dezvoltatorilor necesită cunoștințe tehnice. CMS-urile user-friendly (WordPress) nu livreză pe multiple canale. Soluțiile comerciale sunt scumpe.
-
-> [Screenshot: tabel comparativ]
+*Student: [Nume Prenume]*  
+*Coordonator: [Titlu Nume Prenume]*  
+*[Universitate] — [Facultate] — [Departament]*  
+*Anul universitar [2025/2026]*
 
 ---
 
-## Slide 3 — Competiție
+## Slide 2 — Problema
 
-| Funcție | WordPress | Strapi | Contentful | **Research CMS** |
-|---------|-----------|--------|------------|------------------|
-| Tipuri de conținut vizuale | Limitativ | ✅ | ✅ | **✅ 17 tipuri câmp** |
-| Fără cod | ❌ | ⚠️ | ⚠️ | **✅ Da** |
-| Multi-canal | ⚠️ REST API | ✅ | ✅ | **✅ Web + Mobile SDUI** |
-| Self-hosted | ✅ | ✅ | ❌ | **✅ Da** |
-| Preț | Gratuit / Pluginuri | Gratuit | $300+/lună | **Gratuit** |
-| Multi-client dintr-o instanță | ❌ | ❌ | ❌ | **✅ Da** |
+Platformele actuale de management al conținutului au patru probleme mari:
 
-> [Screenshot: tabel competiție evidențiind Research CMS]
+- Cele pentru programatori (Strapi, Directus) — e nevoie de cunoștințe tehnice să le configurezi și să le întreții
+- Cele pentru neprogramatori (WordPress) — nu pot afișa conținutul pe web și mobil în același timp
+- Cele pentru companii mari (Contentful, Sanity) — costă 150–3.000+ USD/lună pentru 10 proiecte
+- Niciuna nu permite administrarea mai multor clienți dintr-o singură instanță
+
+**Consecința:** la fiecare schimbare a structurii datelor trebuie chemat un programator — asta încetinește totul.
 
 ---
 
-## Slide 4 — Problema și Soluția
+## Slide 3 — Soluția
 
-**Problema:**  
-Agențiile digitale mici gestionează 5–15 proiecte. Nu își permit $300+/lună/client pentru Contentful sau developeri pentru Strapi.
+Research CMS oferă o platformă care rezolvă aceste probleme prin trei mecanisme:
 
-**Soluția:**  
-Platformă modulară unde utilizatorii non-tehnici își definesc singuri tipurile de conținut — articole, produse, evenimente — direct din interfață grafică, fără cod.
+**1. Construirea tipurilor de conținut din interfață** — utilizatorul își definește singur ce fel de conținut vrea (articole, produse, evenimente) printr-un formular grafic, fără să scrie cod. Structura datelor se salvează și se interpretează în timp real.
 
-> [Screenshot: admin dashboard — lista scheme]
+**2. Propagare automată** — orice modificare a structurii datelor apare instantaneu în formulare, în validările serverului și în aplicațiile web și mobile.
 
----
+**3. Suport pentru mai mulți clienți** — un singur server poate deservi oricâți clienți, fiecare cu propriile tipuri de conținut și teme.
 
-## Slide 5 — Constructor Dinamic de Scheme
-
-- **17 tipuri de câmpuri:** text, textarea, richtext, email, url, number, date, boolean, media, select, tags, references, blocks
-- Ordonează câmpurile drag-and-drop
-- Configurare per câmp: required, valori implicite, opțiuni, referințe
-- Toggle features: drafturi, revizii, search, SEO, slug
-- Schimbări propagate instant către toate aplicațiile client
-
-**Rezultat:** Un utilizator non-tehnic creează o schemă "Produs" cu 6 câmpuri în sub 3 minute.
-
-> [Screenshot: schema builder — formular creare cu câmpuri]
+> [Screenshot: diagramă — Admin → API → Web + Mobile]
 
 ---
 
-## Slide 6 — Server-Driven UI (SDUI)
+## Slide 4 — Tehnologii
 
-- Conținutul și layout-ul se configurează în admin
-- Aplicațiile mobile/web fetch-uiesc layout-ul la runtime
-- Schimbări de layout, ordine câmpuri, vizibilitate — **imediat reflectate**
-- Fără app store review-uri, fără redeploy-uri, fără coordonare cu developeri
+| Componentă | Tehnologie | Rol |
+|------------|-----------|------|
+| Organizare proiecte | Nx Workspace | Gestionare cod comun între aplicații |
+| Server | NestJS + MongoDB | Stocare date, validare, puncte de acces REST |
+| Bază de date | MongoDB | Stocare flexibilă — potrivită pentru structuri care se schimbă |
+| Panou administrare | Next.js 14 | Interfață pentru construire scheme și administrare |
+| Aplicație web | React + Vite | Afișare conținut în browser |
+| Aplicație mobilă | Expo (React Native) | Afișare conținut pe telefon (iOS/Android) |
+| Limbaj comun | TypeScript | Siguranță prin tipuri de date pe tot proiectul |
 
-**Cum funcționează:**  
-Admin construiește pagină cu blocuri → API servește layout + conținut → Clientul render-ează cu BlockRenderer
-
-**Platforme suportate:** Web (React/Vite) + Mobile (Expo/React Native)
-
-> [Screenshot: diagramă arhitectură SDUI — Admin → API → Web + Mobile]
-
----
-
-## Slide 7 — Block & Page Builder
-
-- **12 tipuri de blocuri** în 3 categorii:
-  - *Static:* Heading, Text, Divider, Spacer, Image, Button
-  - *Content:* Field, Archive (listă dinamică), Entry (individual)
-  - *Layout:* Row (coloane), Column, Card
-- Drag-and-drop din paletă, reordonare vizuală
-- Configurare per bloc în sidebar (autogenerată din schema blocului)
-- Vizibilitate per dispozitiv (mobile/tabletă/desktop)
-
-**Caz de uz:** Manager de client construiește o pagină landing cu hero, heading, carduri și arhivă produse — tot din admin, fără developer.
-
-> [Screenshot: block editor — paletă + zonă editare + sidebar configurare]
+MongoDB a fost ales pentru că structurile de date care se modifică frecvent sunt mai ușor de gestionat într-o bază de documente decât într-una relațională — nu e nevoie de migrări la fiecare schimbare.
 
 ---
 
-## Slide 8 — Multi-Client Management
+## Slide 5 — Arhitectura Sistemului
 
-- Creează API clienți cu template-uri (none / mobile / web)
-- Control acces per-client la scheme
-- Layout-uri per-client per-schemă
-- Teme per-client (culori, border-radius, typografie)
-- Urmărire utilizare și analytics per API key
-- Pagini specifice clientului cu block-based layouts
+```
+┌──────────────────────────────────────────────────────────┐
+│              PANOU ADMINISTRARE (Next.js)                 │
+│  ┌─────────────────┐  ┌────────────────┐  ┌───────────┐ │
+│  │  Constructor    │  │  Gestionare    │  │  Editor   │ │
+│  │  de scheme      │  │  conținut      │  │  blocuri  │ │
+│  └────────┬────────┘  └──────┬─────────┘  └─────┬─────┘ │
+└───────────┼──────────────────┼───────────────────┼───────┘
+            ▼                  ▼                   ▼
+┌──────────────────────────────────────────────────────────┐
+│                     SERVER (NestJS)                       │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │ Scheme   │  │ Conținut │  │ Pagini   │  │ Clienți  │ │
+│  │ Module   │  │ Module   │  │ Module   │  │ Module   │ │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
+│                      │                                    │
+│               ┌──────┴──────┐                            │
+│               │   MongoDB   │                            │
+│               └─────────────┘                            │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+              ┌────────────┴────────────┐
+              ▼                         ▼
+┌──────────────────────┐    ┌──────────────────────┐
+│  Web (React + Vite)  │    │  Mobil (Expo)        │
+│  Randare dinamică    │    │  Randare dinamică    │
+└──────────────────────┘    └──────────────────────┘
+```
 
-**Un singur server Research CMS poate alimenta 10+ proiecte client.**
+**Cum funcționează:** Administratorul definește o structură → Serverul o salvează în MongoDB → Administratorul adaugă conținut → Serverul validează și salvează → Aplicațiile web și mobile cer structura și conținutul și le afișează dinamic
 
-> [Screenshot: listă clienți în admin + pagină detaliu client]
+---
+
+## Slide 6 — Panoul Principal
+
+> [Screenshot: panou administrare — listă clienți + statistici]
+
+Panoul principal arată toate proiectele într-un singur loc:
+- Lista clienților cu șabloane predefinite
+- Navigare rapidă către scheme, conținut, pagini
+- Setări de aspect per client (culori, fonturi, aranjament)
+- Configurare meniuri și subsol per client
+
+Un singur panou pentru toate proiectele — fără să comuți între instanțe separate.
 
 ---
 
-## Slide 9 — Open Source & Self-Hosted
+## Slide 7 — Constructorul de Scheme
 
-- **Licență MIT** — fără taxe de licențiere
-- **Self-hosted** — datele rămân pe infrastructura ta
-- **Fără preț per client** — clienți nelimitați, intrări nelimitate
-- **Un singur server:** API, admin, web și mobile pornesc de pe un Node.js + MongoDB
+> [Screenshot: constructor scheme — formular cu câmpuri]
 
-| Soluție (10 clienți) | Cost lunar |
-|----------------------|------------|
-| Contentful | $3,000+ |
-| Sanity | $150+ |
-| Strapi Cloud | $500+ |
-| **Research CMS (self-hosted)** | **~$20 (server)** |
+Interfața grafică pentru definirea tipurilor de conținut:
 
-> [Screenshot: grafic/iconiță cost — Research CMS vs. competiție]
+- **17 tipuri de câmpuri:** text, text mare, text formatat, email, URL, număr, dată, da/nu, imagine, listă alegere, etichete, referințe, blocuri
+- **Glisare și plasare** pentru ordonarea câmpurilor
+- **Setări per câmp:** obligatoriu, valori implicite, opțiuni, validări
+- **Opțiuni suplimentare:** schițe, revizii, căutare, link automat, optimizare motoare căutare
+
+Rezultat: o structură "Produs" cu 6 câmpuri se creează în mai puțin de 3 minute.
 
 ---
 
-## Slide 10 — Concluzie
+## Slide 8 — Gestionarea Conținutului
 
-- ✅ Constructor dinamic de tipuri de conținut — fără cod
-- ✅ Server-Driven UI — schimbări instant pe web + mobile
-- ✅ Drag-and-drop page editor — pentru utilizatori non-tehnici
-- ✅ Multi-client — un dashboard pentru toate proiectele
-- ✅ Self-hosted, open-source — control total, cost zero
+> [Screenshot: listă intrări + formular dinamic]
 
-**Gândește-te:**  
-Blocajul în headless CMS nu e crearea de conținut — e coordonarea cu developerii de fiecare dată când se schimbă modelul de date. Research CMS elimină acest blocaj.
+Formularele se generează **automat** din definiția structurii:
+- Validare atât în interfață cât și pe server
+- Legături între diferite tipuri de conținut prin câmpuri de referință
+- Căutare și filtrare pe liste
+- Link-uri automate pentru motoarele de căutare
 
-**Încearcă:** github.com/f0lder/research-cms
-
-> [Screenshot: aplicația în funcțiune — admin + web + mobile]
+Adaugi un câmp în structură → formularul se actualizează instant. Fără cod, fără republish.
 
 ---
+
+## Slide 9 — Editorul de Pagini
+
+> [Screenshot: editor blocuri — paletă + zonă editare + bară laterală]
+
+Editor vizual de pagini pe bază de blocuri reutilizabile:
+
+| Categorie | Blocuri disponibile |
+|-----------|-------------------|
+| Simple | Titlu, Text, Linie, Spațiu, Imagine, Buton |
+| Dinamice | Câmp (dinamic), Listă (arhivă), Intrare individuală |
+| Aranjament | Rând (coloane), Coloană, Card |
+
+Funcționalități: glisare și plasare · reordonare vizuală · configurare din bară laterală · vizibilitate pe telefon/tabletă/calculator · teme per client
+
+---
+
+## Slide 10 — Server-Driven UI
+
+> [Screenshot: diagramă — Admin → API → Web + Mobile]
+
+Server-Driven UI este mecanismul care leagă panoul administrare de aplicațiile client:
+
+1. Administratorul construiește pagina cu blocuri în Editor
+2. Serverul trimite structura paginii + conținutul printr-un singur punct de acces
+3. Aplicația (web/mobil) afișează dinamic folosind aceeași componentă de randare
+4. Zero cod specific de pagină în aplicațiile client
+
+**Avantaje:** modificările apar instant · fără actualizări prin magazinele de aplicații · aceeași logică pe web și mobil
+
+---
+
+## Slide 11 — Aplicația Mobilă
+
+> [Screenshot: aplicația mobilă — listă conținut + ecran detaliu]
+
+Aplicația mobilă folosește aceeași componentă de randare ca web, adaptată pentru telefon:
+- Afișare dinamică din structuri și pagini primite de la server
+- Meniu lateral cu opțiuni configurabile
+- Temă per client (culori, fonturi) descărcată la pornire
+- Subsol, siglă, antet configurabile
+
+---
+
+## Slide 12 — Suport pentru Mai Mulți Clienți
+
+> [Screenshot: listă clienți + pagină detaliu client]
+
+- Chei de acces per client cu șabloane predefinite
+- Scheme, conținut și pagini separate per client
+- Aspect și teme independente
+- Meniuri și subsol configurabil per client
+- Monitorizare utilizare per cheie de acces
+
+O singură instanță Research CMS poate deservi 10+ proiecte simultan.
+
+---
+
+## Slide 13 — Concluzii
+
+**Contribuția principală:** definirea dinamică a structurii datelor cu propagare automată reduce timpul de implementare a unui tip de conținut cu ~90% față de WordPress.
+
+**Ce s-a realizat:**
+- Constructor de scheme — 17 tipuri de câmpuri, glisare și plasare, fără cod
+- Server-Driven UI — schimbări instant pe web și mobil
+- 12 blocuri cu editor vizual
+- Suport pentru mai mulți clienți dintr-o singură instanță
+- Cod deschis, auto-găzduit, ~20 USD/lună
+
+**Concluzie:** blocajul real în platformele de management al conținutului nu este crearea de conținut, ci coordonarea cu programatorii la fiecare schimbare a structurii datelor. Research CMS propune o arhitectură care elimină acest blocaj.
 
 ---
 

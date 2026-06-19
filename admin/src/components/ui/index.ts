@@ -10,11 +10,12 @@ export { Container, type ContainerProps } from './Container';
 export { Modal } from './Modal';
 export { Toggle } from './Toggle';
 export { TypeIcon, type TypeIconProps } from './TypeIcon';
+export { SelectField, pickerSelectStyles, type SelectFieldProps, type SelectOption } from './Select';
+export { Breadcrumb, type BreadcrumbItem, type BreadcrumbProps } from './Breadcrumb';
 export {
   PagePickerSelect,
   SchemaPickerSelect,
   EntryPickerSelect,
   FieldPickerSelect,
   FieldPickerMultiSelect,
-  type SelectOption,
 } from './Pickers';

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Block, PublicEntryResponse } from '@research-cms/shared-types';
+import { Block, PublicEntryResponse, MenuItem } from '@research-cms/shared-types';
 import { API_KEY } from '@/lib/config';
-import { listPages, getPage, getClientSettings, listSchemas, SchemaSummary } from '@/lib/api';
+import { listPages, getPage, getClientSettings, listSchemas, getMenu, getMedia, SchemaSummary } from '@/lib/api';
 import { ThemeProvider, createColors, useTheme, applyThemeVars } from '@/lib/theme';
 import { BlockRenderer } from '@/components/BlockRenderer';
 import ArchiveView from '@/views/ArchiveView';
@@ -36,6 +36,9 @@ export default function App() {
   const [pages, setPages] = useState<PublicEntryResponse[]>([]);
   const [schemas, setSchemas] = useState<SchemaSummary[]>([]);
   const [settings, setSettings] = useState<Record<string, unknown>>({});
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [footerItems, setFooterItems] = useState<MenuItem[]>([]);
+  const [logoUrl, setLogoUrl] = useState('');
   const [bootstrapLoading, setBootstrapLoading] = useState(true);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
@@ -65,12 +68,24 @@ export default function App() {
           console.error('[Theme] Failed to load settings:', e);
           return {} as Record<string, unknown>;
         }),
+      getMenu('header')
+        .then(r => r.items)
+        .catch(() => [] as MenuItem[]),
+      getMenu('footer')
+        .then(r => r.items)
+        .catch(() => [] as MenuItem[]),
     ])
-      .then(([p, s, st]) => {
+      .then(([p, s, st, mi, fi]) => {
         if (cancelled) return;
         setPages(p);
         setSchemas(s.filter(x => x.slug !== 'page' && x.slug !== 'media'));
         setSettings(st);
+        if (mi.length > 0) setMenuItems(mi);
+        if (fi.length > 0) setFooterItems(fi);
+        const logoId = st['client.theme.logo'] as string | undefined;
+        if (logoId) {
+          getMedia(logoId).then(m => !cancelled && setLogoUrl((m.data?.url as string) ?? '')).catch(() => {});
+        }
       })
       .catch(e => !cancelled && setBootstrapError(e instanceof Error ? e.message : 'Failed to load'))
       .finally(() => !cancelled && setBootstrapLoading(false));
@@ -104,11 +119,17 @@ export default function App() {
 
   return (
     <ThemeProvider value={colors}>
-      <div style={{ height: 4, background: `linear-gradient(90deg, ${colors.primary} 0%, ${colors.secondary} 50%, ${colors.accent} 100%)` }} />
+      <header style={{ background: colors.headerBg }}>
+        <div style={{ height: 4, background: `linear-gradient(90deg, ${colors.primary} 0%, ${colors.secondary} 50%, ${colors.accent} 100%)` }} />
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 16px', display: 'flex', alignItems: 'center', gap: 24 }}>
+          {logoUrl && <a href="#/"><img src={logoUrl} alt="Logo" style={{ height: 32, width: 'auto', cursor: 'pointer' }} /></a>}
+          <Nav pages={pages} schemas={schemas} route={route} menuItems={menuItems} />
+        </div>
+      </header>
       <main style={{ maxWidth: 960, margin: '0 auto', padding: '32px 16px', fontFamily: 'system-ui, sans-serif', color: colors.text }}>
-        <Nav pages={pages} schemas={schemas} route={route} />
-        <RouteContent route={route} pages={pages} schemas={schemas} />
+        <RouteContent route={route} pages={pages} schemas={schemas} settings={settings} />
       </main>
+      <Footer footerItems={footerItems} colors={colors} />
     </ThemeProvider>
   );
 }
@@ -117,10 +138,12 @@ function RouteContent({
   route,
   pages,
   schemas,
+  settings,
 }: {
   route: Route;
   pages: PublicEntryResponse[];
   schemas: SchemaSummary[];
+  settings: Record<string, unknown>;
 }) {
   if (route.type === 'home') {
     if (pages.length === 0 && schemas.length === 0) {
@@ -139,7 +162,7 @@ function RouteContent({
   }
 
   if (route.type === 'debug') {
-    return <DebugView />;
+    return <DebugView settings={settings} />;
   }
 
   // 'page'
@@ -180,18 +203,68 @@ function PageView({ slug }: { slug: string }) {
   );
 }
 
-function Nav({ pages, schemas, route }: { pages: PublicEntryResponse[]; schemas: SchemaSummary[]; route: Route }) {
+function Nav({ pages, schemas, route, menuItems }: { pages: PublicEntryResponse[]; schemas: SchemaSummary[]; route: Route; menuItems: MenuItem[] }) {
   const colors = useTheme();
-  if (pages.length === 0 && schemas.length === 0) return null;
 
   const linkStyle = (active: boolean): React.CSSProperties => ({
-    color: active ? colors.primary : colors.subText,
+    color: active ? colors.accent : colors.headerTextColor,
     fontWeight: active ? 600 : 400,
     textDecoration: 'none',
     fontSize: 14,
     paddingBottom: 4,
-    borderBottom: active ? `2px solid ${colors.primary}` : '2px solid transparent',
+    borderBottom: active ? `2px solid ${colors.accent}` : '2px solid transparent',
   });
+
+  const isActive = (item: MenuItem): boolean => {
+    switch (item.type) {
+      case 'page':   return route.type === 'page' && route.slug === item.pageSlug;
+      case 'archive': return route.type === 'archive' && route.slug === item.archiveSchema;
+      case 'entry':  return route.type === 'entry' && route.slug === item.schemaSlug && route.id === item.entryId;
+      case 'external': return false;
+    }
+  };
+
+  const itemHref = (item: MenuItem): string => {
+    switch (item.type) {
+      case 'page':   return `#/${item.pageSlug ?? ''}`;
+      case 'entry':  return `#/${item.schemaSlug ?? ''}/${item.entryId ?? ''}`;
+      case 'archive': return `#/schema/${item.archiveSchema ?? ''}`;
+      case 'external': return item.url ?? '#';
+    }
+  };
+
+  const itemTarget = (item: MenuItem): string | undefined =>
+    item.type === 'external' ? '_blank' : undefined;
+
+  // If a header menu exists with items, render those
+  if (menuItems.length > 0) {
+    return (
+      <nav
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 16,
+          padding: '12px 0',
+          alignItems: 'center',
+        }}
+      >
+        {menuItems.map(item => (
+          <a
+            key={item.id}
+            href={itemHref(item)}
+            target={itemTarget(item)}
+            rel={item.type === 'external' ? 'noopener noreferrer' : undefined}
+            style={linkStyle(isActive(item))}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+    );
+  }
+
+  // Fallback: render pages + schemas as before
+  if (pages.length === 0 && schemas.length === 0) return null;
 
   const activePageSlug = route.type === 'page' ? route.slug : null;
   const activeSchemaSlug = route.type === 'archive' ? route.slug : route.type === 'entry' ? route.slug : null;
@@ -202,9 +275,7 @@ function Nav({ pages, schemas, route }: { pages: PublicEntryResponse[]; schemas:
         display: 'flex',
         flexWrap: 'wrap',
         gap: 16,
-        marginBottom: 24,
-        paddingBottom: 12,
-        borderBottom: `${colors.borderWidth}px solid ${colors.border}`,
+        padding: '12px 0',
         alignItems: 'center',
       }}
     >
@@ -228,6 +299,44 @@ function Nav({ pages, schemas, route }: { pages: PublicEntryResponse[]; schemas:
         </a>
       ))}
     </nav>
+  );
+}
+
+function Footer({ footerItems, colors }: { footerItems: MenuItem[]; colors: ReturnType<typeof createColors> }) {
+  if (footerItems.length === 0) return null;
+
+  const linkStyle: React.CSSProperties = {
+    color: colors.footerTextColor,
+    textDecoration: 'none',
+    fontSize: 14,
+    opacity: 0.85,
+  };
+
+  const itemHref = (item: MenuItem): string => {
+    switch (item.type) {
+      case 'page':   return `#/${item.pageSlug ?? ''}`;
+      case 'entry':  return `#/${item.schemaSlug ?? ''}/${item.entryId ?? ''}`;
+      case 'archive': return `#/schema/${item.archiveSchema ?? ''}`;
+      case 'external': return item.url ?? '#';
+    }
+  };
+
+  return (
+    <footer style={{ background: colors.footerBg, padding: '32px 16px', marginTop: 48 }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'center' }}>
+        {footerItems.map(item => (
+          <a
+            key={item.id}
+            href={itemHref(item)}
+            target={item.type === 'external' ? '_blank' : undefined}
+            rel={item.type === 'external' ? 'noopener noreferrer' : undefined}
+            style={linkStyle}
+          >
+            {item.label}
+          </a>
+        ))}
+      </div>
+    </footer>
   );
 }
 

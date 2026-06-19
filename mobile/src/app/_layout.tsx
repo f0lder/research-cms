@@ -1,9 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Stack, router, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { registerBuiltInBlocks, PageEntryResponse } from '@research-cms/shared-types';
-import { listSchemas, listPages, getClientSettings } from '@/lib/api';
+import { TouchableOpacity, Text, View, StyleSheet, Image } from 'react-native';
+import { registerBuiltInBlocks, PageEntryResponse, MenuItem } from '@research-cms/shared-types';
+import { listSchemas, listPages, getClientSettings, getMenu, getMedia } from '@/lib/api';
 import { Sidebar } from '@/components/Sidebar';
 import { C, createColors } from '@/lib/theme';
 
@@ -22,6 +22,8 @@ type AppCtx = {
   loading: boolean;
   error: string;
   openSidebar: () => void;
+  headerMenuItems: MenuItem[];
+  footerMenuItems: MenuItem[];
 };
 
 const AppContext = createContext<AppCtx>({
@@ -32,6 +34,8 @@ const AppContext = createContext<AppCtx>({
   loading: true,
   error: '',
   openSidebar: () => {},
+  headerMenuItems: [],
+  footerMenuItems: [],
 });
 
 export const useSchemasContext = () => useContext(AppContext);
@@ -45,10 +49,12 @@ export default function RootLayout() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [headerMenuItems, setHeaderMenuItems] = useState<MenuItem[]>([]);
+  const [footerMenuItems, setFooterMenuItems] = useState<MenuItem[]>([]);
+  const [logoUrl, setLogoUrl] = useState('');
   const pathname = usePathname();
 
   const segments = pathname.split('/').filter(Boolean);
-  // For /pages/<slug> routes, use the page slug; for /<schemaSlug> use that directly
   const activeSlug = segments[0] === 'pages' ? (segments[1] ?? null) : (segments[0] ?? null);
 
   useEffect(() => {
@@ -56,11 +62,19 @@ export default function RootLayout() {
       listSchemas().catch(() => [] as Schema[]),
       listPages().catch(() => [] as PageEntryResponse[]),
       getClientSettings().catch(() => ({} as Record<string, unknown>)),
-    ]).then(([s, p, st]) => {
+      getMenu('header').then(r => r.items).catch(() => [] as MenuItem[]),
+      getMenu('footer').then(r => r.items).catch(() => [] as MenuItem[]),
+    ]).then(([s, p, st, hmi, fmi]) => {
       setSchemas(s);
       setPages(p);
       setSettings(st);
       setColors(createColors(st));
+      if (hmi.length > 0) setHeaderMenuItems(hmi);
+      if (fmi.length > 0) setFooterMenuItems(fmi);
+      const logoId = st['client.theme.logo'] as string | undefined;
+      if (logoId) {
+        getMedia(logoId).then(m => setLogoUrl((m.data?.url as string) ?? '')).catch(() => {});
+      }
       setLoading(false);
     }).catch((e: Error) => {
       setError(e.message);
@@ -75,26 +89,57 @@ export default function RootLayout() {
     router.push(path as never);
   }, []);
 
+  const itemHref = (item: MenuItem): string => {
+    switch (item.type) {
+      case 'page':   return `/pages/${item.pageSlug ?? ''}`;
+      case 'entry':  return `/${item.schemaSlug ?? ''}/${item.entryId ?? ''}`;
+      case 'archive': return `/${item.archiveSchema ?? ''}`;
+      case 'external': return item.url ?? '#';
+    }
+  };
+
   return (
-    <AppContext.Provider value={{ schemas, pages, settings, colors, loading, error, openSidebar }}>
-      <StatusBar style="light" />
+    <AppContext.Provider value={{ schemas, pages, settings, colors, loading, error, openSidebar, headerMenuItems, footerMenuItems }}>
+      <StatusBar style={colors.headerText === '#FFFFFF' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.headerBg },
           headerTintColor: colors.headerText,
           headerTitleStyle: { fontWeight: '600', fontSize: 16 },
           headerLeft: () => (
-            <TouchableOpacity onPress={openSidebar} hitSlop={12} style={s.menuBtn}>
-              <Text style={{ color: colors.headerText, fontSize: 20 }}>☰</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <TouchableOpacity onPress={openSidebar} hitSlop={12} style={s.menuBtn}>
+                <Text style={{ color: colors.headerText, fontSize: 20 }}>☰</Text>
+              </TouchableOpacity>
+              {logoUrl ? (
+                <TouchableOpacity onPress={() => router.push('/' as never)} hitSlop={8}>
+                  <Image source={{ uri: logoUrl }} style={{ width: 28, height: 28, resizeMode: 'contain' }} />
+                </TouchableOpacity>
+              ) : null}
+            </View>
           ),
           contentStyle: { backgroundColor: colors.bg },
         }}
       />
+      {footerMenuItems.length > 0 && (
+        <View style={{ backgroundColor: colors.footerBg, paddingVertical: 16, paddingHorizontal: 12 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 16 }}>
+            {footerMenuItems.map(item => (
+              <TouchableOpacity key={item.id} onPress={() => {
+                if (item.type === 'external') return;
+                router.push(itemHref(item) as never);
+              }}>
+                <Text style={{ color: colors.footerTextColor, fontSize: 13, opacity: 0.85 }}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
       <Sidebar
         visible={sidebarOpen}
         schemas={schemas}
         pages={pages}
+        headerMenuItems={headerMenuItems}
         homePageId={(settings['client.homePage'] as string) ?? null}
         activeSlug={activeSlug}
         onSelect={handleSelect}

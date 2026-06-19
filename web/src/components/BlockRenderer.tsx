@@ -15,7 +15,7 @@ import {
   Spacing,
   ArchiveBlock,
 } from '@research-cms/shared-types';
-import { getMedia, listEntries } from '@/lib/api';
+import { getMedia, getEntry, listEntries } from '@/lib/api';
 
 type ArchiveItem = { _id: string; schemaSlug: string; data?: Record<string, unknown> };
 
@@ -234,6 +234,8 @@ function FieldRenderer({ block, entryData }: { block: FieldBlock; entryData?: Re
     : entryData?.[block.fieldName];
 
   useEffect(() => {
+    if (!raw && raw !== 0) { setResolved(null); setLoading(false); return; }
+
     if (block.fieldType === 'media' && typeof raw === 'string' && raw) {
       setLoading(true);
       let cancelled = false;
@@ -247,7 +249,42 @@ function FieldRenderer({ block, entryData }: { block: FieldBlock; entryData?: Re
         .finally(() => !cancelled && setLoading(false));
       return () => { cancelled = true; };
     }
+
+    if (block.fieldType === 'reference' && typeof raw === 'string') {
+      setLoading(true);
+      let cancelled = false;
+      const schemaSlug = (block as any).targetSlug || block.fieldName;
+      getEntry(schemaSlug, raw)
+        .then(entry => {
+          if (cancelled) return;
+          const d = entry.data as Record<string, unknown> | undefined;
+          setResolved({ _id: entry._id, title: d?.title ?? d?.name, name: d?.name });
+        })
+        .catch(() => !cancelled && setResolved({ _id: raw }))
+        .finally(() => !cancelled && setLoading(false));
+      return () => { cancelled = true; };
+    }
+
+    if (block.fieldType === 'references' && Array.isArray(raw)) {
+      setLoading(true);
+      let cancelled = false;
+      const schemaSlug = (block as any).targetSlug || block.fieldName;
+      Promise.all(raw.map(async (id: string) => {
+        try {
+          const entry = await getEntry(schemaSlug, id);
+          const d = entry.data as Record<string, unknown> | undefined;
+          return { _id: entry._id, title: d?.title ?? d?.name, name: d?.name };
+        } catch {
+          return { _id: id };
+        }
+      })).then(resolved => {
+        if (!cancelled) setResolved(resolved);
+      }).finally(() => !cancelled && setLoading(false));
+      return () => { cancelled = true; };
+    }
+
     setResolved(raw);
+    setLoading(false);
   }, [block.fieldType, block.fieldName, raw]);
 
   if (raw === null || raw === undefined || raw === '') return null;
@@ -310,17 +347,32 @@ function FieldValue({ block, value, loading }: { block: FieldBlock; value: unkno
     }
     case 'reference': {
       const ref = value as { _id?: string; title?: string; name?: string } | string;
-      if (typeof ref === 'string') return <span className="cms-text-sub cms-mono" style={{ fontSize: 13 }}>{ref.slice(0, 8)}</span>;
-      return <span>{ref.title ?? ref.name ?? ref._id?.slice(0, 8)}</span>;
+      const refId = typeof ref === 'string' ? ref : ref._id;
+      const refLabel = typeof ref === 'string' ? ref.slice(0, 8) : (ref.title ?? ref.name ?? ref._id?.slice(0, 8) ?? '');
+      const slug = (block as any).targetSlug || block.fieldName;
+      if (!refId) return null;
+      return (
+        <a href={`#/${slug}/${refId}`} style={{ color: 'var(--color-primary, #3B82F6)', textDecoration: 'underline', fontSize: 15 }}>
+          {refLabel}
+        </a>
+      );
     }
     case 'references': {
       const arr = Array.isArray(value) ? value : [];
+      const slug = (block as any).targetSlug || block.fieldName;
+      if (arr.length === 0) return null;
       return (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {arr.map((r, i) => {
             const ref = r as { _id?: string; title?: string; name?: string } | string;
+            const refId = typeof ref === 'string' ? ref : ref._id;
             const label = typeof ref === 'string' ? ref.slice(0, 8) : (ref.title ?? ref.name ?? ref._id?.slice(0, 8) ?? '');
-            return <span key={i} className="cms-pill cms-pill-outline">{label}</span>;
+            if (!refId) return null;
+            return (
+              <a key={i} href={`#/${slug}/${refId}`} className="cms-pill cms-pill-outline" style={{ textDecoration: 'none', cursor: 'pointer' }}>
+                {label}
+              </a>
+            );
           })}
         </div>
       );

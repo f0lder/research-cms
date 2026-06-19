@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation';
 import { FieldDefinition, ContentTypeDefinition } from '@research-cms/shared-types';
 import { getAllSchemas, createSchema, updateSchema, deleteSchema } from '@/app/actions';
 import { generateSlugFromName, validateSlug, getErrorMessage } from '@/lib/utils';
-import { Button, Container, TextField, Heading, Text } from '@/components/ui';
+import { Button, Container, TextField, Heading, Text, Breadcrumb } from '@/components/ui';
+import { LuDatabase } from 'react-icons/lu';
 import { FieldModal } from './FieldModal';
 import { SchemaMetadata } from './SchemaMetadata';
 import { SchemaFieldsList } from './SchemaFieldsList';
@@ -201,6 +202,12 @@ export default function SchemaForm({ mode, initialData, onSuccess }: SchemaFormP
 
   return (
     <Container size="lg" padding="lg">
+      <Breadcrumb
+        items={[
+          { label: 'Schemas', href: '/schemas', icon: LuDatabase },
+          { label: mode === 'create' ? 'New content type' : name || 'Edit content type' },
+        ]}
+      />
       <div className="flex items-center justify-between mb-8">
         <Heading level={1}>
           {mode === 'create' ? 'Create Content Type' : 'Edit Content Type'}

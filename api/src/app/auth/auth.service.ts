@@ -86,13 +86,42 @@ export class AuthService {
     };
   }
 
-  async updateUserRole(id: string, role: UserRole) {
-    const user = await this.userModel.findByIdAndUpdate(
-      id,
-      { role },
-      { new: true, projection: { password: 0 } },
-    );
+  async adminGetUser(id: string) {
+    const user = await this.userModel.findById(id, { password: 0 }).lean();
     if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  async updateUser(id: string, updates: Partial<User>) {
+    // Whitelist updatable fields — never trust the raw body (no password/email here).
+    const allowed: (keyof User)[] = [
+      'name',
+      'firstName',
+      'lastName',
+      'displayName',
+      'bio',
+      'website',
+      'avatarUrl',
+      'role',
+      'isActive',
+    ];
+    const sanitized: Partial<User> = {};
+    for (const key of allowed) {
+      if (updates[key] !== undefined) {
+        (sanitized as Record<string, unknown>)[key] = updates[key];
+      }
+    }
+
+    const user = await this.userModel.findByIdAndUpdate(id, sanitized, {
+      new: true,
+      projection: { password: 0 },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    this.logsService.log(`User updated: ${user.name} (${user.email})`, ['auth', 'user'], {
+      email: user.email,
+      fields: Object.keys(sanitized),
+    });
     return user;
   }
 }

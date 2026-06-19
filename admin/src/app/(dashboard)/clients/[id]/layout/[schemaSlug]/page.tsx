@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { Block, ContentTypeDefinition, blockRegistry } from '@research-cms/shared-types';
@@ -8,7 +7,8 @@ import { extractParam, adminRoutes } from '@/lib/utils';
 import { getSchema, getClientLayout, updateClientLayout } from '@/app/actions';
 import { useToast } from '@/contexts/ToastContext';
 import { BlocksEditor } from '@/components/blocks';
-import { Button, Heading, Text } from '@/components/ui';
+import { Button, Heading, Text, Breadcrumb } from '@/components/ui';
+import { LuKey, LuLayoutTemplate } from 'react-icons/lu';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -85,15 +85,14 @@ export default function EntryDetailLayoutPage() {
       onHeaderContent={
         <div>
           {/* Breadcrumb */}
-          <p className="breadcrumb mb-4 font-mono text-sm">
-            <Link href={adminRoutes.clients}>Clients</Link>
-            <span className="mx-1">/</span>
-            <Link href={adminRoutes.clientDetail(clientId)}>Client</Link>
-            <span className="mx-1">/</span>
-            {schema?.name}
-            <span className="mx-1">/</span>
-            Entry Layout
-          </p>
+          <Breadcrumb
+            items={[
+              { label: 'Clients', href: adminRoutes.clients, icon: LuKey },
+              { label: 'Client', href: adminRoutes.clientDetail(clientId) },
+              { label: schema?.name ?? '…' },
+              { label: 'Entry Layout', icon: LuLayoutTemplate },
+            ]}
+          />
 
           {/* Header */}
           <div className="flex items-start justify-between">

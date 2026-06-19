@@ -19,17 +19,16 @@ export function syncWithSchema(
   if (!saved || saved.length === 0) return bootstrapFromSchema(schema);
 
   const fieldMap = new Map(schema.fields.map(f => [f.name, f]));
-  const retained: Block[] = [];
 
-  for (const b of saved as Block[]) {
+  function syncBlock(b: Block): Block {
     if (b.type === 'field') {
       const fieldName = b.fieldName;
-      if (!fieldName) continue;
+      if (!fieldName) return b;
 
       const f = fieldMap.get(fieldName);
-      if (!f) continue;
+      if (!f) return b;
 
-      retained.push(createFieldBlock({
+      return createFieldBlock({
         id: b.id,
         fieldName,
         label: f.label,
@@ -38,11 +37,33 @@ export function syncWithSchema(
         order: b.order,
         showLabel: b.showLabel,
         labelPosition: b.labelPosition,
-      }));
-    } else {
-      retained.push(b);
+      });
     }
+
+    if (b.type === 'row') {
+      const row = b as any;
+      if (Array.isArray(row.columns)) {
+        return {
+          ...row,
+          columns: row.columns.map((col: any) => ({
+            ...col,
+            blocks: Array.isArray(col.blocks)
+              ? col.blocks.map((cb: Block) => syncBlock(cb))
+              : col.blocks,
+          })),
+        };
+      }
+    }
+
+    if ((b.type === 'column' || b.type === 'card') && Array.isArray((b as any).blocks)) {
+      return {
+        ...b,
+        blocks: (b as any).blocks.map((cb: Block) => syncBlock(cb)),
+      };
+    }
+
+    return b;
   }
 
-  return retained;
+  return (saved as Block[]).map(b => syncBlock(b));
 }

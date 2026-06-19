@@ -199,7 +199,7 @@ function ButtonBlockRenderer({ block, colors }: { block: ButtonBlock; colors: Re
 function FieldBlockRenderer({ block, entryData, colors }: { block: FieldBlock; entryData?: Record<string, any>; colors: ReturnType<typeof useTheme> }) {
   const [resolvedValue, setResolvedValue] = useState<any>(null);
   const [loading, setLoading] = useState(
-    (block.fieldType === 'media' || block.fieldType === 'reference' || block.fieldType === 'references') && entryData
+    (block.fieldType === 'media' || block.fieldType === 'reference' || block.fieldType === 'references')
       ? true
       : false
   );
@@ -209,8 +209,10 @@ function FieldBlockRenderer({ block, entryData, colors }: { block: FieldBlock; e
     block.margin && getMarginStyle(block.margin),
   ];
 
-  // Get the field value from entry data
-  const fieldValue = entryData ? entryData[block.fieldName] : undefined;
+  // Prefer block.value (pre-resolved by server), fall back to entryData
+  const fieldValue = (block.value !== undefined && block.value !== null)
+    ? block.value
+    : entryData ? entryData[block.fieldName] : undefined;
 
   // Resolve media and reference fields
   useEffect(() => {
@@ -492,30 +494,10 @@ function EntryBlockRenderer({ block, colors }: { block: EntryBlock; colors: Retu
 // ── Layout Block Renderers ────────────────────────────────────────────────────
 
 function RowBlockRenderer({ block, entryData, colors }: { block: RowBlock; entryData?: Record<string, any>; colors: ReturnType<typeof useTheme> }) {
-  const containerStyle = [
-    s(colors).row,
-    {
-      gap: block.gap ?? 8,
-      justifyContent: getJustifyContent(block.align),
-    },
-    block.backgroundColor && { backgroundColor: block.backgroundColor },
-    block.padding && getPaddingStyle(block.padding),
-    block.margin && getMarginStyle(block.margin),
-  ];
-
   return (
-    <View style={containerStyle}>
+    <View style={{ flexDirection: 'row', width: '100%' }}>
       {block.columns.map((col, i) => (
-        <View
-          key={i}
-          style={[
-            {
-              flex: col.width === 'auto' ? undefined : 1,
-              width: typeof col.width === 'number' ? col.width : undefined,
-              justifyContent: 'flex-start',
-            },
-          ]}
-        >
+        <View key={i} style={{ flex: 1, overflow: 'hidden' }}>
           {col.blocks.map((b, j) => (
             <BlockRenderer key={j} block={b} entryData={entryData} />
           ))}

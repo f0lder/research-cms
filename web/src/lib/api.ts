@@ -1,4 +1,4 @@
-import { Block, PublicEntryResponse } from '@research-cms/shared-types';
+import { Block, PublicEntryResponse, MenuItem, Menu } from '@research-cms/shared-types';
 import { API_URL, API_KEY } from './config';
 
 const baseHeaders = { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' };
@@ -59,4 +59,13 @@ export interface RenderedLayout {
 
 export function getRenderedLayout(schemaSlug: string, id: string): Promise<RenderedLayout> {
   return get<RenderedLayout>(`/public/layouts/${schemaSlug}/render/${id}`);
+}
+
+export interface MenuResponse {
+  menu: Pick<Menu, 'name' | 'slug' | 'slot'> | null;
+  items: MenuItem[];
+}
+
+export function getMenu(slot: string): Promise<MenuResponse> {
+  return get<MenuResponse>(`/public/menus/${encodeURIComponent(slot)}`);
 }

@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { ContentTypeDefinition } from '@research-cms/shared-types';
 import { rebuildIndex } from '@/app/actions';
 import { API_URL } from '@/config';
-import { Button, Heading, Text, Badge } from '@/components/ui';
+import { Button, Heading, Text, Badge, Breadcrumb } from '@/components/ui';
+import { LuDatabase } from 'react-icons/lu';
 
 interface PageHeaderProps {
   schema: ContentTypeDefinition;
@@ -78,11 +79,12 @@ export function EntryListPageHeader({ schema, slug, isAdmin }: PageHeaderProps) 
   return (
     <>
       {/* Breadcrumb */}
-      <p className="breadcrumb">
-        <Link href="/schemas">Content Types</Link>
-        <span className="mx-1">/</span>
-        {schema.name}
-      </p>
+      <Breadcrumb
+        items={[
+          { label: 'Schemas', href: '/schemas', icon: LuDatabase },
+          { label: schema.name },
+        ]}
+      />
 
       {/* Page header */}
       <div className="flex items-start justify-between mb-6">
