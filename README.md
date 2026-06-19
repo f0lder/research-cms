@@ -151,6 +151,14 @@ The admin's API base URL is configured via `NEXT_PUBLIC_API_URL` in `admin/src/c
 
 ### Run the dev servers
 
+Start everything (API, admin, web, mobile) in parallel:
+
+```bash
+npm run dev
+```
+
+Or run a single app:
+
 ```bash
 npm exec nx serve api      # API     → http://localhost:3000
 npm exec nx serve admin    # Admin   → http://localhost:4200
