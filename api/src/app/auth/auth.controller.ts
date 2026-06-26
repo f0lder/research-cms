@@ -1,4 +1,5 @@
 import { Controller, Post, Body, UseGuards, Get, Patch, Param, Request, Response } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { SessionService } from './session.service';
 import { SessionGuard } from './guards/session.guard';
@@ -13,6 +14,7 @@ export class AuthController {
     private sessionService: SessionService,
   ) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('register')
   async register(
     @Body() body: { email: string; password: string; name: string },
@@ -36,6 +38,7 @@ export class AuthController {
     res.json({ user: result.user });
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
   async login(
     @Body() body: { email: string; password: string },

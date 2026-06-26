@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { SchemaModule } from './schema/schema.module';
 import { ContentModule } from './content/content.module';
 import { AuthModule } from './auth/auth.module';
@@ -26,6 +28,13 @@ import { ContentType, ContentTypeSchema } from './schema/schemas/content-type.sc
       verboseMemoryLeak: true,
     }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
     LogsModule,
     MediaModule,
     AuthModule,
@@ -37,6 +46,12 @@ import { ContentType, ContentTypeSchema } from './schema/schemas/content-type.sc
     SettingsModule,
     MenusModule,
   ],
-  providers: [SystemInitService],
+  providers: [
+    SystemInitService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
