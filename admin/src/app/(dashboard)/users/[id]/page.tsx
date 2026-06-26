@@ -13,7 +13,7 @@ import { UserAvatar, userDisplayName } from '@/components/users/UserAvatar';
 
 const ROLES: UserRole[] = [UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER];
 
-const ROLE_HINT: Record<UserRole, string> = {
+const ROLE_HINT: Partial<Record<UserRole, string>> = {
   [UserRole.ADMIN]: 'Full access — manage schemas, content, users and settings.',
   [UserRole.EDITOR]: 'Create and edit content.',
   [UserRole.VIEWER]: 'Read-only access.',

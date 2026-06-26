@@ -14,6 +14,7 @@ const roleBg: Record<string, string> = {
   admin: 'bg-zinc-900',
   editor: 'bg-zinc-600',
   viewer: 'bg-zinc-400',
+  user: 'bg-blue-600',
 };
 
 export default function UsersPage() {
@@ -63,6 +64,7 @@ export default function UsersPage() {
               <tr className="border-b-2 border-on-surface bg-surface-container">
                 <th className="text-left px-4 py-2.5 text-code font-bold text-on-surface-variant uppercase whitespace-nowrap">User</th>
                 <th className="text-left px-4 py-2.5 text-code font-bold text-on-surface-variant uppercase whitespace-nowrap">Role</th>
+                <th className="text-left px-4 py-2.5 text-code font-bold text-on-surface-variant uppercase whitespace-nowrap">Project</th>
                 <th className="text-left px-4 py-2.5 text-code font-bold text-on-surface-variant uppercase whitespace-nowrap">Status</th>
                 <th className="text-left px-4 py-2.5 text-code font-bold text-on-surface-variant uppercase whitespace-nowrap">Joined</th>
                 <th className="px-4 py-2.5 text-right text-code font-bold text-on-surface-variant uppercase">Actions</th>
@@ -89,6 +91,9 @@ export default function UsersPage() {
                       <span className={`${roleBg[u.role] ?? 'bg-zinc-500'} text-white text-[10px] uppercase tracking-widest px-2.5 py-1 font-mono`}>
                         {u.role}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-zinc-500">
+                      {u.clientId?.name ?? '—'}
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1.5 text-xs text-zinc-600">

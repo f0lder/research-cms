@@ -3,17 +3,22 @@ import { Block, PublicEntryResponse, MenuItem } from '@research-cms/shared-types
 import { API_KEY } from '@/lib/config';
 import { listPages, getPage, getClientSettings, listSchemas, getMenu, getMedia, SchemaSummary } from '@/lib/api';
 import { ThemeProvider, createColors, useTheme, applyThemeVars } from '@/lib/theme';
+import { AuthProvider, useEndUserAuth } from '@/contexts/AuthContext';
 import { BlockRenderer } from '@/components/BlockRenderer';
 import ArchiveView from '@/views/ArchiveView';
 import EntryView from '@/views/EntryView';
 import DebugView from '@/views/DebugView';
+import LoginView from '@/views/LoginView';
+import RegisterView from '@/views/RegisterView';
 
 type Route =
   | { type: 'home' }
   | { type: 'page'; slug: string }
   | { type: 'archive'; slug: string }
   | { type: 'entry'; slug: string; id: string }
-  | { type: 'debug' };
+  | { type: 'debug' }
+  | { type: 'login' }
+  | { type: 'register' };
 
 function parseRoute(): Route {
   const hash = window.location.hash.replace(/^#\/?/, '').replace(/\/$/, '');
@@ -25,6 +30,12 @@ function parseRoute(): Route {
   if (segments[0] === 'debug') {
     return { type: 'debug' };
   }
+  if (segments[0] === 'login') {
+    return { type: 'login' };
+  }
+  if (segments[0] === 'register') {
+    return { type: 'register' };
+  }
   if (segments.length >= 2) {
     return { type: 'entry', slug: decodeURIComponent(segments[0]), id: decodeURIComponent(segments[1]) };
   }
@@ -32,6 +43,14 @@ function parseRoute(): Route {
 }
 
 export default function App() {
+  return (
+    <AuthProvider>
+      <AppShell />
+    </AuthProvider>
+  );
+}
+
+function AppShell() {
   const [route, setRoute] = useState<Route>(parseRoute());
   const [pages, setPages] = useState<PublicEntryResponse[]>([]);
   const [schemas, setSchemas] = useState<SchemaSummary[]>([]);
@@ -165,6 +184,14 @@ function RouteContent({
     return <DebugView settings={settings} />;
   }
 
+  if (route.type === 'login') {
+    return <LoginView />;
+  }
+
+  if (route.type === 'register') {
+    return <RegisterView />;
+  }
+
   // 'page'
   return <PageView slug={route.slug} />;
 }
@@ -205,6 +232,24 @@ function PageView({ slug }: { slug: string }) {
 
 function Nav({ pages, schemas, route, menuItems }: { pages: PublicEntryResponse[]; schemas: SchemaSummary[]; route: Route; menuItems: MenuItem[] }) {
   const colors = useTheme();
+  const { user, isLoading, logout } = useEndUserAuth();
+
+  const accountLink = isLoading ? null : user ? (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto', fontSize: 13 }}>
+      <span style={{ color: colors.headerTextColor }}>{user.name}</span>
+      <button
+        type="button"
+        onClick={logout}
+        style={{ background: 'transparent', border: 'none', color: colors.accent, fontSize: 13, cursor: 'pointer', padding: 0 }}
+      >
+        Log out
+      </button>
+    </span>
+  ) : (
+    <a href="#/login" style={{ marginLeft: 'auto', color: colors.headerTextColor, fontSize: 13, textDecoration: 'none' }}>
+      Log in
+    </a>
+  );
 
   const linkStyle = (active: boolean): React.CSSProperties => ({
     color: active ? colors.accent : colors.headerTextColor,
@@ -259,6 +304,7 @@ function Nav({ pages, schemas, route, menuItems }: { pages: PublicEntryResponse[
             {item.label}
           </a>
         ))}
+        {accountLink}
       </nav>
     );
   }
@@ -298,6 +344,7 @@ function Nav({ pages, schemas, route, menuItems }: { pages: PublicEntryResponse[
           {s.name}
         </a>
       ))}
+      {accountLink}
     </nav>
   );
 }
