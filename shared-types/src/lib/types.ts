@@ -602,6 +602,8 @@ export enum UserRole {
   ADMIN = 'admin',
   EDITOR = 'editor',
   VIEWER = 'viewer',
+  /** End-user (reader) account for a mobile/web client app — not a CMS staff role. */
+  USER = 'user',
 }
 
 export interface User {
@@ -622,6 +624,8 @@ export interface User {
   website?: string;
   /** URL of the profile picture / avatar. */
   avatarUrl?: string;
+  /** Project (Client) this end-user account was registered under. Null/undefined for staff accounts. */
+  clientId?: { _id: string; name: string } | null;
   createdAt?: string;
   updatedAt?: string;
 }

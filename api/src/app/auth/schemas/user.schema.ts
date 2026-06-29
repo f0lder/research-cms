@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -7,11 +7,13 @@ export enum UserRole {
   ADMIN = 'admin',
   EDITOR = 'editor',
   VIEWER = 'viewer',
+  /** End-user (reader) account for a mobile/web client app — not a CMS staff role. */
+  USER = 'user',
 }
 
 @Schema({ timestamps: true })
 export class User {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   email: string;
 
   @Prop({ required: true })
@@ -43,6 +45,13 @@ export class User {
 
   @Prop({ default: '' })
   avatarUrl: string;
+
+  /** Project (Client) this end-user account was registered under. Null for staff accounts. */
+  @Prop({ type: Types.ObjectId, ref: 'ApiKeyModel', default: null })
+  clientId: Types.ObjectId | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+// Staff accounts (clientId: null) stay globally unique by email; end users are
+// unique per project, so the same email can read multiple separate client apps.
+UserSchema.index({ email: 1, clientId: 1 }, { unique: true });

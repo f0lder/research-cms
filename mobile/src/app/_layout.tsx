@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { TouchableOpacity, Text, View, StyleSheet, Image } from 'react-native';
 import { registerBuiltInBlocks, PageEntryResponse, MenuItem } from '@research-cms/shared-types';
 import { listSchemas, listPages, getClientSettings, getMenu, getMedia } from '@/lib/api';
+import { AuthProvider } from '@/lib/auth-context';
 import { Sidebar } from '@/components/Sidebar';
 import { C, createColors } from '@/lib/theme';
 
@@ -99,53 +100,55 @@ export default function RootLayout() {
   };
 
   return (
-    <AppContext.Provider value={{ schemas, pages, settings, colors, loading, error, openSidebar, headerMenuItems, footerMenuItems }}>
-      <StatusBar style={colors.headerText === '#FFFFFF' ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.headerBg },
-          headerTintColor: colors.headerText,
-          headerTitleStyle: { fontWeight: '600', fontSize: 16 },
-          headerLeft: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <TouchableOpacity onPress={openSidebar} hitSlop={12} style={s.menuBtn}>
-                <Text style={{ color: colors.headerText, fontSize: 20 }}>☰</Text>
-              </TouchableOpacity>
-              {logoUrl ? (
-                <TouchableOpacity onPress={() => router.push('/' as never)} hitSlop={8}>
-                  <Image source={{ uri: logoUrl }} style={{ width: 28, height: 28, resizeMode: 'contain' }} />
+    <AuthProvider>
+      <AppContext.Provider value={{ schemas, pages, settings, colors, loading, error, openSidebar, headerMenuItems, footerMenuItems }}>
+        <StatusBar style={colors.headerText === '#FFFFFF' ? 'light' : 'dark'} />
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: colors.headerBg },
+            headerTintColor: colors.headerText,
+            headerTitleStyle: { fontWeight: '600', fontSize: 16 },
+            headerLeft: () => (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <TouchableOpacity onPress={openSidebar} hitSlop={12} style={s.menuBtn}>
+                  <Text style={{ color: colors.headerText, fontSize: 20 }}>☰</Text>
                 </TouchableOpacity>
-              ) : null}
+                {logoUrl ? (
+                  <TouchableOpacity onPress={() => router.push('/' as never)} hitSlop={8}>
+                    <Image source={{ uri: logoUrl }} style={{ width: 28, height: 28, resizeMode: 'contain' }} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            ),
+            contentStyle: { backgroundColor: colors.bg },
+          }}
+        />
+        {footerMenuItems.length > 0 && (
+          <View style={{ backgroundColor: colors.footerBg, paddingVertical: 16, paddingHorizontal: 12 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 16 }}>
+              {footerMenuItems.map(item => (
+                <TouchableOpacity key={item.id} onPress={() => {
+                  if (item.type === 'external') return;
+                  router.push(itemHref(item) as never);
+                }}>
+                  <Text style={{ color: colors.footerTextColor, fontSize: 13, opacity: 0.85 }}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-          ),
-          contentStyle: { backgroundColor: colors.bg },
-        }}
-      />
-      {footerMenuItems.length > 0 && (
-        <View style={{ backgroundColor: colors.footerBg, paddingVertical: 16, paddingHorizontal: 12 }}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 16 }}>
-            {footerMenuItems.map(item => (
-              <TouchableOpacity key={item.id} onPress={() => {
-                if (item.type === 'external') return;
-                router.push(itemHref(item) as never);
-              }}>
-                <Text style={{ color: colors.footerTextColor, fontSize: 13, opacity: 0.85 }}>{item.label}</Text>
-              </TouchableOpacity>
-            ))}
           </View>
-        </View>
-      )}
-      <Sidebar
-        visible={sidebarOpen}
-        schemas={schemas}
-        pages={pages}
-        headerMenuItems={headerMenuItems}
-        homePageId={(settings['client.homePage'] as string) ?? null}
-        activeSlug={activeSlug}
-        onSelect={handleSelect}
-        onClose={() => setSidebarOpen(false)}
-      />
-    </AppContext.Provider>
+        )}
+        <Sidebar
+          visible={sidebarOpen}
+          schemas={schemas}
+          pages={pages}
+          headerMenuItems={headerMenuItems}
+          homePageId={(settings['client.homePage'] as string) ?? null}
+          activeSlug={activeSlug}
+          onSelect={handleSelect}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </AppContext.Provider>
+    </AuthProvider>
   );
 }
 

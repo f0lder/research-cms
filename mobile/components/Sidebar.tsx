@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, Modal, Pressable, SafeAreaView, StyleSheet, Linking } from 'react-native';
 import { PageEntryResponse, MenuItem } from '@research-cms/shared-types';
 import { useTheme } from '../src/app/_layout';
+import { useEndUserAuth } from '../lib/auth-context';
 
 type Schema = { slug: string; name: string };
 
@@ -34,7 +35,8 @@ export function Sidebar({ visible, schemas, pages, headerMenuItems = [], homePag
     onSelect(itemHref(item));
   };
   const colors = useTheme();
-  
+  const { user, isLoading, logout } = useEndUserAuth();
+
   const s = StyleSheet.create({
     scrim:            { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)' },
     drawer:           { position: 'absolute', left: 0, top: 0, bottom: 0, width: 260, backgroundColor: colors.drawerBg, elevation: 16 },
@@ -151,6 +153,30 @@ export function Sidebar({ visible, schemas, pages, headerMenuItems = [], homePag
               <Text style={s.itemText}>Debug</Text>
               <Text style={s.itemSlug}>/debug</Text>
             </TouchableOpacity>
+
+            <View style={s.sectionLabel}>
+              <Text style={s.sectionLabelText}>Account</Text>
+            </View>
+            {!isLoading && user ? (
+              <>
+                <View style={s.item}>
+                  <Text style={s.itemText}>{user.name}</Text>
+                  <Text style={s.itemSlug}>{user.email}</Text>
+                </View>
+                <TouchableOpacity style={s.item} onPress={logout} activeOpacity={0.7}>
+                  <Text style={s.itemText}>Log out</Text>
+                </TouchableOpacity>
+              </>
+            ) : !isLoading ? (
+              <>
+                <TouchableOpacity style={s.item} onPress={() => onSelect('/login')} activeOpacity={0.7}>
+                  <Text style={s.itemText}>Log in</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.item} onPress={() => onSelect('/register')} activeOpacity={0.7}>
+                  <Text style={s.itemText}>Register</Text>
+                </TouchableOpacity>
+              </>
+            ) : null}
           </ScrollView>
         </SafeAreaView>
       </View>

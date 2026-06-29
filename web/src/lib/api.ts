@@ -3,11 +3,50 @@ import { API_URL, API_KEY } from './config';
 
 const baseHeaders = { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' };
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { headers: baseHeaders });
+function authHeaders(token?: string) {
+  return token ? { ...baseHeaders, Authorization: `Bearer ${token}` } : baseHeaders;
+}
+
+async function get<T>(path: string, token?: string): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, { headers: authHeaders(token) });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.message ?? `Request failed: ${res.status}`);
   return body as T;
+}
+
+async function post<T>(path: string, data: unknown, token?: string): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.message ?? `Request failed: ${res.status}`);
+  return body as T;
+}
+
+export interface EndUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
+export interface AuthResponse {
+  user: EndUser;
+  token: string;
+}
+
+export function registerUser(email: string, password: string, name: string): Promise<AuthResponse> {
+  return post<AuthResponse>('/public/auth/register', { email, password, name });
+}
+
+export function loginUser(email: string, password: string): Promise<AuthResponse> {
+  return post<AuthResponse>('/public/auth/login', { email, password });
+}
+
+export function getCurrentUser(token: string): Promise<EndUser> {
+  return get<EndUser>('/public/auth/me', token);
 }
 
 export interface EntriesPage {
